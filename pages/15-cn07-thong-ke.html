@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CN07: Thống kê — Học đồ án QLNS</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header class="header">
+    <a href="../index.html" class="header__brand">
+        <span class="header__brand-icon">📚</span>
+        <span>Học đồ án QLNS</span>
+    </a>
+    <div class="header__search">
+        <span class="header__search-icon">🔍</span>
+        <input type="text" placeholder="Tìm bài học...">
+    </div>
+    <button class="header__menu-toggle" type="button">☰</button>
+</header>
+
+<aside class="sidebar"></aside>
+
+<main class="main">
+    <div class="content">
+
+        <h1>📊 CN07: Thống kê</h1>
+
+        <p>Chức năng Thống kê hiển thị 5 chỉ số quan trọng của kho hàng trong 1 khung bên phải
+        cửa sổ chính. Mỗi lần thêm/sửa/xóa/undo/redo, khung này tự động cập nhật.</p>
+
+        <div class="callout callout--info">
+            <div class="callout__title">📖 Mô tả yêu cầu barem</div>
+            <div class="callout__body">
+                <p><strong>Nhóm 7 — Thống kê:</strong> Hệ thống tính toán + hiển thị: tổng số mặt
+                hàng, mặt hàng đắt nhất / rẻ nhất (dùng đa hình OOP), tổng giá trị kho, số mặt hàng
+                sắp hết (tồn ≤ 5).</p>
+            </div>
+        </div>
+
+        <div class="toc">
+            <div class="toc__title">📑 Mục lục</div>
+            <ol>
+                <li><a href="#cau-truc">Cấu trúc folder cn07</a></li>
+                <li><a href="#tt">File _tt: lay_thong_ke</a></li>
+                <li><a href="#ui">File _ui: KhungThongKeUI (LabelFrame)</a></li>
+                <li><a href="#dk">File _dk: DieuKhienThongKe</a></li>
+                <li><a href="#labelframe">Cú pháp LabelFrame</a></li>
+                <li><a href="#float-inf">float('inf') để tìm min</a></li>
+            </ol>
+        </div>
+
+        <h2 id="cau-truc">1. Cấu trúc folder cn07</h2>
+
+        <pre data-file="chuc_nang/cn07_thong_ke/"><code>cn07_thong_ke/
+├── __init__.py
+├── thong_ke_tt.py     ← Hàm lay_thong_ke (gọi thong_ke() của DSLK)
+├── thong_ke_ui.py     ← Lớp KhungThongKeUI
+└── thong_ke_dk.py     ← Lớp DieuKhienThongKe</code></pre>
+
+        <h2 id="tt">2. File _tt: lay_thong_ke</h2>
+
+        <p>Giống CN02, file thuật toán rất ngắn — chỉ gọi hàm <code class="inline">thong_ke()</code>
+        của DSLK (đã học ở bài DSLK).</p>
+
+        <pre data-file="thong_ke_tt.py"><code>from loi_thuat_toan.danh_sach_lien_ket import DoublyLinkedList
+
+
+def lay_thong_ke(danh_sach):
+    """
+    Trả về dict thống kê toàn bộ danh sách.
+
+    Trả về:
+        Dict chứa các key:
+        - tong_so           : tổng số mặt hàng
+        - dat_nhat          : dict mặt hàng có giá bán cao nhất
+        - re_nhat           : dict mặt hàng có giá bán thấp nhất
+        - sap_het_hang      : list dict các mặt hàng tồn kho ≤ 5
+        - theo_loai         : dict số lượng + tổng tồn theo từng loại
+        - tong_gia_tri_kho  : tổng giá trị hàng trong kho (gia_co_ban × ton_kho)
+        - tong_ton_kho      : tổng số sản phẩm tồn
+    """
+    try:
+        return danh_sach.thong_ke()
+    except Exception as loi:
+        print(f'[LOI thong_ke] {loi}')
+        return {}</code></pre>
+
+        <h3>Thuật toán thong_ke() của DSLK</h3>
+
+        <p>Đây là hàm cốt lõi — nằm trong <code class="inline">danh_sach_lien_ket.py</code>.
+        Duyệt qua tất cả Nodes + tích lũy 7 chỉ số:</p>
+
+        <pre data-file="thong_ke() của DSLK"><code>def thong_ke(self):
+    if self.so_luong == 0:
+        return {
+            'tong_so': 0, 'dat_nhat': None, 're_nhat': None,
+            'sap_het_hang': [], 'theo_loai': {},
+            'tong_gia_tri_kho': 0, 'tong_ton_kho': 0
+        }
+
+    # Khởi tạo biến tích lũy
+    dat_nhat = None
+    re_nhat = None
+    gia_cao_nhat = -1                       # Âm để mọi giá đều lớn hơn
+    gia_thap_nhat = float('inf')            # Vô cực để mọi giá đều nhỏ hơn
+    sap_het_hang = []
+    theo_loai = {}
+    tong_gia_tri_kho = 0
+    tong_ton_kho = 0
+
+    # Duyệt qua từng Node
+    node_hien_tai = self.head
+    while node_hien_tai is not None:
+        data = node_hien_tai.data
+        if hasattr(data, 'tinh_gia_ban'):
+            gia_ban = data.tinh_gia_ban()    # ← ĐA HÌNH
+            # Cập nhật đắt nhất
+            if gia_ban > gia_cao_nhat:
+                gia_cao_nhat = gia_ban
+                dat_nhat = data
+            # Cập nhật rẻ nhất
+            if gia_ban < gia_thap_nhat:
+                gia_thap_nhat = gia_ban
+                re_nhat = data
+
+        if hasattr(data, 'ton_kho'):
+            tong_ton_kho += data.ton_kho
+            tong_gia_tri_kho += data.gia_co_ban * data.ton_kho
+            # Cảnh báo hàng sắp hết khi tồn kho ≤ 5
+            if data.ton_kho <= 5:
+                sap_het_hang.append(data)
+
+        if hasattr(data, 'loai_hang'):
+            loai = data.loai_hang
+            if loai not in theo_loai:
+                theo_loai[loai] = {'so_luong': 0, 'tong_ton': 0}
+            theo_loai[loai]['so_luong'] += 1
+            theo_loai[loai]['tong_ton'] += data.ton_kho
+
+        node_hien_tai = node_hien_tai.next
+
+    return {
+        'tong_so': self.so_luong,
+        'dat_nhat': dat_nhat.chuyen_thanh_dict() if dat_nhat else None,
+        're_nhat': re_nhat.chuyen_thanh_dict() if re_nhat else None,
+        'sap_het_hang': [item.chuyen_thanh_dict() for item in sap_het_hang],
+        'theo_loai': theo_loai,
+        'tong_gia_tri_kho': tong_gia_tri_kho,
+        'tong_ton_kho': tong_ton_kho
+    }</code></pre>
+
+        <h2 id="ui">3. File _ui: KhungThongKeUI (LabelFrame)</h2>
+
+        <pre data-file="thong_ke_ui.py"><code>from tkinter import ttk
+
+
+class KhungThongKeUI:
+    """Khung hiển thị các chỉ số thống kê."""
+
+    def __init__(self, parent):
+        # LabelFrame có tiêu đề "Thống kê", padding 10px
+        frame = ttk.LabelFrame(parent, text='Thống kê', padding=10)
+        frame.pack(fill='x', pady=(0, 5))
+        self.frame = frame
+
+        # 5 label hiển thị 5 chỉ số
+        self.lbl_tong_so = ttk.Label(frame, text='Tổng số: 0')
+        self.lbl_tong_so.pack(anchor='w')
+
+        self.lbl_dat = ttk.Label(frame, text='Đắt nhất: -')
+        self.lbl_dat.pack(anchor='w')
+
+        self.lbl_re = ttk.Label(frame, text='Rẻ nhất: -')
+        self.lbl_re.pack(anchor='w')
+
+        self.lbl_tri_kho = ttk.Label(frame, text='Tổng giá trị kho: 0đ')
+        self.lbl_tri_kho.pack(anchor='w')
+
+        # Foreground='red' để cảnh báo nổi bật
+        self.lbl_sap_het = ttk.Label(frame, text='Sắp hết (<5): 0', foreground='red')
+        self.lbl_sap_het.pack(anchor='w')
+
+    def cap_nhat_tong_so(self, so):
+        self.lbl_tong_so.config(text=f'Tổng số: {so} mặt hàng')
+
+    def cap_nhat_dat_nhat(self, ten, gia):
+        self.lbl_dat.config(text=f'Đắt nhất: {ten} ({gia:,.0f}đ)')
+
+    def cap_nhat_re_nhat(self, ten, gia):
+        self.lbl_re.config(text=f'Rẻ nhất: {ten} ({gia:,.0f}đ)')
+
+    def cap_nhat_tri_kho(self, tong):
+        self.lbl_tri_kho.config(text=f'Tổng giá trị kho: {tong:,.0f}đ')
+
+    def cap_nhat_sap_het(self, so):
+        self.lbl_sap_het.config(text=f'Sắp hết (<5): {so}')
+
+    def dat_mac_dinh(self):
+        """Reset tất cả label về giá trị mặc định."""
+        self.lbl_tong_so.config(text='Tổng số: 0')
+        self.lbl_dat.config(text='Đắt nhất: -')
+        self.lbl_re.config(text='Rẻ nhất: -')
+        self.lbl_tri_kho.config(text='Tổng giá trị kho: 0đ')
+        self.lbl_sap_het.config(text='Sắp hết (<5): 0')</code></pre>
+
+        <h3>Cú pháp mới</h3>
+
+        <h4>3.1. <code>config()</code> để cập nhật widget</h4>
+        <p>Sau khi tạo widget, muốn đổi text/màu/font, dùng <code class="inline">config()</code>
+        (hoặc <code class="inline">configure()</code> — 2 cái giống nhau):</p>
+
+        <pre data-file="config()"><code>label = ttk.Label(parent, text='Hello')
+# Sau đó muốn đổi text:
+label.config(text='World')
+# Hoặc đổi foreground:
+label.config(foreground='red')
+# Hoặc đổi nhiều thứ cùng lúc:
+label.config(text='Updated', foreground='blue', font=('Arial', 12, 'bold'))</code></pre>
+
+        <h4>3.2. <code>foreground</code> + <code>background</code></h4>
+        <ul>
+            <li><code class="inline">foreground</code> (viết tắt <code class="inline">fg</code>):
+            màu chữ.</li>
+            <li><code class="inline">background</code> (viết tắt <code class="inline">bg</code>):
+            màu nền.</li>
+        </ul>
+
+        <p>Có thể dùng tên màu tiếng Anh (<code class="inline">'red'</code>,
+        <code class="inline">'blue'</code>, <code class="inline">'green'</code>) hoặc mã hex
+        (<code class="inline">'#FF0000'</code> = đỏ).</p>
+
+        <h4>3.3. <code>anchor='w'</code> trong pack</h4>
+        <p>Mặc định <code class="inline">pack</code> căn giữa. <code class="inline">anchor='w'</code>
+        căn lề trái (West). Các giá trị: <code class="inline">'n'</code> (trên),
+        <code class="inline">'s'</code> (dưới), <code class="inline">'e'</code> (phải),
+        <code class="inline">'w'</code> (trái), <code class="inline">'center'</code> (giữa).</p>
+
+        <h2 id="dk">4. File _dk: DieuKhienThongKe</h2>
+
+        <pre data-file="thong_ke_dk.py"><code>from .thong_ke_tt import lay_thong_ke
+
+
+class DieuKhienThongKe:
+    def __init__(self, ui_thong_ke, danh_sach):
+        self.ui = ui_thong_ke
+        self.danh_sach = danh_sach
+
+    def cap_nhat(self):
+        """Gọi thuật toán + cập nhật 5 label trên UI."""
+        tk = lay_thong_ke(self.danh_sach)
+        if not tk:
+            self.ui.dat_mac_dinh()
+            return
+
+        # Cập nhật từng label
+        self.ui.cap_nhat_tong_so(tk.get('tong_so', 0))
+
+        # Mặt hàng đắt nhất
+        dat = tk.get('dat_nhat')
+        if dat:
+            self.ui.cap_nhat_dat_nhat(dat.get('ten_san_pham', '-'),
+                                       dat.get('gia_ban', 0))
+        else:
+            self.ui.lbl_dat.config(text='Đắt nhất: -')
+
+        # Mặt hàng rẻ nhất
+        re = tk.get('re_nhat')
+        if re:
+            self.ui.cap_nhat_re_nhat(re.get('ten_san_pham', '-'),
+                                      re.get('gia_ban', 0))
+        else:
+            self.ui.lbl_re.config(text='Rẻ nhất: -')
+
+        # Tổng giá trị kho
+        self.ui.cap_nhat_tri_kho(tk.get('tong_gia_tri_kho', 0))
+
+        # Số mặt hàng sắp hết
+        self.ui.cap_nhat_sap_het(len(tk.get('sap_het_hang', [])))</code></pre>
+
+        <h3>Pattern dict.get(key, default)</h3>
+
+        <p>Trong code có nhiều dòng <code class="inline">tk.get('tong_so', 0)</code> —
+        <code class="inline">.get()</code> là method của dict:</p>
+
+        <pre data-file="dict.get()"><code># Nếu key có trong dict → trả về giá trị tương ứng
+# Nếu key không có → trả về default (tham số 2)
+tk = {'tong_so': 10}
+tk.get('tong_so', 0)        # 10 (key có)
+tk.get('ton_kho', 0)        # 0 (key không có → default)
+tk.get('ton_kho')           # None (không truyền default → None)</code></pre>
+
+        <p>Khác với <code class="inline">tk['ton_kho']</code> — nếu key không có sẽ raise
+        <code class="inline">KeyError</code>. Dùng <code class="inline">.get()</code> an toàn hơn.</p>
+
+        <h2 id="labelframe">5. Cú pháp LabelFrame</h2>
+
+        <p><code class="inline">LabelFrame</code> là Frame có tiêu đề hiển thị trên viền — dùng
+        để nhóm các widget liên quan với nhãn dễ nhìn.</p>
+
+        <pre data-file="LabelFrame"><code>frame = ttk.LabelFrame(parent, text='Thống kê', padding=10)
+frame.pack(fill='x', pady=(0, 5))
+
+# Thêm widget con vào LabelFrame
+label1 = ttk.Label(frame, text='Item 1')
+label1.pack()
+
+label2 = ttk.Label(frame, text='Item 2')
+label2.pack()</code></pre>
+
+        <p>Khác với <code class="inline">Frame</code> thường (không có text), LabelFrame có tiêu
+        đề trên viền — trông gọn gàng hơn khi nhóm chức năng.</p>
+
+        <div class="callout callout--tip">
+            <div class="callout__title">💡 Khi nào dùng Frame, LabelFrame, PanedWindow?</div>
+            <div class="callout__body">
+                <ul>
+                    <li><strong>Frame</strong>: nhóm widget khi không cần tiêu đề. Đa dụng nhất.</li>
+                    <li><strong>LabelFrame</strong>: nhóm widget + cần tiêu đề (như "Thống kê", "Tùy chọn").</li>
+                    <li><strong>PanedWindow</strong>: chia khung có thể kéo đổi tỷ lệ (như split panel).</li>
+                </ul>
+            </div>
+        </div>
+
+        <h2 id="float-inf">6. float('inf') để tìm min</h2>
+
+        <p>Trong <code class="inline">thong_ke()</code> có dòng:</p>
+
+        <pre data-file="float inf"><code>gia_thap_nhat = float('inf')   # Vô cực
+# ...
+if gia_ban < gia_thap_nhat:
+    gia_thap_nhat = gia_ban
+    re_nhat = data</code></pre>
+
+        <h3>Tại sao dùng float('inf')?</h3>
+
+        <p>Khi tìm giá trị nhỏ nhất, cần khởi tạo biến với giá trị <strong>"vô cùng lớn"</strong>
+        để mọi giá trị đầu tiên đều nhỏ hơn. Có 2 cách:</p>
+
+        <pre data-file="2 cách khởi tạo"><code># Cách 1: Dùng số rất lớn (khó chọn)
+gia_thap_nhat = 9999999999   # Có thể không đủ lớn!
+
+# Cách 2: Dùng float('inf') — chuẩn
+gia_thap_nhat = float('inf')   # Vô cực — mọi số đều nhỏ hơn</code></pre>
+
+        <p>Tương tự khi tìm max:</p>
+
+        <pre data-file="float -inf"><code>gia_cao_nhat = float('-inf')   # Âm vô cực — mọi số đều lớn hơn
+# Hoặc:
+gia_cao_nhat = -1   # Nếu biết chắc giá ≥ 0</code></pre>
+
+        <div class="callout callout--info">
+            <div class="callout__title">📖 Đa hình trong thong_ke</div>
+            <div class="callout__body">
+                <p>Trong hàm <code class="inline">thong_ke()</code> có dòng:</p>
+                <pre data-file="Đa hình"><code>gia_ban = data.tinh_gia_ban()</code></pre>
+                <p>Cùng 1 lời gọi, nhưng kết quả khác nhau tùy loại đối tượng:</p>
+                <ul>
+                    <li>Nếu <code class="inline">data</code> là <code class="inline">Sach</code> → <code class="inline">gia × 1.1</code></li>
+                    <li>Nếu <code class="inline">data</code> là <code class="inline">TapChi</code> → <code class="inline">gia × 1.05</code></li>
+                    <li>v.v.</li>
+                </ul>
+                <p>Đây chính là <strong>đa hình OOP</strong> — code ngắn gọn mà xử lý được 5 loại.</p>
+            </div>
+        </div>
+
+        <div class="callout callout--success">
+            <div class="callout__title">✅ Tóm tắt CN07</div>
+            <div class="callout__body">
+                <ul>
+                    <li>5 chỉ số: tổng số, đắt nhất, rẻ nhất, tổng giá trị kho, sắp hết.</li>
+                    <li>Thuật toán nằm trong DSLK (duyệt 1 lần + tích lũy tất cả).</li>
+                    <li>UI dùng LabelFrame + 5 Label, có nút reset về mặc định.</li>
+                    <li>Dùng đa hình OOP khi tính giá bán (<code class="inline">tinh_gia_ban()</code>).</li>
+                    <li>Khởi tạo min/max bằng <code class="inline">float('inf')</code> / <code class="inline">float('-inf')</code>.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="page-nav"></div>
+
+    </div>
+
+    <footer class="footer">
+        <p>CN07 — Thống kê | Học đồ án QLNS</p>
+    </footer>
+</main>
+
+<script src="../js/highlight.js"></script>
+<script src="../js/main.js"></script>
+
+</body>
+</html>

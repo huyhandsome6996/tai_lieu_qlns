@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 8: Queue FIFO (Hàng đợi) — Học đồ án QLNS</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header class="header">
+    <a href="../index.html" class="header__brand">
+        <span class="header__brand-icon">📚</span>
+        <span>Học đồ án QLNS</span>
+    </a>
+    <div class="header__search">
+        <span class="header__search-icon">🔍</span>
+        <input type="text" placeholder="Tìm bài học...">
+    </div>
+    <button class="header__menu-toggle" type="button">☰</button>
+</header>
+
+<aside class="sidebar"></aside>
+
+<main class="main">
+    <div class="content">
+
+        <h1>🚶 Bài 8: Queue FIFO (Hàng đợi)</h1>
+
+        <p><strong>Queue</strong> (Hàng đợi) là cấu trúc dữ liệu theo nguyên lý <strong>FIFO</strong>
+        — <em>First In First Out</em> (Vào trước Ra trước). Phần tử nào được thêm vào hàng trước
+        thì sẽ được lấy ra trước, giống như xếp hàng mua vé: người đến trước được phục vụ trước.</p>
+
+        <p>Trong đồ án, Queue được dùng cho <strong>Giỏ hàng + Thanh toán</strong> (CN09).
+        Khi khách thêm sản phẩm A rồi mới thêm B, hệ thống thanh toán sẽ xử lý A trước rồi mới tới B.</p>
+
+        <div class="toc">
+            <div class="toc__title">📑 Mục lục bài học</div>
+            <ol>
+                <li><a href="#khainiem">Khái niệm Queue FIFO</a></li>
+                <li><a href="#minhhoa">Minh họa trực quan</a></li>
+                <li><a href="#code">Code hoàn chỉnh (cau_truc_du_lieu.py)</a></li>
+                <li><a href="#node">Lớp NodeHangDoi</a></li>
+                <li><a href="#them">Hàm them_vao (Enqueue)</a></li>
+                <li><a href="#lay">Hàm lay_ra (Dequeue)</a></li>
+                <li><a href="#xem">Hàm xem_danh_sach</a></li>
+                <li><a href="#xoa-theo-ma">Hàm xoa_theo_ma</a></li>
+                <li><a href="#ungdung">Ứng dụng trong đồ án</a></li>
+            </ol>
+        </div>
+
+        <h2 id="khainiem">1. Khái niệm Queue FIFO</h2>
+
+        <p>Queue là cấu trúc dữ liệu tuyến tính có 2 đầu:</p>
+        <ul>
+            <li><strong>Đầu (dau)</strong>: nơi phần tử được <em>lấy ra</em> (dequeue).</li>
+            <li><strong>Cuối (cuoi_hang)</strong>: nơi phần tử được <em>thêm vào</em> (enqueue).</li>
+        </ul>
+
+        <p>Nguyên lý <strong>FIFO</strong> (First In First Out): phần tử vào trước sẽ ra trước.</p>
+
+        <div class="callout callout--info">
+            <div class="callout__title">📖 So sánh với Stack</div>
+            <div class="callout__body">
+                <p><strong>Stack LIFO</strong> (bài 7): chỉ có 1 đầu (đỉnh). Cả push và pop đều
+                ở đỉnh → phần tử vào sau sẽ ra trước.</p>
+                <p><strong>Queue FIFO</strong> (bài này): có 2 đầu. Thêm ở cuối, lấy ở đầu →
+                phần tử vào trước sẽ ra trước.</p>
+            </div>
+        </div>
+
+        <h2 id="minhhoa">2. Minh họa trực quan</h2>
+
+        <div class="diagram">
+            <div class="diagram__title">Queue — 4 món trong giỏ hàng</div>
+            <p style="margin-bottom: 8px;">Thêm vào cuối ↓ &nbsp;&nbsp; | &nbsp;&nbsp; Lấy ra đầu ↓</p>
+            <div class="queue-container">
+                <span class="queue-arrow">← Lấy ra</span>
+                <span class="queue-item">A: Truyện Kiều</span>
+                <span class="queue-item">B: Tạp chí</span>
+                <span class="queue-item">C: Báo giấy</span>
+                <span class="queue-item">D: Luận văn</span>
+                <span class="queue-arrow">← Thêm vào</span>
+            </div>
+            <p style="margin-top: 8px; font-size: 0.9rem; color: #718096;">
+                A vào trước → khi thanh toán, A sẽ được xử lý đầu tiên, D cuối cùng.
+            </p>
+        </div>
+
+        <p><strong>Các thao tác cơ bản:</strong></p>
+        <ul>
+            <li><code class="inline">them_vao(data)</code> (Enqueue): thêm phần tử vào cuối hàng.</li>
+            <li><code class="inline">lay_ra()</code> (Dequeue): lấy phần tử ở đầu hàng ra và xóa.</li>
+            <li><code class="inline">xem_danh_sach()</code>: duyệt từ đầu đến cuối, không xóa.</li>
+            <li><code class="inline">rong()</code>: kiểm tra hàng có rỗng không.</li>
+            <li><code class="inline">xoa_tat_ca()</code>: xóa toàn bộ hàng.</li>
+        </ul>
+
+        <h2 id="code">3. Code hoàn chỉnh (file cau_truc_du_lieu.py)</h2>
+
+        <p>Đây là phần code tự cài đặt Queue trong file
+        <code class="inline">loi_thuat_toan/cau_truc_du_lieu.py</code> — không dùng
+        <code class="inline">list</code> Python, mà tự tạo Node liên kết qua con trỏ.</p>
+
+        <pre data-file="cau_truc_du_lieu.py — phần HangDoi"><code>class NodeHangDoi:
+    """
+    Lớp NodeHangDoi — một mắt xích trong Hàng đợi.
+
+    Mỗi Node chứa:
+        data: Dữ liệu (ở đây là mặt hàng trong giỏ).
+        sau:  Con trỏ trỏ đến Node phía sau (Node tiếp theo trong hàng).
+    """
+
+    def __init__(self, data):
+        """Khởi tạo Node mới với dữ liệu truyền vào, sau = None."""
+        self.data = data        # Lưu mặt hàng (đối tượng Sach/TapChi/...).
+        self.sau = None         # Chưa trỏ đến Node kế tiếp.
+
+
+class HangDoi:
+    """
+    Lớp HangDoi (Queue) — tự cài đặt theo nguyên lý FIFO.
+
+    Thuộc tính:
+        dau:       Trỏ đến Node đầu hàng (lấy ra ở đây khi thanh toán).
+        cuoi_hang: Trỏ đến Node cuối hàng (thêm mới vào đây).
+        so_luong:  Số Node hiện có.
+    """
+
+    def __init__(self):
+        """Khởi tạo hàng đợi rỗng: đầu = cuối = None, số lượng = 0."""
+        self.dau = None
+        self.cuoi_hang = None
+        self.so_luong = 0
+
+    def them_vao(self, data):
+        """Enqueue — thêm một phần tử vào CUỐI hàng đợi."""
+        node_moi = NodeHangDoi(data)        # Bọc dữ liệu vào Node mới.
+
+        if self.dau is None:                # Trường hợp hàng đang rỗng.
+            self.dau = node_moi             # Node mới là cả đầu lẫn cuối.
+            self.cuoi_hang = node_moi
+        else:                               # Trường hợp đã có phần tử.
+            self.cuoi_hang.sau = node_moi   # Nối Node mới sau Node cuối.
+            self.cuoi_hang = node_moi       # Cập nhật cuối = Node mới.
+
+        self.so_luong += 1
+
+    def lay_ra(self):
+        """Dequeue — lấy phần tử ở ĐẦU hàng đợi ra (và xóa nó)."""
+        if self.dau is None:
+            return None
+
+        data = self.dau.data                # Lưu dữ liệu đầu.
+        self.dau = self.dau.sau             # Dịch đầu sang Node kế tiếp.
+
+        if self.dau is None:                # Nếu sau khi dịch mà rỗng →
+            self.cuoi_hang = None           # phải reset cả cuối_hang.
+
+        self.so_luong -= 1
+        return data
+
+    def xem_danh_sach(self):
+        """Trả về list Python chứa toàn bộ phần tử từ đầu đến cuối."""
+        ket_qua = []
+        node_hien_tai = self.dau
+        while node_hien_tai is not None:
+            if hasattr(node_hien_tai.data, 'chuyen_thanh_dict'):
+                ket_qua.append(node_hien_tai.data.chuyen_thanh_dict())
+            else:
+                ket_qua.append(node_hien_tai.data)
+            node_hien_tai = node_hien_tai.sau
+        return ket_qua
+
+    def rong(self):
+        """Kiểm tra hàng đợi có rỗng không."""
+        return self.dau is None
+
+    def xoa_tat_ca(self):
+        """Clear — xóa toàn bộ giỏ hàng."""
+        self.dau = None
+        self.cuoi_hang = None
+        self.so_luong = 0
+
+    def xoa_theo_ma(self, ma_so):
+        """Xóa một phần tử BẤT KỲ trong hàng đợi theo mã số."""
+        if self.dau is None:
+            return False
+
+        def _lay_ma(d):
+            if hasattr(d, 'ma_so'):
+                return d.ma_so
+            if isinstance(d, dict):
+                return d.get('ma_so')
+            return None
+
+        # Trường hợp 1: Node cần xóa chính là Node đầu.
+        if _lay_ma(self.dau.data) == ma_so:
+            self.dau = self.dau.sau
+            if self.dau is None:
+                self.cuoi_hang = None
+            self.so_luong -= 1
+            return True
+
+        # Trường hợp 2: Node cần xóa ở giữa/cuối → duyệt tìm.
+        node_hien_tai = self.dau
+        while node_hien_tai.sau is not None:
+            if _lay_ma(node_hien_tai.sau.data) == ma_so:
+                if node_hien_tai.sau == self.cuoi_hang:
+                    self.cuoi_hang = node_hien_tai
+                node_hien_tai.sau = node_hien_tai.sau.sau
+                self.so_luong -= 1
+                return True
+            node_hien_tai = node_hien_tai.sau
+
+        return False</code></pre>
+
+        <h2 id="node">4. Lớp NodeHangDoi</h2>
+
+        <p>Mỗi phần tử trong hàng được bọc trong 1 Node. Node chứa:</p>
+        <ul>
+            <li><code class="inline">data</code>: dữ liệu thực (món hàng trong giỏ).</li>
+            <li><code class="inline">sau</code>: con trỏ trỏ tới Node kế tiếp (phía sau).</li>
+        </ul>
+
+        <pre data-file="NodeHangDoi"><code>class NodeHangDoi:
+    def __init__(self, data):
+        self.data = data
+        self.sau = None    # Ban đầu chưa trỏ tới ai</code></pre>
+
+        <div class="callout callout--tip">
+            <div class="callout__title">💡 Tại sao gọi là "sau"?</div>
+            <div class="callout__body">
+                <p>Vì Node này trỏ tới Node <strong>phía sau</strong> nó trong hàng. Nếu bạn đang
+                ở đầu hàng (vị trí 1), <code class="inline">.sau</code> trỏ tới vị trí 2.</p>
+                <p>Khác với Stack (chỉ có <code class="inline">duoi</code>), Queue dùng <code class="inline">sau</code>
+                vì có thể duyệt tiến từ đầu đến cuối.</p>
+            </div>
+        </div>
+
+        <h2 id="them">5. Hàm them_vao (Enqueue)</h2>
+
+        <p>Thêm 1 phần tử vào <strong>cuối hàng</strong>. Có 2 trường hợp:</p>
+
+        <h3>Trường hợp 1: Hàng rỗng (chưa có Node nào)</h3>
+        <pre data-file="them_vao — rỗng"><code>if self.dau is None:
+    self.dau = node_moi             # Node mới là đầu
+    self.cuoi_hang = node_moi       # Và cũng là cuối</code></pre>
+
+        <h3>Trường hợp 2: Hàng đã có phần tử</h3>
+        <pre data-file="them_vao — có sẵn"><code>else:
+    self.cuoi_hang.sau = node_moi   # Nối Node mới sau Node cuối
+    self.cuoi_hang = node_moi       # Cập nhật cuối = Node mới</code></pre>
+
+        <div class="diagram">
+            <div class="diagram__title">Trực quan them_vao khi hàng đã có dữ liệu</div>
+            <p>Trước khi thêm D:</p>
+            <div class="queue-container">
+                <span class="queue-item">A</span>
+                <span class="queue-arrow">→</span>
+                <span class="queue-item">B</span>
+                <span class="queue-arrow">→</span>
+                <span class="queue-item">C</span>
+            </div>
+            <p style="margin-top: 12px;">Sau khi thêm D:</p>
+            <div class="queue-container">
+                <span class="queue-item">A</span>
+                <span class="queue-arrow">→</span>
+                <span class="queue-item">B</span>
+                <span class="queue-arrow">→</span>
+                <span class="queue-item">C</span>
+                <span class="queue-arrow">→</span>
+                <span class="queue-item" style="background: var(--color-accent);">D (mới)</span>
+            </div>
+            <p style="margin-top: 12px; font-size: 0.85rem; color: #718096;">
+                <code class="inline">cuoi_hang</code> dịch từ C sang D.
+            </p>
+        </div>
+
+        <p><strong>Độ phức tạp:</strong> O(1) vì đã giữ sẵn con trỏ <code class="inline">cuoi_hang</code>.
+        Nếu chỉ có <code class="inline">dau</code> thì phải duyệt O(n) để tìm cuối.</p>
+
+        <h2 id="lay">6. Hàm lay_ra (Dequeue)</h2>
+
+        <p>Lấy phần tử ở <strong>đầu hàng</strong> ra và xóa nó khỏi hàng.</p>
+
+        <pre data-file="lay_ra"><code>def lay_ra(self):
+    if self.dau is None:
+        return None              # Hàng rỗng → không có gì để lấy
+
+    data = self.dau.data         # Lưu dữ liệu đầu trước khi xóa
+    self.dau = self.dau.sau      # Dịch đầu sang Node kế tiếp
+
+    if self.dau is None:         # Nếu sau khi dịch mà rỗng →
+        self.cuoi_hang = None    # phải reset cả cuối_hang (tránh tham chiếu rác)
+
+    self.so_luong -= 1
+    return data</code></pre>
+
+        <div class="callout callout--warning">
+            <div class="callout__title">⚠️ Tại sao phải reset cuoi_hang khi rỗng?</div>
+            <div class="callout__body">
+                <p>Vì nếu hàng chỉ còn 1 Node, khi dequeue thì <code class="inline">dau</code> sẽ
+                thành <code class="inline">None</code>, nhưng <code class="inline">cuoi_hang</code>
+                vẫn trỏ tới Node đã bị gỡ — đó là <strong>tham chiếu rác</strong>.</p>
+                <p>Để tránh bug, ta reset <code class="inline">cuoi_hang = None</code> khi
+                <code class="inline">dau</code> thành <code class="inline">None</code>.</p>
+            </div>
+        </div>
+
+        <div class="diagram">
+            <div class="diagram__title">Trực quan lay_ra</div>
+            <p>Trước khi lay_ra:</p>
+            <div class="queue-container">
+                <span class="queue-item" style="background: var(--color-accent);">A (đầu)</span>
+                <span class="queue-arrow">→</span>
+                <span class="queue-item">B</span>
+                <span class="queue-arrow">→</span>
+                <span class="queue-item">C</span>
+            </div>
+            <p style="margin-top: 12px;">Sau khi lay_ra — A bị lấy ra, B thành đầu:</p>
+            <div class="queue-container">
+                <span class="queue-item" style="background: var(--color-accent);">B (đầu mới)</span>
+                <span class="queue-arrow">→</span>
+                <span class="queue-item">C</span>
+            </div>
+            <p style="margin-top: 12px; font-size: 0.85rem; color: #718096;">
+                Hàm trả về dữ liệu của A (đã bị xóa khỏi hàng).
+            </p>
+        </div>
+
+        <h2 id="xem">7. Hàm xem_danh_sach</h2>
+
+        <p>Trả về list Python chứa toàn bộ phần tử từ đầu đến cuối — <strong>không xóa</strong>
+        gì cả. Dùng để UI hiển thị giỏ hàng.</p>
+
+        <pre data-file="xem_danh_sach"><code>def xem_danh_sach(self):
+    ket_qua = []
+    node_hien_tai = self.dau                # Bắt đầu duyệt từ đầu
+    while node_hien_tai is not None:        # Lặp đến khi hết Node
+        if hasattr(node_hien_tai.data, 'chuyen_thanh_dict'):
+            ket_qua.append(node_hien_tai.data.chuyen_thanh_dict())
+        else:
+            ket_qua.append(node_hien_tai.data)
+        node_hien_tai = node_hien_tai.sau   # Tiến sang Node kế
+    return ket_qua</code></pre>
+
+        <div class="callout callout--info">
+            <div class="callout__title">📖 Tại sao dùng hasattr?</div>
+            <div class="callout__body">
+                <p>Vì data trong giỏ có thể là:</p>
+                <ul>
+                    <li><strong>Đối tượng OOP</strong> (Sach, TapChi, ...) → có hàm
+                    <code class="inline">chuyen_thanh_dict()</code>.</li>
+                    <li><strong>Dict Python</strong> (món hàng trong giỏ) → không có hàm này,
+                    chỉ cần giữ nguyên.</li>
+                </ul>
+                <p>Dùng <code class="inline">hasattr</code> để kiểm tra trước khi gọi — tránh lỗi
+                <code class="inline">AttributeError</code>.</p>
+            </div>
+        </div>
+
+        <h2 id="xoa-theo-ma">8. Hàm xoa_theo_ma</h2>
+
+        <p>Xóa 1 phần tử <strong>bất kỳ</strong> trong hàng theo mã số. Khách có thể đổi ý,
+        muốn bỏ 1 món khỏi giỏ — không nhất thiết phải là món đầu.</p>
+
+        <pre data-file="xoa_theo_ma"><code>def xoa_theo_ma(self, ma_so):
+    if self.dau is None:
+        return False
+
+    def _lay_ma(d):
+        if hasattr(d, 'ma_so'):
+            return d.ma_so
+        if isinstance(d, dict):
+            return d.get('ma_so')
+        return None
+
+    # Trường hợp 1: Node cần xóa là Node đầu
+    if _lay_ma(self.dau.data) == ma_so:
+        self.dau = self.dau.sau
+        if self.dau is None:
+            self.cuoi_hang = None
+        self.so_luong -= 1
+        return True
+
+    # Trường hợp 2: Node cần xóa ở giữa/cuối → duyệt tìm
+    node_hien_tai = self.dau
+    while node_hien_tai.sau is not None:
+        if _lay_ma(node_hien_tai.sau.data) == ma_so:
+            if node_hien_tai.sau == self.cuoi_hang:
+                self.cuoi_hang = node_hien_tai
+            node_hien_tai.sau = node_hien_tai.sau.sau
+            self.so_luong -= 1
+            return True
+        node_hien_tai = node_hien_tai.sau
+
+    return False</code></pre>
+
+        <h3>Thuật toán duyệt tìm</h3>
+
+        <p>Khi Node cần xóa không phải đầu, ta duyệt từ đầu. Tại mỗi Node, kiểm tra
+        <strong>Node kế tiếp</strong> (<code class="inline">.sau</code>) có phải Node cần xóa không.
+        Nếu có, <strong>bỏ qua</strong> Node đó bằng cách nối <code class="inline">.sau</code> của
+        Node hiện tại sang <code class="inline">.sau.sau</code> (Node sau Node cần xóa).</p>
+
+        <pre data-file="Bỏ qua Node giữa"><code># Trước: A → B → C → D, muốn xóa C
+node_hien_tai = B
+node_hien_tai.sau = C   # cần xóa
+node_hien_tai.sau.sau = D   # Node sau C
+
+# Lệnh xóa:
+node_hien_tai.sau = node_hien_tai.sau.sau   # B.sau = D
+
+# Kết quả: A → B → D (C bị cắt)</code></pre>
+
+        <h2 id="ungdung">9. Ứng dụng trong đồ án</h2>
+
+        <p>Queue FIFO được dùng trong <strong>CN09 — Giỏ hàng + Thanh toán</strong>:</p>
+
+        <div class="card-grid">
+            <div class="card">
+                <div class="card__title">➕ Thêm vào giỏ</div>
+                <div class="card__body">Khách chọn sản phẩm → <code class="inline">them_vao</code>
+                (enqueue vào cuối).</div>
+            </div>
+            <div class="card">
+                <div class="card__title">👁️ Xem giỏ</div>
+                <div class="card__body">Hiển thị toàn bộ giỏ → <code class="inline">xem_danh_sach</code>
+                (không lấy ra).</div>
+            </div>
+            <div class="card">
+                <div class="card__title">❌ Bỏ món</div>
+                <div class="card__body">Khách đổi ý → <code class="inline">xoa_theo_ma</code>.</div>
+            </div>
+            <div class="card">
+                <div class="card__title">💰 Thanh toán</div>
+                <div class="card__body">Lần lượt <code class="inline">lay_ra</code> từng món
+                (FIFO) → tính tổng tiền → trả hóa đơn.</div>
+            </div>
+        </div>
+
+        <div class="callout callout--success">
+            <div class="callout__title">✅ Tóm tắt</div>
+            <div class="callout__body">
+                <ul>
+                    <li>Queue FIFO: vào trước — ra trước (như xếp hàng mua vé).</li>
+                    <li>2 con trỏ chính: <code class="inline">dau</code> (lấy ra) + <code class="inline">cuoi_hang</code> (thêm vào).</li>
+                    <li>Enqueue/Dequeue đều O(1).</li>
+                    <li>Trong đồ án: dùng cho Giỏ hàng + Thanh toán (CN09).</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="page-nav"></div>
+
+    </div>
+
+    <footer class="footer">
+        <p>Bài 8: Queue FIFO — Học đồ án Quản lý Nhà sách</p>
+    </footer>
+</main>
+
+<script src="../js/highlight.js"></script>
+<script src="../js/main.js"></script>
+
+</body>
+</html>

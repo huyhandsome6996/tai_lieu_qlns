@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CN05: Xóa sản phẩm — Học đồ án QLNS</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header class="header">
+    <a href="../index.html" class="header__brand">
+        <span class="header__brand-icon">📚</span>
+        <span>Học đồ án QLNS</span>
+    </a>
+    <div class="header__search">
+        <span class="header__search-icon">🔍</span>
+        <input type="text" placeholder="Tìm bài học...">
+    </div>
+    <button class="header__menu-toggle" type="button">☰</button>
+</header>
+
+<aside class="sidebar"></aside>
+
+<main class="main">
+    <div class="content">
+
+        <h1>🗑️ CN05: Xóa sản phẩm</h1>
+
+        <p>Chức năng Xóa cho phép admin xóa sản phẩm khỏi hệ thống. <strong>Nhân viên không được
+        phép xóa</strong> — nút Xóa bị vô hiệu hóa trong UI và thuật toán cũng kiểm tra quyền.</p>
+
+        <div class="callout callout--danger">
+            <div class="callout__title">🔒 Yêu cầu phân quyền</div>
+            <div class="callout__body">
+                <p>Chức năng Xóa yêu cầu <strong>vai trò admin</strong>. Nhân viên không thấy nút
+                Xóa hoạt động (nút bị <code class="inline">disabled</code>) và nếu somehow gọi
+                thuật toán, nó vẫn từ chối với thông báo rõ ràng.</p>
+            </div>
+        </div>
+
+        <div class="toc">
+            <div class="toc__title">📑 Mục lục</div>
+            <ol>
+                <li><a href="#cau-truc">Cấu trúc folder cn05</a></li>
+                <li><a href="#tt">File _tt: xoa_san_pham</a></li>
+                <li><a href="#ui">File _ui: hoi_xac_nhan_xoa</a></li>
+                <li><a href="#dk">File _dk: DieuKhienXoaSanPham</a></li>
+                <li><a href="#undo">Undo entry khi xóa (lưu toàn bộ dữ liệu cũ)</a></li>
+            </ol>
+        </div>
+
+        <h2 id="cau-truc">1. Cấu trúc folder cn05</h2>
+
+        <pre data-file="chuc_nang/cn05_xoa_san_pham/"><code>cn05_xoa_san_pham/
+├── __init__.py
+├── xoa_san_pham_tt.py     ← Thuật toán
+├── xoa_san_pham_ui.py     ← Hàm tiện ích show dialog (xác nhận, lỗi, thành công)
+└── xoa_san_pham_dk.py     ← Điều khiển</code></pre>
+
+        <h2 id="tt">2. File _tt: xoa_san_pham</h2>
+
+        <pre data-file="xoa_san_pham_tt.py"><code>from loi_thuat_toan.ket_noi_sqlite import xoa_mot_san_pham
+from loi_thuat_toan.danh_sach_lien_ket import DoublyLinkedList
+
+
+def xoa_san_pham(danh_sach, bo_undoredo, ma_so, la_admin):
+    """
+    Xóa 1 sản phẩm theo mã số.
+
+    Tham số:
+        danh_sach   : DSLK đôi toàn cục.
+        bo_undoredo : dict 2 Stack undo/redo.
+        ma_so       : mã sản phẩm cần xóa.
+        la_admin    : True nếu user hiện tại là admin (được phép xóa).
+    """
+    try:
+        # === BƯỚC 1: KIỂM TRA PHÂN QUYỀN ===
+        if not la_admin:
+            return False, 'BẠN LÀ NHÂN VIÊN - KHÔNG ĐƯỢC PHÉP XÓA SẢN PHẨM.'
+
+        # === BƯỚC 2: TÌM SẢN PHẨM CẦN XÓA ===
+        sp_cu = danh_sach.tim_theo_ma_so(ma_so)
+        if sp_cu is None:
+            return False, f'Không tìm thấy sản phẩm mã {ma_so}.'
+
+        # === BƯỚC 3: LƯU DỮ LIỆU CŨ (để Undo có thể khôi phục lại) ===
+        du_lieu_cu = sp_cu.chuyen_thanh_dict()
+
+        # === BƯỚC 4: XÓA KHỎI DSLK + SQLITE ===
+        if danh_sach.xoa_node(ma_so):
+            xoa_mot_san_pham(ma_so)
+
+            # === BƯỚC 5: GHI LỊCH SỬ UNDO ===
+            bo_undoredo['undo'].day_vao({
+                'loai': 'xoa',
+                'du_lieu_cu': du_lieu_cu,
+                'du_lieu_moi': None
+            })
+            # Xóa toàn bộ Redo vì có thao tác mới
+            bo_undoredo['redo'].xoa_tat_ca()
+
+            return True, f'Đã xóa sản phẩm mã {ma_so}.'
+
+        return False, 'Không tìm thấy sản phẩm.'
+    except Exception as loi:
+        return False, f'Lỗi: {loi}'</code></pre>
+
+        <h3>Luồng thuật toán</h3>
+
+        <div class="diagram">
+            <div class="diagram__title">5 bước xóa sản phẩm</div>
+            <p>1. Kiểm tra <code class="inline">la_admin</code> — nếu không phải admin → trả về lỗi</p>
+            <p style="margin-top: 8px;">↓</p>
+            <p>2. Tìm sản phẩm trong DSLK bằng <code class="inline">tim_theo_ma_so</code></p>
+            <p style="margin-top: 8px;">↓</p>
+            <p>3. Lưu dữ liệu cũ (toàn bộ dict) — để Undo khôi phục được</p>
+            <p style="margin-top: 8px;">↓</p>
+            <p>4. Xóa khỏi DSLK + SQLite</p>
+            <p style="margin-top: 8px;">↓</p>
+            <p>5. Đẩy Undo entry (loai='xoa', du_lieu_cu=dict, du_lieu_moi=None) + xóa Redo</p>
+        </div>
+
+        <h2 id="ui">3. File _ui: hoi_xac_nhan_xoa</h2>
+
+        <p>File UI của cn05 không phải lớp mà là các <strong>hàm tiện ích</strong> — vì xóa không
+        cần form phức tạp, chỉ cần hộp thoại xác nhận YES/NO.</p>
+
+        <pre data-file="xoa_san_pham_ui.py"><code>from tkinter import messagebox
+
+
+def hoi_xac_nhan_xoa(parent, ma_so):
+    """Hiện hộp thoại YES/NO để xác nhận xóa."""
+    return messagebox.askyesno(
+        'Xác nhận xóa',
+        f'Bạn có chắc muốn xóa sản phẩm mã "{ma_so}"?\n'
+        f'(Có thể hoàn tác bằng nút Undo)',
+        parent=parent
+    )
+
+
+def bao_loi(parent, thong_bao):
+    """Hiện hộp thoại lỗi."""
+    messagebox.showerror('Lỗi', thong_bao, parent=parent)
+
+
+def bao_thanh_cong(parent, thong_bao):
+    """Hiện hộp thoại thành công."""
+    messagebox.showinfo('Thành công', thong_bao, parent=parent)</code></pre>
+
+        <h3>Cú pháp messagebox</h3>
+
+        <p><code class="inline">messagebox</code> là module của Tkinter cung cấp các hộp thoại
+        tiêu chuẩn. Các hàm chính:</p>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Hàm</th>
+                        <th>Trả về</th>
+                        <th>Hiển thị</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>showinfo(title, msg)</code></td>
+                        <td>None</td>
+                        <td>Thông báo thông tin (icon "i")</td>
+                    </tr>
+                    <tr>
+                        <td><code>showwarning(title, msg)</code></td>
+                        <td>None</td>
+                        <td>Cảnh báo (icon "!")</td>
+                    </tr>
+                    <tr>
+                        <td><code>showerror(title, msg)</code></td>
+                        <td>None</td>
+                        <td>Lỗi (icon "X" đỏ)</td>
+                    </tr>
+                    <tr>
+                        <td><code>askyesno(title, msg)</code></td>
+                        <td>True / False</td>
+                        <td>Hỏi Yes/No (Yes=True, No=False)</td>
+                    </tr>
+                    <tr>
+                        <td><code>askokcancel(title, msg)</code></td>
+                        <td>True / False</td>
+                        <td>Hỏi OK/Cancel</td>
+                    </tr>
+                    <tr>
+                        <td><code>askretrycancel(title, msg)</code></td>
+                        <td>True / False</td>
+                        <td>Hỏi Retry/Cancel</td>
+                    </tr>
+                    <tr>
+                        <td><code>askyesnocancel(title, msg)</code></td>
+                        <td>True/False/None</td>
+                        <td>Hỏi Yes/No/Cancel (Cancel=None)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <p>Tham số <code class="inline">parent=parent</code>: chỉ định cửa sổ cha — hộp thoại sẽ
+        hiện modal trên parent. Nếu không truyền, hộp thoại có thể hiện sau các cửa sổ khác.</p>
+
+        <h2 id="dk">4. File _dk: DieuKhienXoaSanPham</h2>
+
+        <pre data-file="xoa_san_pham_dk.py"><code>from .xoa_san_pham_tt import xoa_san_pham
+from .xoa_san_pham_ui import hoi_xac_nhan_xoa, bao_loi, bao_thanh_cong
+
+
+class DieuKhienXoaSanPham:
+    def __init__(self, danh_sach, bo_undoredo):
+        self.danh_sach = danh_sach
+        self.bo_undoredo = bo_undoredo
+
+    def xu_ly_xoa(self, parent, ma_so, la_admin):
+        """Xóa 1 sản phẩm theo mã số."""
+        # Trường hợp không có mã
+        if not ma_so:
+            bao_loi(parent, 'Vui lòng chọn 1 dòng trong bảng để xóa.')
+            return False
+
+        # Hiện hộp thoại xác nhận YES/NO
+        if not hoi_xac_nhan_xoa(parent, ma_so):
+            return False   # User nhấn No → không làm gì
+
+        # Gọi thuật toán xóa
+        ok, msg = xoa_san_pham(self.danh_sach, self.bo_undoredo, ma_so, la_admin)
+        if ok:
+            bao_thanh_cong(parent, msg)
+            return True
+        else:
+            bao_loi(parent, msg)
+            return False</code></pre>
+
+        <h3>Luồng gọi từ cua_so_chinh_dk.py</h3>
+
+        <pre data-file="Cách cua_so_chinh_dk gọi xoa"><code>def _xoa_san_pham(self):
+    """Lấy mã đang chọn → gọi điều khiển xóa → nếu xóa OK → refresh_all."""
+    ma = self.ui.ui_bang.lay_ma_dang_chon()
+    if not ma:
+        messagebox.showwarning('Chưa chọn', 'Vui lòng chọn 1 dòng để xóa.')
+        return
+    # Truyền la_admin để thuật toán kiểm tra quyền
+    da_xoa = self.dk_xoa.xu_ly_xoa(self.root, ma, self.quan_ly.la_admin())
+    if da_xoa:
+        self.refresh_all()</code></pre>
+
+        <p>Lưu ý: <code class="inline">self.quan_ly.la_admin()</code> được gọi từ
+        <code class="inline">QuanLyTrungTam</code> — kiểm tra
+        <code class="inline">nguoi_dung_hien_tai.vai_tro == 'admin'</code>.</p>
+
+        <h2 id="undo">5. Undo entry khi xóa (lưu toàn bộ dữ liệu cũ)</h2>
+
+        <p>Undo entry của thao tác Xóa có dạng:</p>
+
+        <pre data-file="Undo entry Xóa"><code>{
+    'loai': 'xoa',
+    'du_lieu_cu': {                       # Toàn bộ dữ liệu sản phẩm đã xóa
+        'ma_so': 'MH001',
+        'loai_hang': 'Sách',
+        'ten_san_pham': 'Truyện Kiều',
+        'gia_co_ban': 50000,
+        'ton_kho': 20,
+        'gia_ban': 55000,
+        'tac_gia': 'Nguyễn Du',
+        'nha_xuat_ban': 'NXB Văn học'
+    },
+    'du_lieu_moi': None                   # Xóa → không có dữ liệu mới
+}</code></pre>
+
+        <h3>Tại sao phải lưu toàn bộ dữ liệu cũ?</h3>
+
+        <p>Vì khi Undo thao tác Xóa, ta cần <strong>thêm lại sản phẩm</strong> vào DSLK + SQLite.
+        Nếu chỉ lưu mã số, ta không biết tên/giá/tồn kho/tác giả... để tạo lại đối tượng.</p>
+
+        <p>Đó là lý do <code class="inline">du_lieu_cu</code> phải là dict đầy đủ. Khi Undo:</p>
+
+        <ol>
+            <li>Lấy <code class="inline">du_lieu_cu</code> từ entry.</li>
+            <li>Gọi <code class="inline">_tao_doi_tuong_tu_dict(du_lieu_cu)</code> — hàm này
+            tạo đối tượng OOP (Sach/TapChi/...) dựa trên <code class="inline">loai_hang</code>.</li>
+            <li>Gọi <code class="inline">danh_sach.them_vao_cuoi(sp)</code> + <code class="inline">luu_mot_san_pham(sp)</code>.</li>
+        </ol>
+
+        <pre data-file="Hàm _tao_doi_tuong_tu_dict"><code>def _tao_doi_tuong_tu_dict(d):
+    """Tái tạo đối tượng MatHang từ dict (dùng cho Undo thao tác xóa)."""
+    loai = d.get('loai_hang')
+    if loai == 'Sách':
+        return Sach(d['ma_so'], d['ten_san_pham'], d['gia_co_ban'],
+                    d['ton_kho'], d.get('tac_gia', ''), d.get('nha_xuat_ban', ''))
+    elif loai == 'Tạp chí':
+        return TapChi(d['ma_so'], d['ten_san_pham'], d['gia_co_ban'],
+                      d['ton_kho'], d.get('so_phat_hanh', ''))
+    # ... các loại khác tương tự ...</code></pre>
+
+        <div class="callout callout--tip">
+            <div class="callout__title">💡 So sánh Undo entry của 3 thao tác</div>
+            <div class="callout__body">
+                <table style="width:100%; background:transparent; box-shadow:none;">
+                    <tr style="background:#f7fafc;">
+                        <th style="background:transparent; color:#2c5282;">Thao tác</th>
+                        <th style="background:transparent; color:#2c5282;">du_lieu_cu</th>
+                        <th style="background:transparent; color:#2c5282;">du_lieu_moi</th>
+                    </tr>
+                    <tr>
+                        <td><strong>them</strong></td>
+                        <td><code>None</code></td>
+                        <td>dict sản phẩm mới</td>
+                    </tr>
+                    <tr style="background:#f7fafc;">
+                        <td><strong>sua</strong></td>
+                        <td>dict cũ</td>
+                        <td>dict mới</td>
+                    </tr>
+                    <tr>
+                        <td><strong>xoa</strong></td>
+                        <td>dict cũ (đầy đủ)</td>
+                        <td><code>None</code></td>
+                    </tr>
+                </table>
+                <p style="margin-top: 8px;">Quy tắc: <strong>luôn lưu đủ dữ liệu để đảo ngược thao tác</strong>.</p>
+            </div>
+        </div>
+
+        <div class="callout callout--success">
+            <div class="callout__title">✅ Tóm tắt CN05</div>
+            <div class="callout__body">
+                <ul>
+                    <li>Yêu cầu admin — kiểm tra quyền ở cả UI (disabled nút) + thuật toán (<code class="inline">la_admin</code>).</li>
+                    <li>UI chỉ là các hàm tiện ích (<code class="inline">askyesno</code>, <code class="inline">showerror</code>, <code class="inline">showinfo</code>).</li>
+                    <li>5 bước: kiểm tra quyền → tìm → lưu dữ liệu cũ → xóa DSLK + SQLite → ghi Undo.</li>
+                    <li>Undo entry lưu <strong>toàn bộ dữ liệu cũ</strong> để có thể thêm lại khi undo.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="page-nav"></div>
+
+    </div>
+
+    <footer class="footer">
+        <p>CN05 — Xóa sản phẩm | Học đồ án QLNS</p>
+    </footer>
+</main>
+
+<script src="../js/highlight.js"></script>
+<script src="../js/main.js"></script>
+
+</body>
+</html>

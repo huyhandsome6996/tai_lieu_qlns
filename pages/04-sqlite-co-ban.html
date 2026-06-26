@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 4: SQLite cơ bản — Học đồ án QLNS</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header class="header">
+    <a href="../index.html" class="header__brand">
+        <span class="header__brand-icon">📚</span>
+        <span>Học đồ án QLNS</span>
+    </a>
+    <div class="header__search">
+        <span class="header__search-icon">🔍</span>
+        <input type="text" placeholder="Tìm bài học...">
+    </div>
+    <button class="header__menu-toggle" type="button">☰</button>
+</header>
+
+<aside class="sidebar"></aside>
+
+<main class="main">
+    <div class="content">
+
+        <h1>💾 Bài 4: SQLite cơ bản</h1>
+
+        <p><strong>SQLite</strong> là cơ sở dữ liệu nhẹ, lưu trong 1 file (<code class="inline">.sqlite3</code>).
+        Không cần cài server — Python có sẵn module <code class="inline">sqlite3</code>.</p>
+
+        <p>Đây là phần <strong>Ngọ</strong> phụ trách (vì đã học SQLite + Stack + Queue).</p>
+
+        <div class="toc">
+            <div class="toc__title">📑 Mục lục</div>
+            <ol>
+                <li><a href="#connect">Kết nối + tạo bảng</a></li>
+                <li><a href="#insert">INSERT — thêm dữ liệu</a></li>
+                <li><a href="#select">SELECT — đọc dữ liệu</a></li>
+                <li><a href="#update">UPDATE — sửa dữ liệu</a></li>
+                <li><a href="#delete">DELETE — xóa dữ liệu</a></li>
+                <li><a href="#parameterized">Parameterized query — chống SQL Injection</a></li>
+                <li><a href="#try-except">try/except/finally cho SQLite</a></li>
+                <li><a href="#ket_noi_sqlite">Phân tích file ket_noi_sqlite.py</a></li>
+            </ol>
+        </div>
+
+        <h2 id="connect">1. Kết nối + tạo bảng</h2>
+
+        <pre data-file="vidu_connect.py"><code>import sqlite3
+
+# 1. Kết nối tới file DB (nếu file không có → tự tạo mới)
+ket_noi = sqlite3.connect("test.db")
+
+# 2. Tạo con trỏ (cursor) để thực thi SQL
+con_tro = ket_noi.cursor()
+
+# 3. Tạo bảng
+con_tro.execute('''
+    CREATE TABLE IF NOT EXISTS hoc_sinh (
+        id    INTEGER PRIMARY KEY AUTOINCREMENT,
+        ten   TEXT NOT NULL,
+        tuoi  INTEGER,
+        diem  REAL
+    )
+''')
+
+# 4. Lưu thay đổi (commit)
+ket_noi.commit()
+
+# 5. Đóng kết nối
+ket_noi.close()</code></pre>
+
+        <h3>Giải thích từng dòng</h3>
+        <ul>
+            <li><code class="inline">sqlite3.connect("test.db")</code> — mở file <code class="inline">test.db</code>.
+            Nếu chưa có → tạo file mới. Trả về đối tượng kết nối.</li>
+            <li><code class="inline">.cursor()</code> — tạo "con trỏ" — công cụ để chạy SQL.</li>
+            <li><code class="inline">con_tro.execute("SQL...")</code> — chạy 1 câu SQL.</li>
+            <li><code class="inline">CREATE TABLE IF NOT EXISTS</code> — tạo bảng nếu chưa có (tránh lỗi khi bảng đã tồn tại).</li>
+            <li><code class="inline">INTEGER PRIMARY KEY AUTOINCREMENT</code> — số nguyên, khóa chính, tự tăng.</li>
+            <li><code class="inline">TEXT</code> — chuỗi. <code class="inline">INTEGER</code> — số nguyên. <code class="inline">REAL</code> — số thực.</li>
+            <li><code class="inline">NOT NULL</code> — bắt buộc nhập, không được để trống.</li>
+            <li><code class="inline">ket_noi.commit()</code> — LƯU thay đổi xuống file. Quên commit = mất dữ liệu khi đóng!</li>
+            <li><code class="inline">ket_noi.close()</code> — đóng kết nối, giải phóng tài nguyên.</li>
+        </ul>
+
+        <h2 id="insert">2. INSERT — thêm dữ liệu</h2>
+
+        <pre data-file="vidu_insert.py"><code>import sqlite3
+
+ket_noi = sqlite3.connect("test.db")
+con_tro = ket_noi.cursor()
+
+# Cách 1: nối chuỗi (NGUY HIỂM — dễ bị SQL Injection)
+# KHÔNG nên dùng!
+# ten = "Robert'); DROP TABLE hoc_sinh;--"
+# con_tro.execute(f"INSERT INTO hoc_sinh (ten, tuoi, diem) VALUES ('{ten}', 20, 8.5)")
+
+# Cách 2: PARAMETERIZED QUERY (an toàn — dùng dấu ?)
+con_tro.execute(
+    "INSERT INTO hoc_sinh (ten, tuoi, diem) VALUES (?, ?, ?)",
+    ("Nguyễn Văn A", 20, 8.5)
+)
+
+# Thêm nhiều dòng cùng lúc bằng executemany
+ds_hoc_sinh = [
+    ("Trần Thị B", 21, 9.0),
+    ("Lê Văn C", 19, 7.5),
+    ("Phạm Thị D", 22, 8.0),
+]
+con_tro.executemany(
+    "INSERT INTO hoc_sinh (ten, tuoi, diem) VALUES (?, ?, ?)",
+    ds_hoc_sinh
+)
+
+ket_noi.commit()                  # LƯU thay đổi
+ket_noi.close()</code></pre>
+
+        <div class="callout callout--danger">
+            <div class="callout__title">🚨 SQL Injection là gì?</div>
+            <div class="callout__body">
+                <p>Nếu user nhập tên <code class="inline">Robert'); DROP TABLE hoc_sinh;--</code> vào ô nhập,
+                và bạn dùng <strong>nối chuỗi</strong> để tạo SQL — hacker có thể xóa toàn bộ bảng của bạn!</p>
+                <p><strong>Giải pháp</strong>: luôn dùng dấu <code class="inline">?</code> (parameterized query).
+                SQLite tự thoát ký tự đặc biệt → an toàn 100%.</p>
+            </div>
+        </div>
+
+        <h2 id="select">3. SELECT — đọc dữ liệu</h2>
+
+        <pre data-file="vidu_select.py"><code>import sqlite3
+
+ket_noi = sqlite3.connect("test.db")
+con_tro = ket_noi.cursor()
+
+# Lấy tất cả
+con_tro.execute("SELECT * FROM hoc_sinh")
+tat_ca = con_tro.fetchall()              # trả list các tuple
+for hang in tat_ca:
+    print(hang)
+# (1, 'Nguyễn Văn A', 20, 8.5)
+# (2, 'Trần Thị B', 21, 9.0)
+# ...
+
+# Lấy 1 dòng đầu tiên
+con_tro.execute("SELECT * FROM hoc_sinh WHERE id = ?", (1,))
+mot_hang = con_tro.fetchone()            # trả 1 tuple hoặc None
+print(mot_hang)                          # (1, 'Nguyễn Văn A', 20, 8.5)
+
+# Lấy N dòng đầu
+con_tro.execute("SELECT * FROM hoc_sinh LIMIT 2")
+hai_hang = con_tro.fetchmany(2)
+
+# Lấy theo điều kiện
+con_tro.execute("SELECT * FROM hoc_sinh WHERE tuoi >= ?", (20,))
+ket_qua = con_tro.fetchall()
+
+# Lấy 1 số cột
+con_tro.execute("SELECT ten, diem FROM hoc_sinh")
+for hang in con_tro.fetchall():
+    print(f"Tên: {hang[0]}, Điểm: {hang[1]}")
+
+# Sắp xếp
+con_tro.execute("SELECT * FROM hoc_sinh ORDER BY diem DESC")  # giảm dần
+con_tro.execute("SELECT * FROM hoc_sinh ORDER BY diem ASC")   # tăng dần
+
+# Đếm số dòng
+con_tro.execute("SELECT COUNT(*) FROM hoc_sinh")
+so_luong = con_tro.fetchone()[0]         # [0] vì fetchone trả (so_luong,)
+print(f"Số học sinh: {so_luong}")
+
+ket_noi.close()</code></pre>
+
+        <h3>Lấy tên cột từ description</h3>
+        <pre data-file="lấy tên cột.py"><code>con_tro.execute("SELECT * FROM hoc_sinh")
+ten_cot = [mo_ta[0] for mo_ta in con_tro.description]
+# ten_cot = ['id', 'ten', 'tuoi', 'diem']
+
+# Ép tuple → dict để dễ truy cập theo tên
+for hang in con_tro.fetchall():
+    du_lieu = dict(zip(ten_cot, hang))
+    print(du_lieu)
+# {'id': 1, 'ten': 'Nguyễn Văn A', 'tuoi': 20, 'diem': 8.5}</code></pre>
+
+        <h2 id="update">4. UPDATE — sửa dữ liệu</h2>
+
+        <pre data-file="vidu_update.py"><code>import sqlite3
+
+ket_noi = sqlite3.connect("test.db")
+con_tro = ket_noi.cursor()
+
+# Sửa 1 dòng theo điều kiện
+con_tro.execute(
+    "UPDATE hoc_sinh SET diem = ? WHERE id = ?",
+    (9.5, 1)                              # diem_moi, id
+)
+
+# Sửa nhiều cột
+con_tro.execute(
+    "UPDATE hoc_sinh SET ten = ?, tuoi = ? WHERE id = ?",
+    ("Nguyễn Văn A Mới", 21, 1)
+)
+
+ket_noi.commit()
+
+# Kiểm tra số dòng bị ảnh hưởng
+print(f"Đã sửa {con_tro.rowcount} dòng.")
+
+ket_noi.close()</code></pre>
+
+        <h2 id="delete">5. DELETE — xóa dữ liệu</h2>
+
+        <pre data-file="vidu_delete.py"><code>import sqlite3
+
+ket_noi = sqlite3.connect("test.db")
+con_tro = ket_noi.cursor()
+
+# Xóa theo điều kiện
+con_tro.execute("DELETE FROM hoc_sinh WHERE id = ?", (1,))
+
+# ⚠️ Lưu ý: (1,) có dấu phẩy — vì đây là tuple 1 phần tử
+# Nếu viết (1) → Python hiểu là số 1, không phải tuple → LỖI
+
+ket_noi.commit()
+print(f"Đã xóa {con_tro.rowcount} dòng.")
+
+# Xóa tất cả (CẨN THẬN!)
+# con_tro.execute("DELETE FROM hoc_sinh")
+
+ket_noi.close()</code></pre>
+
+        <div class="callout callout--warning">
+            <div class="callout__title">⚠️ Tuple 1 phần tử cần dấu phẩy</div>
+            <div class="callout__body">
+                <p>Sai: <code class="inline">(1)</code> → Python hiểu là số <code class="inline">1</code> (trong ngoặc đơn toán học).</p>
+                <p>Đúng: <code class="inline">(1,)</code> → tuple chứa 1 phần tử <code class="inline">1</code>.</p>
+                <p>SQLite cần tuple để thay dấu <code class="inline">?</code>, nên phải có dấu phẩy.</p>
+            </div>
+        </div>
+
+        <h2 id="parameterized">6. Parameterized query — chống SQL Injection</h2>
+
+        <p>Quy tắc vàng: <strong>KHÔNG BAO GIỜ</strong> nối chuỗi để tạo SQL. Luôn dùng dấu <code class="inline">?</code>.</p>
+
+        <pre data-file="parameterized.py"><code># ❌ SAI — nguy cơ SQL Injection
+ten = input("Nhập tên: ")
+sql = f"SELECT * FROM hoc_sinh WHERE ten = '{ten}'"
+con_tro.execute(sql)
+
+# ✅ ĐÚNG — parameterized query
+ten = input("Nhập tên: ")
+con_tro.execute("SELECT * FROM hoc_sinh WHERE ten = ?", (ten,))
+
+# Nhiều tham số
+con_tro.execute(
+    "SELECT * FROM hoc_sinh WHERE tuoi >= ? AND diem >= ?",
+    (18, 8.0)
+)
+
+# Tên bảng/cột không thể dùng ? — phải nối chuỗi AN TOÀN
+# (chỉ khi giá trị đến từ code cố định, không từ user)
+bang = "hoc_sinh"
+con_tro.execute(f"SELECT * FROM {bang}")</code></pre>
+
+        <h2 id="try-except">7. try/except/finally cho SQLite</h2>
+
+        <p>Mọi thao tác SQLite đều nên bọc <code class="inline">try/except/finally</code>:</p>
+
+        <pre data-file="vidu_try_except.py"><code>import sqlite3
+
+ket_noi = None                              # khai báo trước để finally truy cập được
+try:
+    ket_noi = sqlite3.connect("test.db")
+    con_tro = ket_noi.cursor()
+
+    con_tro.execute("INSERT INTO hoc_sinh (ten, tuoi) VALUES (?, ?)", ("Test", 20))
+    ket_noi.commit()
+
+except sqlite3.IntegrityError as loi:
+    # Lỗi ràng buộc (vd: trùng khóa chính)
+    print(f"Trùng khóa: {loi}")
+
+except sqlite3.Error as loi:
+    # Lỗi SQLite khác
+    print(f"Lỗi DB: {loi}")
+    raise                                   # ném lỗi lên để xử lý tiếp
+
+finally:
+    # LUÔN đóng kết nối — dù thành công hay lỗi
+    if ket_noi:
+        ket_noi.close()</code></pre>
+
+        <h3>Các loại lỗi SQLite thường gặp</h3>
+        <div class="table-wrap">
+        <table>
+            <thead>
+                <tr><th>Lỗi</th><th>Nguyên nhân</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>sqlite3.IntegrityError</code></td><td>Trùng khóa chính / vi phạm ràng buộc NOT NULL / FOREIGN KEY</td></tr>
+                <tr><td><code>sqlite3.OperationalError</code></td><td>Bảng không tồn tại, cú pháp SQL sai, DB bị khóa</td></tr>
+                <tr><td><code>sqlite3.ProgrammingError</code></td><td>Số tham số <code>?</code> không khớp số giá trị truyền vào</td></tr>
+                <tr><td><code>sqlite3.Error</code></td><td>Lỗi SQLite tổng quát (cha của tất cả lỗi trên)</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <h2 id="ket_noi_sqlite">8. Phân tích file ket_noi_sqlite.py</h2>
+
+        <p>Giờ xem code thực tế trong đồ án. File <code class="inline">loi_thuat_toan/ket_noi_sqlite.py</code>
+        dài ~440 dòng, gồm các hàm chính:</p>
+
+        <h3>8.1. Lấy đường dẫn file DB</h3>
+        <pre data-file="ket_noi_sqlite.py — lay_duong_dan_db"><code>import os
+import sqlite3
+
+def lay_duong_dan_db():
+    """
+    Trả về đường dẫn TUYỆT ĐỐI tới file db.sqlite3.
+    File này nằm ở thư mục gốc do_an_tkinter/.
+    """
+    # __file__ = đường dẫn file ket_noi_sqlite.py hiện tại
+    # VD: /home/user/quanlynhasach/do_an_tkinter/loi_thuat_toan/ket_noi_sqlite.py
+
+    thu_muc_hien_tai = os.path.dirname(os.path.abspath(__file__))
+    # thu_muc_hien_tai = .../loi_thuat_toan/
+
+    duong_dan_du_an = os.path.dirname(os.path.dirname(thu_muc_hien_tai))
+    # dirname(loi_thuat_toan) = .../do_an_tkinter/
+    # dirname(do_an_tkinter) = .../quanlynhasach/   (lấy 2 lần)
+
+    return os.path.join(duong_dan_du_an, 'db.sqlite3')
+    # → .../quanlynhasach/do_an_tkinter/db.sqlite3</code></pre>
+
+        <h3>8.2. Tạo bảng</h3>
+        <pre data-file="ket_noi_sqlite.py — tao_bang_neu_chua_co"><code>def tao_bang_neu_chua_co():
+    """Tạo 2 bảng nếu chưa tồn tại."""
+    ket_noi = None                                  # khai báo trước cho finally
+    try:
+        duong_dan = lay_duong_dan_db()
+        ket_noi = sqlite3.connect(duong_dan)         # mở kết nối
+        con_tro = ket_noi.cursor()
+
+        # Bảng mặt hàng — 12 cột
+        # Các trường riêng (tac_gia, so_phat_hanh, ...) có thể NULL
+        # vì không phải loại nào cũng có
+        con_tro.execute('''
+            CREATE TABLE IF NOT EXISTS bang_mat_hang (
+                ma_so         TEXT PRIMARY KEY,      -- khóa chính
+                loai_hang     TEXT NOT NULL,
+                ten_san_pham  TEXT NOT NULL,
+                gia_co_ban    REAL NOT NULL,
+                ton_kho       INTEGER NOT NULL,
+                tac_gia       TEXT,                   -- Sách/Luận văn/Bản thảo
+                nha_xuat_ban  TEXT,                   -- Sách
+                so_phat_hanh  TEXT,                   -- Tạp chí
+                ngay_xuat_ban TEXT,                   -- Báo giấy
+                truong_dai_hoc TEXT,                  -- Luận văn
+                nam_bao_ve    TEXT,                   -- Luận văn
+                tinh_trang    TEXT                    -- Bản thảo
+            )
+        ''')
+
+        # Bảng người dùng — 4 cột
+        con_tro.execute('''
+            CREATE TABLE IF NOT EXISTS bang_nguoi_dung (
+                ten_dang_nhap  TEXT PRIMARY KEY,
+                mat_khau_hash  TEXT NOT NULL,
+                ho_ten         TEXT NOT NULL,
+                vai_tro        TEXT NOT NULL DEFAULT 'nhan_vien'
+            )
+        ''')
+
+        ket_noi.commit()                             # LƯU thay đổi
+    except sqlite3.Error as loi:
+        print(f'[LOI DATABASE] Loi khi tao bang: {str(loi)}')
+        raise                                        # ném lỗi lên
+    finally:
+        # LUÔN đóng kết nối
+        if ket_noi:
+            ket_noi.close()</code></pre>
+
+        <h3>8.3. Tải dữ liệu từ SQLite vào DSLK</h3>
+        <pre data-file="ket_noi_sqlite.py — tai_du_lieu"><code>def tai_du_lieu(danh_sach_lien_ket):
+    """Đọc tất cả mặt hàng từ SQLite → tạo đối tượng OOP → thêm vào DSLK."""
+    # Lazy import để tránh phụ thuộc vòng
+    from loi_thuat_toan.lop_doi_tuong import Sach, TapChi, BaoGiay, LuanVan, BanThao
+
+    tao_bang_neu_chua_co()                           # đảm bảo bảng có
+    ket_noi = None
+    try:
+        ket_noi = sqlite3.connect(lay_duong_dan_db())
+        con_tro = ket_noi.cursor()
+
+        # Lấy tất cả hàng
+        con_tro.execute('SELECT * FROM bang_mat_hang')
+        cac_hang = con_tro.fetchall()                # list các tuple
+
+        # Lấy tên cột
+        ten_cot = [mo_ta[0] for mo_ta in con_tro.description]
+
+        # Duyệt từng hàng → tạo đối tượng OOP → thêm vào DSLK
+        for hang in cac_hang:
+            du_lieu = dict(zip(ten_cot, hang))       # ép tuple → dict
+
+            ma_so = du_lieu['ma_so']
+            loai_hang = du_lieu['loai_hang']
+            ten_san_pham = du_lieu['ten_san_pham']
+            gia_co_ban = du_lieu['gia_co_ban']
+            ton_kho = du_lieu['ton_kho']
+
+            # Tùy loại hàng → khởi tạo đối tượng OOP khác nhau (ĐA HÌNH)
+            if loai_hang == 'Sách':
+                san_pham = Sach(
+                    ma_so, ten_san_pham, gia_co_ban, ton_kho,
+                    du_lieu.get('tac_gia') or '',
+                    du_lieu.get('nha_xuat_ban') or ''
+                )
+            elif loai_hang == 'Tạp chí':
+                san_pham = TapChi(
+                    ma_so, ten_san_pham, gia_co_ban, ton_kho,
+                    du_lieu.get('so_phat_hanh') or ''
+                )
+            elif loai_hang == 'Báo giấy':
+                san_pham = BaoGiay(
+                    ma_so, ten_san_pham, gia_co_ban, ton_kho,
+                    du_lieu.get('ngay_xuat_ban') or ''
+                )
+            elif loai_hang == 'Luận văn':
+                san_pham = LuanVan(
+                    ma_so, ten_san_pham, gia_co_ban, ton_kho,
+                    du_lieu.get('tac_gia') or '',
+                    du_lieu.get('truong_dai_hoc') or '',
+                    du_lieu.get('nam_bao_ve') or ''
+                )
+            elif loai_hang == 'Bản thảo':
+                san_pham = BanThao(
+                    ma_so, ten_san_pham, gia_co_ban, ton_kho,
+                    du_lieu.get('tac_gia') or '',
+                    du_lieu.get('tinh_trang') or ''
+                )
+            else:
+                continue                              # loại lạ → bỏ qua
+
+            danh_sach_lien_ket.them_vao_cuoi(san_pham)
+
+    except sqlite3.Error as loi:
+        print(f'[LOI DATABASE] Loi khi tai du lieu: {str(loi)}')
+        raise
+    finally:
+        if ket_noi:
+            ket_noi.close()</code></pre>
+
+        <h3>8.4. INSERT — luu_mot_san_pham</h3>
+        <pre data-file="ket_noi_sqlite.py — luu_mot_san_pham"><code>def luu_mot_san_pham(san_pham):
+    """Lưu 1 sản phẩm mới vào SQLite."""
+    ket_noi = None
+    try:
+        ket_noi = sqlite3.connect(lay_duong_dan_db())
+        con_tro = ket_noi.cursor()
+
+        # 12 dấu ? tương ứng 12 giá trị
+        con_tro.execute('''
+            INSERT INTO bang_mat_hang (
+                ma_so, loai_hang, ten_san_pham, gia_co_ban, ton_kho,
+                tac_gia, nha_xuat_ban, so_phat_hanh, ngay_xuat_ban,
+                truong_dai_hoc, nam_bao_ve, tinh_trang
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            san_pham.ma_so,
+            san_pham.loai_hang,
+            san_pham.ten_san_pham,
+            san_pham.gia_co_ban,
+            san_pham.ton_kho,
+            # getattr(obj, attr, default) — trả default nếu đối tượng không có thuộc tính
+            # Sach có tac_gia, nhưng TapChi không có → getattr trả None
+            getattr(san_pham, 'tac_gia', None),
+            getattr(san_pham, 'nha_xuat_ban', None),
+            getattr(san_pham, 'so_phat_hanh', None),
+            getattr(san_pham, 'ngay_xuat_ban', None),
+            getattr(san_pham, 'truong_dai_hoc', None),
+            getattr(san_pham, 'nam_bao_ve', None),
+            getattr(san_pham, 'tinh_trang', None)
+        ))
+        ket_noi.commit()                             # LƯU xuống file
+    except sqlite3.IntegrityError as loi:
+        # Thường do trùng ma_so (khóa chính)
+        print(f'[LOI DATABASE] Ma so da ton tai: {str(loi)}')
+        raise
+    except sqlite3.Error as loi:
+        print(f'[LOI DATABASE] Loi khi luu: {str(loi)}')
+        raise
+    finally:
+        if ket_noi:
+            ket_noi.close()</code></pre>
+
+        <h3>8.5. UPDATE — cap_nhat_san_pham</h3>
+        <pre data-file="ket_noi_sqlite.py — cap_nhat_san_pham"><code>def cap_nhat_san_pham(san_pham):
+    """Cập nhật sản phẩm theo ma_so."""
+    ket_noi = None
+    try:
+        ket_noi = sqlite3.connect(lay_duong_dan_db())
+        con_tro = ket_noi.cursor()
+        con_tro.execute('''
+            UPDATE bang_mat_hang SET
+                loai_hang = ?, ten_san_pham = ?, gia_co_ban = ?, ton_kho = ?,
+                tac_gia = ?, nha_xuat_ban = ?, so_phat_hanh = ?, ngay_xuat_ban = ?,
+                truong_dai_hoc = ?, nam_bao_ve = ?, tinh_trang = ?
+            WHERE ma_so = ?
+        ''', (
+            san_pham.loai_hang, san_pham.ten_san_pham, san_pham.gia_co_ban, san_pham.ton_kho,
+            getattr(san_pham, 'tac_gia', None),
+            getattr(san_pham, 'nha_xuat_ban', None),
+            getattr(san_pham, 'so_phat_hanh', None),
+            getattr(san_pham, 'ngay_xuat_ban', None),
+            getattr(san_pham, 'truong_dai_hoc', None),
+            getattr(san_pham, 'nam_bao_ve', None),
+            getattr(san_pham, 'tinh_trang', None),
+            san_pham.ma_so                          # điều kiện WHERE
+        ))
+        ket_noi.commit()
+        # rowcount = số hàng bị ảnh hưởng (1 = OK, 0 = không tìm thấy)
+        return con_tro.rowcount > 0
+    except sqlite3.Error as loi:
+        print(f'[LOI DATABASE] Loi khi cap nhat: {str(loi)}')
+        raise
+    finally:
+        if ket_noi:
+            ket_noi.close()</code></pre>
+
+        <h3>8.6. DELETE — xoa_mot_san_pham</h3>
+        <pre data-file="ket_noi_sqlite.py — xoa_mot_san_pham"><code>def xoa_mot_san_pham(ma_so):
+    """Xóa sản phẩm theo ma_so."""
+    ket_noi = None
+    try:
+        ket_noi = sqlite3.connect(lay_duong_dan_db())
+        con_tro = ket_noi.cursor()
+        # (ma_so,) — dấu phẩy để tạo tuple 1 phần tử!
+        con_tro.execute('DELETE FROM bang_mat_hang WHERE ma_so = ?', (ma_so,))
+        ket_noi.commit()
+        return con_tro.rowcount > 0
+    except sqlite3.Error as loi:
+        print(f'[LOI DATABASE] Loi khi xoa: {str(loi)}')
+        raise
+    finally:
+        if ket_noi:
+            ket_noi.close()</code></pre>
+
+        <h3>8.7. Tạo dữ liệu mẫu</h3>
+        <pre data-file="ket_noi_sqlite.py — tao_du_lieu_mau_neu_rong"><code>def tao_du_lieu_mau_neu_rong():
+    """Nếu bảng mat_hang rỗng → thêm 5 sản phẩm mẫu (mỗi loại 1 cái)."""
+    ket_noi = None
+    try:
+        tao_bang_neu_chua_co()
+        ket_noi = sqlite3.connect(lay_duong_dan_db())
+        con_tro = ket_noi.cursor()
+
+        # Kiểm tra bảng có dữ liệu chưa
+        con_tro.execute('SELECT COUNT(*) FROM bang_mat_hang')
+        so_luong = con_tro.fetchone()[0]
+        if so_luong > 0:
+            return                                    # đã có → không thêm
+
+        # 5 sản phẩm mẫu
+        san_pham_mau = [
+            ('MH001', 'Sách',      'Truyện Kiều',           50000, 20,
+             'Nguyễn Du',  'NXB Văn học',  None, None,         None,           None,   None),
+            ('MH002', 'Tạp chí',   'Tạp chí Khoa học 06/25', 30000, 15,
+             None,         None,           'Số 120', None,        None,           None,   None),
+            ('MH003', 'Báo giấy',  'Báo Tuổi Trẻ 25/06',      5000, 50,
+             None,         None,           None,    '2025-06-25', None,           None,   None),
+            ('MH004', 'Luận văn',  'Luận văn Tốt nghiệp',  120000,  3,
+             'Trần Thị B', None,           None,    None,        'ĐH Bách Khoa', '2024', None),
+            ('MH005', 'Bản thảo',  'Bản thảo Tiểu thuyết', 200000,  1,
+             'Lê Văn C',   None,           None,    None,        None,           None,   'Chưa duyệt'),
+        ]
+        # Thêm từng sản phẩm
+        for sp in san_pham_mau:
+            con_tro.execute('''
+                INSERT INTO bang_mat_hang VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', sp)
+        ket_noi.commit()
+        print('[KHOI TAO] Da them 5 san pham mau.')
+    except sqlite3.Error as loi:
+        print(f'[LOI DATABASE] Loi khi tao du lieu mau: {str(loi)}')
+    finally:
+        if ket_noi:
+            ket_noi.close()</code></pre>
+
+        <h2>🎯 Tổng kết bài 4</h2>
+
+        <p>Bạn đã học:</p>
+        <ul>
+            <li>✅ <code class="inline">sqlite3.connect()</code> — mở kết nối</li>
+            <li>✅ <code class="inline">cursor()</code> — tạo con trỏ chạy SQL</li>
+            <li>✅ <code class="inline">CREATE TABLE</code> — tạo bảng</li>
+            <li>✅ <code class="inline">INSERT</code> — thêm dòng</li>
+            <li>✅ <code class="inline">SELECT</code> — đọc dữ liệu (fetchone/fetchall/fetchmany)</li>
+            <li>✅ <code class="inline">UPDATE</code> — sửa dòng</li>
+            <li>✅ <code class="inline">DELETE</code> — xóa dòng</li>
+            <li>✅ Parameterized query (dấu <code class="inline">?</code>) — chống SQL Injection</li>
+            <li>✅ <code class="inline">commit()</code> — lưu thay đổi</li>
+            <li>✅ <code class="inline">try/except/finally</code> — bắt lỗi + đóng kết nối</li>
+            <li>✅ Phân tích 7 hàm trong file <code class="inline">ket_noi_sqlite.py</code></li>
+        </ul>
+
+        <div class="callout callout--success">
+            <div class="callout__title">✅ Bạn đã hiểu phần Ngọ làm</div>
+            <div class="callout__body">
+                <p>File <code class="inline">ket_noi_sqlite.py</code> giờ rõ ràng. Ngọ phụ trách file này,
+                và 3 chức năng cn01/cn08/cn09 đều gọi các hàm trong file này.</p>
+            </div>
+        </div>
+
+        <div class="page-nav"></div>
+
+    </div>
+
+    <footer class="footer">
+        <p>Bài 4/20 — SQLite cơ bản</p>
+    </footer>
+</main>
+
+<script src="../js/highlight.js"></script>
+<script src="../js/main.js"></script>
+
+</body>
+</html>

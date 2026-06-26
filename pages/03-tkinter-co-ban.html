@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 3: Tkinter cơ bản — Học đồ án QLNS</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header class="header">
+    <a href="../index.html" class="header__brand">
+        <span class="header__brand-icon">📚</span>
+        <span>Học đồ án QLNS</span>
+    </a>
+    <div class="header__search">
+        <span class="header__search-icon">🔍</span>
+        <input type="text" placeholder="Tìm bài học...">
+    </div>
+    <button class="header__menu-toggle" type="button">☰</button>
+</header>
+
+<aside class="sidebar"></aside>
+
+<main class="main">
+    <div class="content">
+
+        <h1>🖼️ Bài 3: Tkinter cơ bản</h1>
+
+        <p><strong>Tkinter</strong> là thư viện tạo giao diện đồ họa (GUI) có sẵn trong Python.
+        Không cần cài đặt — <code class="inline">import tkinter</code> là dùng được.</p>
+
+        <div class="callout callout--info">
+            <div class="callout__title">ℹ️ Tại sao dùng Tkinter?</div>
+            <div class="callout__body">
+                <p>Tkinter đơn giản, dễ học, có sẵn trong Python. Đây là phiên bản chính nhóm chọn để thi.</p>
+            </div>
+        </div>
+
+        <div class="toc">
+            <div class="toc__title">📑 Mục lục</div>
+            <ol>
+                <li><a href="#first-window">Tạo cửa sổ đầu tiên</a></li>
+                <li><a href="#label">Label — nhãn chữ</a></li>
+                <li><a href="#entry">Entry — ô nhập chữ</a></li>
+                <li><a href="#button">Button — nút bấm</a></li>
+                <li><a href="#combobox">Combobox — dropdown chọn</a></li>
+                <li><a href="#treeview">Treeview — bảng dữ liệu</a></li>
+                <li><a href="# messagebox">messagebox — hộp thoại thông báo</a></li>
+                <li><a href="#toplevel">Toplevel — cửa sổ con</a></li>
+                <li><a href="#events">Sự kiện (events) + bind</a></li>
+                <li><a href="#layout">Layout: pack / grid / place</a></li>
+                <li><a href="#example">Ví dụ hoàn chỉnh: form đăng nhập</a></li>
+            </ol>
+        </div>
+
+        <h2 id="first-window">1. Tạo cửa sổ đầu tiên</h2>
+
+        <pre data-file="vidu_window.py"><code>import tkinter as tk
+
+# Tạo cửa sổ chính
+root = tk.Tk()
+
+# Đặt tiêu đề cửa sổ
+root.title("Chương trình đầu tiên")
+
+# Đặt kích thước (rộng x cao)
+root.geometry("400x300")
+
+# Chạy vòng lặp chính (lắng nghe sự kiện)
+root.mainloop()</code></pre>
+
+        <p>Chạy code trên → xuất hiện cửa sổ trắng 400×300 có tiêu đề.</p>
+
+        <div class="callout callout--warning">
+            <div class="callout__title">⚠️ Quên mainloop() = cửa sổ không hiện</div>
+            <div class="callout__body">
+                <p><code class="inline">root.mainloop()</code> là dòng lệnh "chạy mãi mãi" để chờ user bấm nút,
+                gõ phím, click chuột. Nếu quên → chương trình kết thúc ngay → cửa sổ biến mất.</p>
+            </div>
+        </div>
+
+        <h2 id="label">2. Label — nhãn chữ</h2>
+
+        <p><code class="inline">Label</code> dùng để hiển thị chữ (hoặc ảnh) — không cho user sửa.</p>
+
+        <pre data-file="vidu_label.py"><code>import tkinter as tk
+
+root = tk.Tk()
+root.title("Ví dụ Label")
+root.geometry("400x200")
+
+# Label cơ bản
+label1 = tk.Label(root, text="Xin chào!")
+label1.pack(pady=20)                  # pack() = đặt widget vào cửa sổ
+
+# Label có định dạng chữ
+label2 = tk.Label(
+    root,
+    text="Chữ to, đỏ, đậm",
+    font=("Arial", 20, "bold"),       # font chữ
+    fg="red",                         # foreground = màu chữ
+    bg="yellow"                       # background = màu nền
+)
+label2.pack(pady=10)
+
+# Label căn lề
+label3 = tk.Label(
+    root,
+    text="Căn giữa",
+    fg="blue",
+    font=("Times New Roman", 14),
+    width=20,
+    height=2,                         # chiều cao tính theo dòng chữ
+    anchor="center"                   # căn giữa: center, w (trái), e (phải)
+)
+label3.pack()
+
+root.mainloop()</code></pre>
+
+        <h3>Các tham số Label thường dùng</h3>
+        <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Tham số</th>
+                    <th>Ý nghĩa</th>
+                    <th>Ví dụ</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><code>text</code></td><td>Nội dung chữ</td><td><code>"Xin chào"</code></td></tr>
+                <tr><td><code>font</code></td><td>Font chữ (tên, size, style)</td><td><code>("Arial", 12, "bold")</code></td></tr>
+                <tr><td><code>fg</code></td><td>Màu chữ (foreground)</td><td><code>"red"</code>, <code>"#FF0000"</code></td></tr>
+                <tr><td><code>bg</code></td><td>Màu nền (background)</td><td><code>"yellow"</code></td></tr>
+                <tr><td><code>width</code></td><td>Rộng (số ký tự)</td><td><code>20</code></td></tr>
+                <tr><td><code>height</code></td><td>Cao (số dòng)</td><td><code>2</code></td></tr>
+                <tr><td><code>anchor</code></td><td>Căn lề chữ</td><td><code>"w"</code> trái, <code>"e"</code> phải, <code>"center"</code></td></tr>
+                <tr><td><code>justify</code></td><td>Căn lề chữ nhiều dòng</td><td><code>"left"</code>, <code>"right"</code>, <code>"center"</code></td></tr>
+                <tr><td><code>padx</code></td><td>Đệm ngang</td><td><code>10</code></td></tr>
+                <tr><td><code>pady</code></td><td>Đệm dọc</td><td><code>5</code></td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <h2 id="entry">3. Entry — ô nhập chữ</h2>
+
+        <p><code class="inline">Entry</code> là ô nhập liệu 1 dòng (như ô nhập tên đăng nhập).</p>
+
+        <pre data-file="vidu_entry.py"><code>import tkinter as tk
+
+root = tk.Tk()
+root.title("Ví dụ Entry")
+root.geometry("400x200")
+
+# Label hướng dẫn
+tk.Label(root, text="Tên đăng nhập:").pack(pady=5)
+
+# Entry cơ bản
+entry_ten = tk.Entry(root, width=30)
+entry_ten.pack(pady=5)
+
+# Entry cho mật khẩu (hiện dấu *)
+tk.Label(root, text="Mật khẩu:").pack(pady=5)
+entry_mk = tk.Entry(root, width=30, show="*")     # show="*" → mỗi ký tự thành *
+entry_mk.pack(pady=5)
+
+# Hàm đọc giá trị Entry
+def lay_gia_tri():
+    ten = entry_ten.get()                # get() → lấy nội dung Entry
+    mk = entry_mk.get()
+    print(f"Tên: {ten}, MK: {mk}")
+
+# Nút để gọi hàm
+tk.Button(root, text="In giá trị", command=lay_gia_tri).pack(pady=10)
+
+root.mainloop()</code></pre>
+
+        <h3>Các thao tác Entry</h3>
+        <pre data-file="thao tác Entry.py"><code># Lấy nội dung Entry
+gia_tri = entry.get()
+
+# Xóa toàn bộ Entry
+entry.delete(0, tk.END)              # 0 = vị trí bắt đầu, tk.END = vị trí cuối
+
+# Xóa từ vị trí 2 đến 4
+entry.delete(2, 4)
+
+# Chèn chữ vào Entry
+entry.insert(0, "Chữ ban đầu")       # 0 = vị trí chèn
+
+# Chèn chữ vào cuối
+entry.insert(tk.END, "Thêm cuối")
+
+# Đặt focus (con trỏ chuột tự vào Entry)
+entry.focus()
+
+# Vô hiệu hóa Entry (không cho sửa)
+entry.config(state="disabled")
+
+# Kích hoạt lại
+entry.config(state="normal")</code></pre>
+
+        <h2 id="button">4. Button — nút bấm</h2>
+
+        <pre data-file="vidu_button.py"><code>import tkinter as tk
+
+def xu_ly_click():
+    print("Bạn đã bấm nút!")
+    # Đổi chữ nút sau khi bấm
+    nut.config(text="Đã bấm ✓")
+
+root = tk.Tk()
+root.title("Ví dụ Button")
+root.geometry("300x200")
+
+# Button cơ bản
+nut = tk.Button(
+    root,
+    text="Bấm tôi!",
+    command=xu_ly_click,                 # command = hàm chạy khi bấm
+    bg="#4CAF50",                        # màu nền xanh lá
+    fg="white",                          # chữ trắng
+    font=("Arial", 12, "bold"),
+    padx=20,                             # đệm ngang
+    pady=10                              # đệm dọc
+)
+nut.pack(pady=30)
+
+root.mainloop()</code></pre>
+
+        <div class="callout callout--warning">
+            <div class="callout__title">⚠️ command=ten_ham KHÔNG có dấu ()</div>
+            <div class="callout__body">
+                <p>Sai: <code class="inline">command=xu_ly_click()</code> → gọi hàm ngay khi tạo Button!</p>
+                <p>Đúng: <code class="inline">command=xu_ly_click</code> → gọi hàm khi user bấm.</p>
+            </div>
+        </div>
+
+        <h3>Đổi command động (sau khi tạo Button)</h3>
+        <pre data-file="đổi command.py"><code># Ban đầu
+nut = tk.Button(root, text="Bấm", command=ham_A)
+
+# Đổi sang hàm B
+nut.config(command=ham_B)
+
+# Bỏ command (nút không làm gì khi bấm)
+nut.config(command=lambda: None)</code></pre>
+
+        <h2 id="combobox">5. Combobox — dropdown chọn</h2>
+
+        <p><code class="inline">Combobox</code> nằm trong module <code class="inline">ttk</code> (themed Tkinter).
+        Cần <code class="inline">from tkinter import ttk</code>.</p>
+
+        <pre data-file="vidu_combobox.py"><code>import tkinter as tk
+from tkinter import ttk
+
+def khi_chon(event):
+    gia_tri = combo.get()
+    print(f"Bạn đã chọn: {gia_tri}")
+
+root = tk.Tk()
+root.title("Ví dụ Combobox")
+root.geometry("300x150")
+
+tk.Label(root, text="Chọn loại hàng:").pack(pady=5)
+
+# Tạo Combobox với các lựa chọn
+combo = ttk.Combobox(
+    root,
+    values=["Sách", "Tạp chí", "Báo giấy", "Luận văn", "Bản thảo"],
+    state="readonly"                       # không cho gõ tay, chỉ chọn
+)
+combo.set("Sách")                          # giá trị mặc định
+combo.pack(pady=10)
+
+# Bắt sự kiện khi user chọn giá trị mới
+combo.bind("&lt;&lt;ComboboxSelected&gt;&gt;", khi_chon)
+
+root.mainloop()</code></pre>
+
+        <h2 id="treeview">6. Treeview — bảng dữ liệu</h2>
+
+        <p><code class="inline">Treeview</code> là bảng có cột + hàng — giống Excel. Đây là widget quan trọng nhất
+        trong đồ án vì bảng danh sách mặt hàng dùng nó.</p>
+
+        <pre data-file="vidu_treeview.py"><code>import tkinter as tk
+from tkinter import ttk
+
+root = tk.Tk()
+root.title("Ví dụ Treeview")
+root.geometry("600x300")
+
+# Tạo Treeview với 4 cột
+bang = ttk.Treeview(root, columns=("ma", "ten", "loai", "gia"), show="headings")
+
+# Đặt tiêu đề + độ rộng cho từng cột
+bang.heading("ma", text="Mã số")
+bang.heading("ten", text="Tên sản phẩm")
+bang.heading("loai", text="Loại")
+bang.heading("gia", text="Giá bán")
+
+bang.column("ma", width=80, anchor="center")
+bang.column("ten", width=200, anchor="w")
+bang.column("loai", width=100, anchor="center")
+bang.column("gia", width=100, anchor="e")
+
+bang.pack(fill="both", expand=True, padx=10, pady=10)
+
+# Thêm dữ liệu vào bảng
+bang.insert("", tk.END, values=("MH001", "Truyện Kiều", "Sách", "55000"))
+bang.insert("", tk.END, values=("MH002", "Tạp chí KH", "Tạp chí", "31500"))
+bang.insert("", tk.END, values=("MH003", "Báo Tuổi Trẻ", "Báo giấy", "5000"))
+
+# Lấy dòng được chọn
+def lay_dong_chon():
+    chon = bang.selection()              # trả list các ID dòng được chọn
+    if chon:
+        gia_tri = bang.item(chon[0])["values"]   # lấy values của dòng đầu
+        print("Dòng được chọn:", gia_tri)
+
+tk.Button(root, text="Lấy dòng chọn", command=lay_dong_chon).pack(pady=5)
+
+root.mainloop()</code></pre>
+
+        <h3>Các thao tác Treeview</h3>
+        <pre data-file="thao tác Treeview.py"><code># Thêm 1 dòng — trả về ID dòng mới
+dong_id = bang.insert("", tk.END, values=("MH004", "Sách mới", "Sách", "60000"))
+
+# Thêm dòng ở đầu
+bang.insert("", 0, values=("MH000", "Sách đầu", "Sách", "10000"))
+
+# Sửa nội dung dòng
+bang.item(dong_id, values=("MH004", "Sách đã sửa", "Sách", "65000"))
+
+# Xóa 1 dòng theo ID
+bang.delete(dong_id)
+
+# Xóa toàn bộ dòng
+for dong in bang.get_children():
+    bang.delete(dong)
+
+# Lấy ID tất cả dòng
+tat_ca = bang.get_children()
+
+# Lấy values của 1 dòng
+values = bang.item(dong_id)["values"]      # ["MH004", "Sách mới", "Sách", "60000"]
+
+# Lấy các dòng được user chọn
+chon = bang.selection()                     # tuple ID các dòng chọn</code></pre>
+
+        <h2 id="messagebox">7. messagebox — hộp thoại thông báo</h2>
+
+        <p><code class="inline">messagebox</code> dùng để hiện thông báo nhỏ (thành công, lỗi, cảnh báo...).</p>
+
+        <pre data-file="vidu_messagebox.py"><code>import tkinter as tk
+from tkinter import messagebox
+
+root = tk.Tk()
+root.title("Ví dụ messagebox")
+root.geometry("300x200")
+
+def hien_thong_bao():
+    # Thông báo thành công
+    messagebox.showinfo("Thông báo", "Thao tác thành công!")
+
+def hoi_xac_nhan():
+    # Hỏi Yes/No — trả về True/False
+    tra_loi = messagebox.askyesno("Xác nhận", "Bạn có chắc muốn xóa?")
+    if tra_loi:
+        print("Đã xóa")
+    else:
+        print("Hủy xóa")
+
+def bao_loi():
+    # Báo lỗi
+    messagebox.showerror("Lỗi", "Không tìm thấy sản phẩm!")
+
+def canh_bao():
+    # Cảnh báo
+    messagebox.showwarning("Cảnh báo", "Số lượng tồn kho thấp!")
+
+tk.Button(root, text="Thông báo", command=hien_thong_bao).pack(pady=5)
+tk.Button(root, text="Hỏi Yes/No", command=hoi_xac_nhan).pack(pady=5)
+tk.Button(root, text="Báo lỗi", command=bao_loi).pack(pady=5)
+tk.Button(root, text="Cảnh báo", command=canh_bao).pack(pady=5)
+
+root.mainloop()</code></pre>
+
+        <h2 id="toplevel">8. Toplevel — cửa sổ con</h2>
+
+        <p><code class="inline">Toplevel</code> dùng để tạo cửa sổ phụ (như form thêm/sửa) — riêng biệt với
+        cửa sổ chính.</p>
+
+        <pre data-file="vidu_toplevel.py"><code>import tkinter as tk
+
+def mo_cua_so_con():
+    top = tk.Toplevel(root)               # Toplevel = cửa sổ con
+    top.title("Cửa sổ con")
+    top.geometry("300x200")
+    top.grab_set()                        # grab_set = modal (không cho click cửa sổ chính)
+
+    tk.Label(top, text="Đây là cửa sổ con", font=("Arial", 14)).pack(pady=50)
+
+    tk.Button(top, text="Đóng", command=top.destroy).pack()
+
+root = tk.Tk()
+root.title("Cửa sổ chính")
+root.geometry("400x300")
+
+tk.Button(root, text="Mở cửa sổ con", command=mo_cua_so_con).pack(pady=100)
+
+root.mainloop()</code></pre>
+
+        <h3>Các thao tác Toplevel</h3>
+        <pre data-file="thao tác Toplevel.py"><code># Tạo
+top = tk.Toplevel(root)
+
+# Đặt kích thước + vị trí
+top.geometry("400x300+100+100")          # rộng×cao+x+y (x, y từ góc trái trên màn hình)
+
+# Modal — không cho click cửa sổ chính khi đang mở cửa sổ con
+top.grab_set()
+
+# Chờ đến khi cửa sổ con đóng
+root.wait_window(top)                     # block cho đến khi top.destroy() được gọi
+
+# Đóng cửa sổ con
+top.destroy()
+
+# Ẩn (không hủy) — có thể hiện lại
+top.withdraw()
+
+# Hiện lại
+top.deiconify()</code></pre>
+
+        <h2 id="events">9. Sự kiện (events) + bind</h2>
+
+        <p><code class="inline">bind</code> dùng để gắn sự kiện (bấm phím, click chuột...) vào widget.</p>
+
+        <pre data-file="vidu_bind.py"><code>import tkinter as tk
+
+def xu_ly_phim_enter(event):
+    print("Bạn đã bấm Enter!")
+
+def xu_ly_click_chuot(event):
+    print(f"Bạn click chuột tại tọa độ: {event.x}, {event.y}")
+
+def xu_ly_phim_bat_ky(event):
+    print(f"Bạn bấm phím: {event.char} (mã: {event.keysym})")
+
+root = tk.Tk()
+root.geometry("400x300")
+
+entry = tk.Entry(root, width=30)
+entry.pack(pady=20)
+
+# Gắn phím Enter khi focus trong Entry
+entry.bind("&lt;Return&gt;", xu_ly_phim_enter)              # Return = Enter
+
+# Gắn phím bất kỳ
+entry.bind("&lt;Key&gt;", xu_ly_phim_bat_ky)
+
+# Gắn click chuột vào cửa sổ
+root.bind("&lt;Button-1&gt;", xu_ly_click_chuot)           # Button-1 = chuột trái
+
+root.mainloop()</code></pre>
+
+        <h3>Mã sự kiện thường dùng</h3>
+        <div class="table-wrap">
+        <table>
+            <thead>
+                <tr><th>Mã</th><th>Ý nghĩa</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>&lt;Return&gt;</code></td><td>Phím Enter</td></tr>
+                <tr><td><code>&lt;Escape&gt;</code></td><td>Phím Esc</td></tr>
+                <tr><td><code>&lt;Tab&gt;</code></td><td>Phím Tab</td></tr>
+                <tr><td><code>&lt;Key&gt;</code></td><td>Bất kỳ phím nào</td></tr>
+                <tr><td><code>&lt;Button-1&gt;</code></td><td>Click chuột trái</td></tr>
+                <tr><td><code>&lt;Button-2&gt;</code></td><td>Click chuột giữa</td></tr>
+                <tr><td><code>&lt;Button-3&gt;</code></td><td>Click chuột phải</td></tr>
+                <tr><td><code>&lt;Double-Button-1&gt;</code></td><td>Double-click chuột trái</td></tr>
+                <tr><td><code>&lt;FocusIn&gt;</code></td><td>Widget nhận focus</td></tr>
+                <tr><td><code>&lt;FocusOut&gt;</code></td><td>Widget mất focus</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <h2 id="layout">10. Layout: pack / grid / place</h2>
+
+        <p>Có 3 cách xếp widget trong cửa sổ. Đồ án dùng chủ yếu <code class="inline">pack</code> và <code class="inline">grid</code>.</p>
+
+        <h3>pack() — xếp tuần tự</h3>
+        <pre data-file="vidu_pack.py"><code># Mặc định xếp từ trên xuống
+tk.Label(root, text="Dòng 1").pack()
+tk.Label(root, text="Dòng 2").pack()
+tk.Label(root, text="Dòng 3").pack()
+
+# Xếp từ trái sang
+tk.Label(root, text="A").pack(side="left")
+tk.Label(root, text="B").pack(side="left")
+tk.Label(root, text="C").pack(side="left")
+
+# side: top, bottom, left, right
+# fill: "x" (lấp đầy ngang), "y" (lấp đầy dọc), "both"
+# expand: True → widget lấp đầy không gian còn lại
+
+tk.Label(root, text="Lấp đầy").pack(fill="both", expand=True)</code></pre>
+
+        <h3>grid() — xếp dạng lưới (như bảng)</h3>
+        <pre data-file="vidu_grid.py"><code># Tạo form đăng nhập bằng grid
+tk.Label(root, text="Tên:").grid(row=0, column=0, sticky="e", padx=5, pady=5)
+tk.Entry(root).grid(row=0, column=1, padx=5, pady=5)
+
+tk.Label(root, text="Mật khẩu:").grid(row=1, column=0, sticky="e", padx=5, pady=5)
+tk.Entry(root, show="*").grid(row=1, column=1, padx=5, pady=5)
+
+tk.Button(root, text="Đăng nhập").grid(row=2, column=0, columnspan=2, pady=10)
+# row: dòng (bắt đầu từ 0)
+# column: cột (bắt đầu từ 0)
+# columnspan: gộp nhiều cột
+# rowspan: gộp nhiều dòng
+# sticky: "n" (trên), "s" (dưới), "e" (phải), "w" (trái), hoặc kết hợp "nsew"
+# padx, pady: đệm ngang/dọc</code></pre>
+
+        <div class="callout callout--warning">
+            <div class="callout__title">⚠️ Không trộn pack và grid</div>
+            <div class="callout__body">
+                <p>Trong cùng cửa sổ, dùng <strong>HOẶC</strong> pack <strong>HOẶC</strong> grid — không trộn lẫn.
+                Nếu trộn → Tkinter báo lỗi và sập chương trình.</p>
+            </div>
+        </div>
+
+        <h3>place() — đặt tọa độ tuyệt đối</h3>
+        <pre data-file="vidu_place.py"><code># Đặt widget tại tọa độ (x, y) tính từ góc trái trên
+tk.Button(root, text="Nút").place(x=50, y=100, width=100, height=30)
+
+# x: tọa độ ngang
+# y: tọa độ dọc
+# width, height: kích thước
+# relx, rely: tọa độ theo % (0.0 - 1.0) so với cửa sổ</code></pre>
+
+        <h2 id="example">11. Ví dụ hoàn chỉnh: form đăng nhập</h2>
+
+        <p>Đây là version đơn giản của <code class="inline">dang_nhap_ui.py</code> trong đồ án:</p>
+
+        <pre data-file="form_dang_nhap.py"><code>import tkinter as tk
+from tkinter import messagebox
+
+class FormDangNhap:
+    """Form đăng nhập đơn giản."""
+
+    def __init__(self, root):
+        # Tạo cửa sổ con (Toplevel)
+        self.top = tk.Toplevel(root)
+        self.top.title("Đăng nhập")
+        self.top.geometry("350x200")
+        self.top.grab_set()                    # modal
+
+        # Tiêu đề
+        tk.Label(
+            self.top, text="ĐĂNG NHẬP HỆ THỐNG",
+            font=("Arial", 14, "bold"), fg="#1e3a5f"
+        ).grid(row=0, column=0, columnspan=2, pady=15)
+
+        # Label + Entry cho tên đăng nhập
+        tk.Label(self.top, text="Tên đăng nhập:").grid(
+            row=1, column=0, sticky="e", padx=10, pady=5
+        )
+        self.entry_ten = tk.Entry(self.top, width=25)
+        self.entry_ten.grid(row=1, column=1, padx=10, pady=5)
+        self.entry_ten.focus()                 # focus tự động
+
+        # Label + Entry cho mật khẩu
+        tk.Label(self.top, text="Mật khẩu:").grid(
+            row=2, column=0, sticky="e", padx=10, pady=5
+        )
+        self.entry_mk = tk.Entry(self.top, width=25, show="*")
+        self.entry_mk.grid(row=2, column=1, padx=10, pady=5)
+
+        # Nút đăng nhập
+        self.btn_dn = tk.Button(
+            self.top, text="Đăng nhập",
+            command=self.xu_ly_dang_nhap,
+            bg="#4CAF50", fg="white",
+            font=("Arial", 10, "bold"),
+            width=15
+        )
+        self.btn_dn.grid(row=3, column=0, columnspan=2, pady=15)
+
+        # Gắn phím Enter cho ô mật khẩu
+        self.entry_mk.bind("&lt;Return&gt;", lambda e: self.xu_ly_dang_nhap())
+
+        # Biến lưu người dùng sau khi đăng nhập
+        self.nguoi_dung = None
+
+    def xu_ly_dang_nhap(self):
+        ten = self.entry_ten.get().strip()
+        mk = self.entry_mk.get().strip()
+
+        if not ten or not mk:
+            messagebox.showerror("Lỗi", "Vui lòng nhập đầy đủ!")
+            return
+
+        # Giả lập kiểm tra (thực tế gọi hàm check DB)
+        if ten == "admin" and mk == "123":
+            self.nguoi_dung = {"ten": ten, "vai_tro": "admin"}
+            self.top.destroy()                 # đóng form
+        else:
+            messagebox.showerror("Lỗi", "Sai tên hoặc mật khẩu!")
+            self.entry_mk.delete(0, tk.END)    # xóa mật khẩu
+
+    def lay_ten(self):
+        return self.entry_ten.get().strip()
+
+    def lay_mat_khau(self):
+        return self.entry_mk.get().strip()
+
+
+# Chạy thử
+if __name__ == "__main__":
+    root = tk.Tk()
+    root.title("Ứng dụng chính")
+    root.geometry("400x300")
+    root.withdraw()                            # ẩn root, chỉ hiện form đăng nhập
+
+    form = FormDangNhap(root)
+    root.wait_window(form.top)                 # chờ form đóng
+
+    if form.nguoi_dung:
+        print("Đăng nhập thành công:", form.nguoi_dung)
+        root.deiconify()                       # hiện root
+        root.mainloop()
+    else:
+        root.destroy()                         # đóng luôn</code></pre>
+
+        <div class="callout callout--tip">
+            <div class="callout__title">💡 Phân tích code trên</div>
+            <div class="callout__body">
+                <ul>
+                    <li><code class="inline">Toplevel(root)</code> — tạo cửa sổ con từ root</li>
+                    <li><code class="inline">grab_set()</code> — modal, không cho bấm root</li>
+                    <li><code class="inline">grid(row=, column=)</code> — xếp dạng lưới</li>
+                    <li><code class="inline">columnspan=2</code> — nút chiếm 2 cột</li>
+                    <li><code class="inline">show="*"</code> — mật khẩu hiện dấu *</li>
+                    <li><code class="inline">.focus()</code> — con trỏ tự vào ô</li>
+                    <li><code class="inline">.bind("&lt;Return&gt;", ...)</code> — Enter = bấm nút</li>
+                    <li><code class="inline">.get()</code> — lấy giá trị Entry</li>
+                    <li><code class="inline">.delete(0, tk.END)</code> — xóa Entry</li>
+                    <li><code class="inline">.destroy()</code> — đóng cửa sổ</li>
+                    <li><code class="inline">root.wait_window(form.top)</code> — chờ form đóng</li>
+                    <li><code class="inline">root.withdraw() / deiconify()</code> — ẩn / hiện root</li>
+                </ul>
+            </div>
+        </div>
+
+        <h2>🎯 Tổng kết bài 3</h2>
+
+        <p>Bạn đã học các widget Tkinter:</p>
+        <ul>
+            <li>✅ <code class="inline">tk.Tk()</code> — cửa sổ chính, <code class="inline">mainloop()</code> chạy vòng lặp</li>
+            <li>✅ <code class="inline">Label</code> — hiển thị chữ</li>
+            <li>✅ <code class="inline">Entry</code> — ô nhập 1 dòng</li>
+            <li>✅ <code class="inline">Button</code> — nút bấm (command=)</li>
+            <li>✅ <code class="inline">ttk.Combobox</code> — dropdown</li>
+            <li>✅ <code class="inline">ttk.Treeview</code> — bảng dữ liệu</li>
+            <li>✅ <code class="inline">messagebox</code> — hộp thoại thông báo</li>
+            <li>✅ <code class="inline">Toplevel</code> — cửa sổ con (modal)</li>
+            <li>✅ <code class="inline">bind</code> — gắn sự kiện phím/chuột</li>
+            <li>✅ <code class="inline">pack / grid / place</code> — 3 cách xếp widget</li>
+        </ul>
+
+        <div class="callout callout--success">
+            <div class="callout__title">✅ Bạn đã sẵn sàng đọc file _ui</div>
+            <div class="callout__body">
+                <p>Giờ bạn có thể đọc các file <code class="inline">*_ui.py</code> trong đồ án — tất cả đều dùng
+                các widget bạn vừa học.</p>
+            </div>
+        </div>
+
+        <div class="page-nav"></div>
+
+    </div>
+
+    <footer class="footer">
+        <p>Bài 3/20 — Tkinter cơ bản</p>
+    </footer>
+</main>
+
+<script src="../js/highlight.js"></script>
+<script src="../js/main.js"></script>
+
+</body>
+</html>

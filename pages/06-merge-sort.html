@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 6: Merge Sort — Học đồ án QLNS</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header class="header">
+    <a href="../index.html" class="header__brand">
+        <span class="header__brand-icon">📚</span>
+        <span>Học đồ án QLNS</span>
+    </a>
+    <div class="header__search">
+        <span class="header__search-icon">🔍</span>
+        <input type="text" placeholder="Tìm bài học...">
+    </div>
+    <button class="header__menu-toggle" type="button">☰</button>
+</header>
+
+<aside class="sidebar"></aside>
+
+<main class="main">
+    <div class="content">
+
+        <h1>🔀 Bài 6: Merge Sort (Thuật toán sắp xếp trộn)</h1>
+
+        <p><strong>Merge Sort</strong> là thuật toán sắp xếp O(n log n) — nhanh hơn Bubble Sort, Insertion Sort.
+        Đây là phần khó nhất về thuật toán trong đồ án, do <strong>Huy</strong> phụ trách.</p>
+
+        <div class="callout callout--danger">
+            <div class="callout__title">🚨 Đọc chậm + vẽ ra giấy</div>
+            <div class="callout__body">
+                <p>Merge Sort dùng <strong>đệ quy</strong> — khái niệm khó hiểu nếu mới lần đầu.
+                Hãy lấy giấy bút ra vẽ theo từng bước trong bài.</p>
+            </div>
+        </div>
+
+        <div class="toc">
+            <div class="toc__title">📑 Mục lục</div>
+            <ol>
+                <li><a href="#idea">Ý tưởng Merge Sort</a></li>
+                <li><a href="#recursion">Đệ quy là gì?</a></li>
+                <li><a href="#divide">Bước 1: Chia đôi (Fast/Slow pointer)</a></li>
+                <li><a href="#merge">Bước 2: Trộn 2 danh sách đã sort</a></li>
+                <li><a href="#combine">Bước 3: Ghép 2 bước lại</a></li>
+                <li><a href="#full-example">Ví dụ đầy đủ</a></li>
+                <li><a href="#complexity">Độ phức tạp O(n log n)</a></li>
+            </ol>
+        </div>
+
+        <h2 id="idea">1. Ý tưởng Merge Sort</h2>
+
+        <p>Merge Sort dựa trên nguyên lý <strong>"chia để trị" (divide and conquer)</strong>:</p>
+
+        <ol>
+            <li><strong>Chia</strong>: cắt danh sách thành 2 nửa.</li>
+            <li><strong>Trị</strong>: đệ quy sắp xếp từng nửa.</li>
+            <li><strong>Trộn</strong>: ghép 2 nửa đã sắp xếp thành 1 danh sách cũng sắp xếp.</li>
+        </ol>
+
+        <div class="diagram">
+            <div class="diagram__title">Sơ đồ Merge Sort</div>
+            <pre style="font-family: monospace; text-align: left; display: inline-block;">
+            [38, 27, 43, 3, 9, 82, 10]
+                    ↓ CHIA
+        [38, 27, 43, 3]    [9, 82, 10]
+              ↓ CHIA           ↓ CHIA
+      [38, 27]  [43, 3]   [9, 82]  [10]
+        ↓ CHIA    ↓ CHIA    ↓         |
+     [38][27]  [43][3]   [9][82]    [10]
+        ↓ TRỘN    ↓ TRỘN    ↓ TRỘN    |
+      [27, 38]  [3, 43]   [9, 82]    [10]
+          ↓ TRỘN              ↓ TRỘN
+       [3, 27, 38, 43]    [9, 10, 82]
+                ↓ TRỘN
+         [3, 9, 10, 27, 38, 43, 82]
+            </pre>
+        </div>
+
+        <h2 id="recursion">2. Đệ quy là gì?</h2>
+
+        <p><strong>Đệ quy (recursion)</strong> = hàm tự gọi lại chính nó. Mỗi lần gọi với input nhỏ hơn,
+        đến khi đạt <strong>điều kiện dừng</strong> thì trả về.</p>
+
+        <pre data-file="vidu_de_quy.py"><code># Ví dụ: tính giai thừa n! = n × (n-1) × ... × 1
+# Cách 1: vòng lặp
+def giai_thua_lap(n):
+    ket_qua = 1
+    for i in range(1, n + 1):
+        ket_qua *= i
+    return ket_qua
+
+# Cách 2: đệ quy
+def giai_thua_de_quy(n):
+    # Điều kiện dừng — BẮT BUỘC phải có!
+    if n &lt;= 1:
+        return 1
+    # Tự gọi lại với input nhỏ hơn
+    return n * giai_thua_de_quy(n - 1)
+
+print(giai_thua_de_quy(5))
+# 5 * giai_thua_de_quy(4)
+# = 5 * 4 * giai_thua_de_quy(3)
+# = 5 * 4 * 3 * giai_thua_de_quy(2)
+# = 5 * 4 * 3 * 2 * giai_thua_de_quy(1)
+# = 5 * 4 * 3 * 2 * 1 * 1     (n=1 → trả 1, dừng)
+# = 120</code></pre>
+
+        <div class="callout callout--warning">
+            <div class="callout__title">⚠️ Quên điều kiện dừng = vô hạn</div>
+            <div class="callout__body">
+                <p>Nếu hàm đệ quy không có điều kiện dừng → gọi mãi mãi → sập chương trình (Stack Overflow).</p>
+                <pre data-file="SAI"><code># SAI — không có điều kiện dừng
+def de_quy_vo_han(n):
+    return n * de_quy_vo_han(n - 1)    # đệ quy mãi → sập</code></pre>
+            </div>
+        </div>
+
+        <h2 id="divide">3. Bước 1: Chia đôi (Fast/Slow pointer)</h2>
+
+        <p>Để chia DSLK thành 2 nửa, ta dùng kỹ thuật <strong>Fast/Slow pointer</strong>:</p>
+        <ul>
+            <li><code class="inline">con_tro_cham</code> đi 1 bước mỗi lần.</li>
+            <li><code class="inline">con_tro_nhanh</code> đi 2 bước mỗi lần.</li>
+            <li>Khi <code class="inline">con_tro_nhanh</code> tới cuối → <code class="inline">con_tro_cham</code> đang ở giữa.</li>
+        </ul>
+
+        <pre data-file="danh_sach_lien_ket.py — _chia_doi"><code>def _chia_doi(self):
+    """
+    Chia danh sách thành 2 nửa bằng Fast/Slow pointer.
+    Trả về tuple (nua_dau, nua_sau) — head của 2 nửa.
+    """
+    con_tro_cham = self.head
+    con_tro_nhanh = self.head
+
+    # Lưu ý: kiểm tra next.next để không bị vượt quá cuối
+    while con_tro_nhanh.next is not None and \
+          con_tro_nhanh.next.next is not None:
+        con_tro_cham = con_tro_cham.next          # đi 1 bước
+        con_tro_nhanh = con_tro_nhanh.next.next   # đi 2 bước
+
+    # Khi thoát vòng lặp, con_tro_cham đang ở giữa
+    nua_dau = self.head
+    nua_sau = con_tro_cham.next                    # nửa sau bắt đầu từ Node kế slow
+
+    # Cắt liên kết giữa 2 nửa
+    con_tro_cham.next = None
+    if nua_sau is not None:
+        nua_sau.truoc = None
+
+    return (nua_dau, nua_sau)</code></pre>
+
+        <h3>Mô phỏng chia đôi</h3>
+        <p>DSLK: <code>A ⇄ B ⇄ C ⇄ D ⇄ E</code></p>
+
+        <div class="diagram">
+            <div class="diagram__title">Vòng lặp 1</div>
+            <div>
+                <span class="dslk-node" style="border-color: blue;">A (slow)</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node">B</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node">C</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node">D</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node" style="border-color: red;">E (fast)</span>
+            </div>
+            <p style="margin-top:8px;">slow ở A, fast ở E → fast.next = None → thoát vòng</p>
+            <p>Nhưng thực tế fast.next.next = None (vì fast ở E, next=None) → thoát sớm hơn</p>
+        </div>
+
+        <p>Để đơn giản, hãy tưởng tượng DSLK dài hơn: <code>A ⇄ B ⇄ C ⇄ D ⇄ E ⇄ F ⇄ G</code></p>
+
+        <div class="diagram">
+            <div class="diagram__title">Bước đầu: slow=A, fast=A</div>
+            <div>
+                <span class="dslk-node" style="border-color: blue;">A (slow, fast)</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node">B</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node">C</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node">D</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node">E</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node">F</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node">G</span>
+            </div>
+        </div>
+
+        <div class="diagram">
+            <div class="diagram__title">Vòng 1: slow=B, fast=C</div>
+            <div>
+                <span class="dslk-node">A</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node" style="border-color: blue;">B (slow)</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node" style="border-color: red;">C (fast)</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node">D</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node">E</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node">F</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node">G</span>
+            </div>
+        </div>
+
+        <div class="diagram">
+            <div class="diagram__title">Vòng 2: slow=C, fast=E</div>
+            <div>
+                <span class="dslk-node">A</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node">B</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node" style="border-color: blue;">C (slow)</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node">D</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node" style="border-color: red;">E (fast)</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node">F</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node">G</span>
+            </div>
+        </div>
+
+        <div class="diagram">
+            <div class="diagram__title">Vòng 3: slow=D, fast=G → fast.next=None → DỪNG</div>
+            <div>
+                <span class="dslk-node">A</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node">B</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node">C</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node" style="border-color: blue;">D (slow)</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node">E</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node">F</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node" style="border-color: red;">G (fast)</span>
+            </div>
+            <p style="margin-top:12px;">slow đang ở D → chốt! Nửa đầu: A→D, nửa sau: E→G</p>
+        </div>
+
+        <h2 id="merge">4. Bước 2: Trộn 2 danh sách đã sort</h2>
+
+        <p>Sau khi có 2 nửa đã sắp xếp, ta <strong>trộn (merge)</strong> chúng thành 1 danh sách cũng sắp xếp.</p>
+
+        <p>Ý tưởng: so sánh Node đầu của A với Node đầu của B, lấy Node nhỏ hơn gắn vào kết quả.</p>
+
+        <pre data-file="danh_sach_lien_ket.py — _tron"><code>def _tron(self, ds_a, ds_b, tieu_chi):
+    """
+    Trộn 2 danh sách A và B (đã sắp xếp) thành 1 danh sách cũng sắp xếp.
+    """
+    # Node tạm (Node(None)) làm điểm xuất phát để dễ code
+    node_tam = Node(None)
+    hien_tai = node_tam                       # con trỏ xây danh sách kết quả
+    node_a = ds_a.head
+    node_b = ds_b.head
+
+    # So sánh từng cặp Node đầu của A và B
+    while node_a is not None and node_b is not None:
+        gia_tri_a = self._lay_gia_tri(node_a.data, tieu_chi)
+        gia_tri_b = self._lay_gia_tri(node_b.data, tieu_chi)
+
+        # Lấy Node có giá trị nhỏ hơn gắn vào kết quả
+        if gia_tri_a &lt;= gia_tri_b:
+            hien_tai.next = node_a
+            node_a.truoc = hien_tai
+            node_a = node_a.next              # tiến A
+        else:
+            hien_tai.next = node_b
+            node_b.truoc = hien_tai
+            node_b = node_b.next              # tiến B
+        hien_tai = hien_tai.next
+
+    # Một trong 2 danh sách còn sót → gắn toàn bộ vào cuối kết quả
+    if node_a is not None:
+        hien_tai.next = node_a
+        node_a.truoc = hien_tai
+        self.cuoi = ds_a.cuoi
+    if node_b is not None:
+        hien_tai.next = node_b
+        node_b.truoc = hien_tai
+        self.cuoi = ds_b.cuoi
+
+    # Bỏ Node tạm và đặt lại head mới
+    self.head = node_tam.next
+    if self.head is not None:
+        self.head.truoc = None                # head mới không có truoc
+
+def _lay_gia_tri(self, doi_tuong, tieu_chi):
+    """Lấy giá trị để so sánh theo tiêu chí."""
+    if tieu_chi == 'gia_ban':
+        if hasattr(doi_tuong, 'tinh_gia_ban'):
+            return doi_tuong.tinh_gia_ban()   # đa hình!
+        return getattr(doi_tuong, 'gia_co_ban', 0)
+    elif tieu_chi == 'ten_san_pham':
+        return getattr(doi_tuong, 'ten_san_pham', '')
+    elif tieu_chi == 'ton_kho':
+        return getattr(doi_tuong, 'ton_kho', 0)
+    return 0</code></pre>
+
+        <h3>Mô phỏng trộn</h3>
+        <p>Trộn A = <code>[2, 5, 8]</code> với B = <code>[1, 3, 9]</code> thành <code>[1, 2, 3, 5, 8, 9]</code>:</p>
+
+        <div class="diagram">
+            <div class="diagram__title">Bước đầu: node_a=2, node_b=1</div>
+            <div>
+                <span class="dslk-node">2</span><span class="dslk-arrow">→</span>
+                <span class="dslk-node">5</span><span class="dslk-arrow">→</span>
+                <span class="dslk-node">8</span>
+                <span style="margin: 0 20px;">+</span>
+                <span class="dslk-node" style="border-color: red;">1</span><span class="dslk-arrow">→</span>
+                <span class="dslk-node" style="border-color: red;">3</span><span class="dslk-arrow">→</span>
+                <span class="dslk-node" style="border-color: red;">9</span>
+            </div>
+            <p style="margin-top:12px;">2 vs 1 → 1 nhỏ hơn → lấy 1. Kết quả: [1]</p>
+        </div>
+
+        <div class="diagram">
+            <div class="diagram__title">Bước 2: node_a=2, node_b=3</div>
+            <div>
+                <span class="dslk-node" style="opacity:0.4;">2</span><span class="dslk-arrow">→</span>
+                <span class="dslk-node">5</span><span class="dslk-arrow">→</span>
+                <span class="dslk-node">8</span>
+                <span style="margin: 0 20px;">+</span>
+                <span class="dslk-node" style="border-color: red; opacity:0.4;">1</span><span class="dslk-arrow">→</span>
+                <span class="dslk-node" style="border-color: red;">3</span><span class="dslk-arrow">→</span>
+                <span class="dslk-node" style="border-color: red;">9</span>
+            </div>
+            <p style="margin-top:12px;">2 vs 3 → 2 nhỏ hơn → lấy 2. Kết quả: [1, 2]</p>
+        </div>
+
+        <div class="diagram">
+            <div class="diagram__title">Bước 3: node_a=5, node_b=3 → lấy 3. Kết quả: [1, 2, 3]</div>
+            <p>Bước 4: node_a=5, node_b=9 → lấy 5. Kết quả: [1, 2, 3, 5]</p>
+            <p>Bước 5: node_a=8, node_b=9 → lấy 8. Kết quả: [1, 2, 3, 5, 8]</p>
+            <p>Bước 6: A hết → gắn nguyên phần còn lại của B. Kết quả: [1, 2, 3, 5, 8, 9] ✓</p>
+        </div>
+
+        <h2 id="combine">5. Bước 3: Ghép 2 bước lại (hàm sap_xep_tron)</h2>
+
+        <pre data-file="danh_sach_lien_ket.py — sap_xep_tron"><code>def sap_xep_tron(self, tieu_chi='gia_ban'):
+    """
+    Sắp xếp DSLK bằng Merge Sort — O(n log n).
+
+    Hỗ trợ 3 tiêu chí: 'gia_ban', 'ten_san_pham', 'ton_kho'.
+    """
+    # Điều kiện dừng: 0 hoặc 1 phần tử → đã "sắp xếp" sẵn
+    if self.head is None or self.head.next is None:
+        return
+
+    # 1. Chia đôi danh sách thành 2 nửa
+    nua_dau, nua_sau = self._chia_doi()
+
+    # 2. Bọc nửa đầu thành DoublyLinkedList để đệ quy
+    ds_nua_dau = DoublyLinkedList()
+    ds_nua_dau.head = nua_dau
+    # Tìm Node cuối của nửa đầu (vì _chia_doi chỉ trả head)
+    node_cuoi_dau = nua_dau
+    while node_cuoi_dau.next is not None:
+        node_cuoi_dau = node_cuoi_dau.next
+    ds_nua_dau.cuoi = node_cuoi_dau
+    ds_nua_dau.so_luong = self._dem_node(nua_dau)
+
+    # Tương tự cho nửa sau
+    ds_nua_sau = DoublyLinkedList()
+    ds_nua_sau.head = nua_sau
+    node_cuoi_sau = nua_sau
+    while node_cuoi_sau.next is not None:
+        node_cuoi_sau = node_cuoi_sau.next
+    ds_nua_sau.cuoi = node_cuoi_sau
+    ds_nua_sau.so_luong = self._dem_node(nua_sau)
+
+    # Đệ quy sắp xếp từng nửa
+    ds_nua_dau.sap_xep_tron(tieu_chi)         # GỌI LẠI CHÍNH NÓ!
+    ds_nua_sau.sap_xep_tron(tieu_chi)
+
+    # 3. Trộn 2 nửa đã sắp xếp vào lại self
+    self._tron(ds_nua_dau, ds_nua_sau, tieu_chi)
+
+def _dem_node(self, node_dau):
+    """Đếm số Node từ node_dau đến cuối."""
+    dem = 0
+    node_hien_tai = node_dau
+    while node_hien_tai is not None:
+        dem += 1
+        node_hien_tai = node_hien_tai.next
+    return dem</code></pre>
+
+        <h2 id="full-example">6. Ví dụ đầy đủ</h2>
+
+        <p>Sort DSLK <code>[38, 27, 43, 3, 9, 82, 10]</code> theo giá trị tăng dần:</p>
+
+        <pre data-file="vidu_merge_sort.py"><code># Tạo DSLK với 7 số
+ds = DoublyLinkedList()
+for x in [38, 27, 43, 3, 9, 82, 10]:
+    ds.them_vao_cuoi(x)
+
+# Sort
+ds.sap_xep_tron()
+
+# In kết quả
+print(ds)
+# 3 &lt;-&gt; 9 &lt;-&gt; 10 &lt;-&gt; 27 &lt;-&gt; 38 &lt;-&gt; 43 &lt;-&gt; 82</code></pre>
+
+        <p>Đường đi của đệ quy (mỗi dòng = 1 lần gọi <code class="inline">sap_xep_tron</code>):</p>
+
+        <pre data-file="call stack"><code>sap_xep_tron([38, 27, 43, 3, 9, 82, 10])
+├── _chia_doi → [38, 27, 43, 3] + [9, 82, 10]
+│
+├── sap_xep_tron([38, 27, 43, 3])          ← đệ quy nửa đầu
+│   ├── _chia_doi → [38, 27] + [43, 3]
+│   ├── sap_xep_tron([38, 27])
+│   │   ├── _chia_doi → [38] + [27]
+│   │   ├── sap_xep_tron([38])    → return (1 ptu, dừng)
+│   │   ├── sap_xep_tron([27])    → return (1 ptu, dừng)
+│   │   └── _tron([38], [27])     → [27, 38]
+│   ├── sap_xep_tron([43, 3])
+│   │   ├── _chia_doi → [43] + [3]
+│   │   ├── sap_xep_tron([43])    → return
+│   │   ├── sap_xep_tron([3])     → return
+│   │   └── _tron([43], [3])      → [3, 43]
+│   └── _tron([27, 38], [3, 43])  → [3, 27, 38, 43]
+│
+├── sap_xep_tron([9, 82, 10])              ← đệ quy nửa sau
+│   ├── _chia_doi → [9, 82] + [10]
+│   ├── sap_xep_tron([9, 82])
+│   │   ├── _chia_doi → [9] + [82]
+│   │   ├── _tron([9], [82])       → [9, 82]
+│   ├── sap_xep_tron([10])         → return
+│   └── _tron([9, 82], [10])       → [9, 10, 82]
+│
+└── _tron([3, 27, 38, 43], [9, 10, 82])  → [3, 9, 10, 27, 38, 43, 82] ✓</code></pre>
+
+        <h2 id="complexity">7. Độ phức tạp O(n log n)</h2>
+
+        <p>Merge Sort chia đôi liên tục → số lần chia = log₂(n).</p>
+        <p>Mỗi lần trộn cần O(n) thao tác.</p>
+        <p>Tổng: <strong>n × log₂(n)</strong> = O(n log n).</p>
+
+        <div class="table-wrap">
+        <table>
+            <thead>
+                <tr><th>n</th><th>Bubble Sort O(n²)</th><th>Merge Sort O(n log n)</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>10</td><td>100</td><td>33</td></tr>
+                <tr><td>100</td><td>10,000</td><td>664</td></tr>
+                <tr><td>1,000</td><td>1,000,000</td><td>9,965</td></tr>
+                <tr><td>10,000</td><td>100,000,000</td><td>132,877</td></tr>
+            </tbody>
+        </table>
+        </div>
+
+        <p>Nếu sort 10,000 mặt hàng, Bubble Sort cần 100 triệu thao tác, Merge Sort chỉ cần ~133 nghìn.
+        Nhanh hơn <strong>750 lần</strong>!</p>
+
+        <h2>🎯 Tổng kết bài 6</h2>
+
+        <p>Bạn đã học:</p>
+        <ul>
+            <li>✅ <strong>Merge Sort</strong> = Chia để trị (Chia → Trị → Trộn)</li>
+            <li>✅ <strong>Đệ quy</strong> = hàm tự gọi lại chính nó, cần điều kiện dừng</li>
+            <li>✅ <strong>Fast/Slow pointer</strong> để chia đôi DSLK</li>
+            <li>✅ <strong>Merge</strong> — trộn 2 danh sách đã sort thành 1 danh sách sort</li>
+            <li>✅ Độ phức tạp O(n log n) — nhanh hơn Bubble Sort 750× với n=10,000</li>
+            <li>✅ Đa hình trong Merge Sort: <code class="inline">tinh_gia_ban()</code> cho từng loại đối tượng</li>
+        </ul>
+
+        <div class="callout callout--success">
+            <div class="callout__title">✅ Bạn đã hiểu phần Huy làm (2/2)</div>
+            <div class="callout__body">
+                <p>File <code class="inline">danh_sach_lien_ket.py</code> giờ hoàn toàn rõ ràng. Huy phụ trách file này,
+                dùng cho cn02 (đọc DS), cn06 (tìm + sắp), cn07 (thống kê).</p>
+            </div>
+        </div>
+
+        <div class="page-nav"></div>
+
+    </div>
+    <footer class="footer">
+        <p>Bài 6/20 — Merge Sort</p>
+    </footer>
+</main>
+
+<script src="../js/highlight.js"></script>
+<script src="../js/main.js"></script>
+
+</body>
+</html>

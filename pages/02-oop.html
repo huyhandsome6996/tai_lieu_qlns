@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 2: OOP — Kế thừa & Đa hình — Học đồ án QLNS</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header class="header">
+    <a href="../index.html" class="header__brand">
+        <span class="header__brand-icon">📚</span>
+        <span>Học đồ án QLNS</span>
+    </a>
+    <div class="header__search">
+        <span class="header__search-icon">🔍</span>
+        <input type="text" placeholder="Tìm bài học...">
+    </div>
+    <button class="header__menu-toggle" type="button">☰</button>
+</header>
+
+<aside class="sidebar"></aside>
+
+<main class="main">
+    <div class="content">
+
+        <h1>🧬 Bài 2: OOP — Kế thừa & Đa hình</h1>
+
+        <p><strong>OOP (Object-Oriented Programming)</strong> = Lập trình hướng đối tượng.
+        Đây là phần <strong>Tú</strong> phụ trách trong đồ án. Bài này giải thích tường tận
+        mọi thứ bạn cần biết.</p>
+
+        <div class="callout callout--tip">
+            <div class="callout__title">💡 Nếu chỉ học 1 bài thì học bài này</div>
+            <div class="callout__body">
+                <p>OOP là <strong>trái tim</strong> của đồ án. File <code class="inline">lop_doi_tuong.py</code>
+                chứa lớp <code class="inline">MatHang</code> (cha) + 5 lớp con (Sach, TapChi, BaoGiay, LuanVan, BanThao).
+                Hiểu bài này = hiểu được 1/3 đồ án.</p>
+            </div>
+        </div>
+
+        <div class="toc">
+            <div class="toc__title">📑 Mục lục</div>
+            <ol>
+                <li><a href="#class-object">Lớp (class) và Đối tượng (object) là gì?</a></li>
+                <li><a href="#khoi-tao">Hàm __init__ — Khởi tạo đối tượng</a></li>
+                <li><a href="#phuong-thuc">Phương thức (method) — hàm trong lớp</a></li>
+                <li><a href="#ke-thua">Kế thừa (inheritance) — lớp con kế thừa lớp cha</a></li>
+                <li><a href="#super">super() — gọi hàm của lớp cha</a></li>
+                <li><a href="#override">Ghi đè (override) — đa hình đầu tiên</a></li>
+                <li><a href="#abstract">Lớp trừu tượng + abstractmethod</a></li>
+                <li><a href="#da-hinh">Đa hình (polymorphism) — cốt lõi đồ án</a></li>
+                <li><a href="#mathang">Lớp MatHang trong đồ án</a></li>
+                <li><a href="#5-lop-con">5 lớp con: Sach, TapChi, BaoGiay, LuanVan, BanThao</a></li>
+                <li><a href="#chuyen-dict">Phương thức chuyen_thanh_dict()</a></li>
+            </ol>
+        </div>
+
+        <h2 id="class-object">1. Lớp (class) và Đối tượng (object) là gì?</h2>
+
+        <p><strong>Lớp (class)</strong> giống như <strong>bản vẽ thiết kế</strong> một loại đồ vật.
+        <strong>Đối tượng (object)</strong> là <strong>sản phẩm thực tế</strong> được tạo ra từ bản vẽ đó.</p>
+
+        <p>Ví dụ: <em>Lớp "Chiếc xe"</em> là bản vẽ. <em>Chiếc xe của bạn</em>, <em>chiếc xe của tôi</em>
+        là các đối tượng được tạo ra từ lớp đó.</p>
+
+        <pre data-file="vidu_class.py"><code># Định nghĩa lớp
+class Cho:
+    # Lớp này có 2 thuộc tính: ten, tuoi
+    def __init__(self, ten, tuoi):
+        self.ten = ten
+        self.tuoi = tuoi
+
+    # Lớp này có 1 phương thức: sua
+    def sua(self):
+        print(f"{self.ten} sắp: Gâu gâu!")
+
+# Tạo 2 đối tượng từ lớp Cho
+cho_1 = Cho("Milu", 3)      # tạo chó tên Milu, 3 tuổi
+cho_2 = Cho("Bull", 5)      # tạo chó tên Bull, 5 tuổi
+
+# Gọi phương thức
+cho_1.sua()                  # Milu sắp: Gâu gâu!
+cho_2.sua()                  # Bull sắp: Gâu gâu!
+
+# Truy cập thuộc tính
+print(cho_1.ten)             # Milu
+print(cho_2.tuoi)            # 5</code></pre>
+
+        <div class="callout callout--info">
+            <div class="callout__title">ℹ️ Giải thích <code class="inline">self</code></div>
+            <div class="callout__body">
+                <p><code class="inline">self</code> = "chính đối tượng này". Khi gọi <code class="inline">cho_1.sua()</code>,
+                Python tự truyền <code class="inline">cho_1</code> vào <code class="inline">self</code>.
+                Nên trong hàm <code class="inline">sua</code>, <code class="inline">self.ten</code> chính là <code class="inline">cho_1.ten</code> = "Milu".</p>
+                <p>Đừng quên <code class="inline">self</code> ở tham số đầu tiên của mọi hàm trong lớp!</p>
+            </div>
+        </div>
+
+        <h2 id="khoi-tao">2. Hàm __init__ — Khởi tạo đối tượng</h2>
+
+        <p><code class="inline">__init__</code> (2 gạch dưới + init + 2 gạch dưới) là <strong>hàm tạo</strong>.
+        Nó tự động chạy khi bạn tạo đối tượng mới.</p>
+
+        <pre data-file="vidu_init.py"><code>class HocSinh:
+    def __init__(self, ten, tuoi, lop):
+        # self.xxx = yyy → gán giá trị yyy vào thuộc tính xxx
+        self.ten = ten            # tạo thuộc tính ten
+        self.tuoi = tuoi          # tạo thuộc tính tuoi
+        self.lop = lop            # tạo thuộc tính lop
+
+    def gioi_thieu(self):
+        print(f"Tôi là {self.ten}, {self.tuoi} tuổi, học lớp {self.lop}")
+
+# Tạo đối tượng — tự động chạy __init__
+hs = HocSinh("Huy", 21, "12A1")
+hs.gioi_thieu()              # Tôi là Huy, 21 tuổi, học lớp 12A1</code></pre>
+
+        <h2 id="phuong-thuc">3. Phương thức (method) — hàm trong lớp</h2>
+
+        <p>Phương thức = hàm đặt trong lớp. Luôn có <code class="inline">self</code> ở tham số đầu.</p>
+
+        <pre data-file="vidu_method.py"><code>class MayTinh:
+    def __init__(self, hang, ram):
+        self.hang = hang
+        self.ram = ram
+
+    # Phương thức không tham số (ngoài self)
+    def thong_tin(self):
+        print(f"{self.hang} - RAM {self.ram}GB")
+
+    # Phương thức có tham số
+    def nang_cap_ram(self, them_gb):
+        self.ram += them_gb
+        print(f"Đã thêm {them_gb}GB. RAM mới: {self.ram}GB")
+
+    # Phương thức trả về giá trị
+    def lay_ram(self):
+        return self.ram
+
+mt = MayTinh("Dell", 8)
+mt.thong_tin()                       # Dell - RAM 8GB
+mt.nang_cap_ram(8)                   # Đã thêm 8GB. RAM mới: 16GB
+print("RAM hiện tại:", mt.lay_ram()) # RAM hiện tại: 16</code></pre>
+
+        <h2 id="ke-thua">4. Kế thừa (inheritance) — lớp con kế thừa lớp cha</h2>
+
+        <p><strong>Kế thừa</strong> = lớp con nhận lại tất cả thuộc tính + phương thức của lớp cha,
+        rồi có thể thêm cái của riêng mình.</p>
+
+        <p>Ví dụ: <code class="inline">DongVat</code> là lớp cha, <code class="inline">Cho</code> và
+        <code class="inline">Meo</code> là 2 lớp con. Cả 2 đều có thuộc tính "ten" (kế thừa từ DongVat),
+        nhưng tiếng kêu khác nhau.</p>
+
+        <pre data-file="vidu_ke_thua.py"><code># Lớp cha
+class DongVat:
+    def __init__(self, ten):
+        self.ten = ten
+
+    def an(self):
+        print(f"{self.ten} đang ăn...")
+
+# Lớp con — kế thừa từ DongVat
+class Cho(DongVat):                  # ← (DongVat) = kế thừa
+    def sua(self):
+        print(f"{self.ten}: Gâu gâu!")
+
+class Meo(DongVat):
+    def meu(self):
+        print(f"{self.ten}: Meo meo!")
+
+# Sử dụng
+cho = Cho("Milu")
+cho.an()                              # Milu đang ăn... (kế thừa từ DongVat)
+cho.sua()                             # Milu: Gâu gâu!   (riêng của Cho)
+
+meo = Meo("Mimi")
+meo.an()                              # Mimi đang ăn... (kế thừa)
+meo.meu()                             # Mimi: Meo meo!</code></pre>
+
+        <h2 id="super">5. super() — gọi hàm của lớp cha</h2>
+
+        <p>Khi lớp con có <code class="inline">__init__</code> riêng, ta thường muốn gọi
+        <code class="inline">__init__</code> của lớp cha để không phải viết lại.</p>
+
+        <pre data-file="vidu_super.py"><code>class DongVat:
+    def __init__(self, ten, tuoi):
+        self.ten = ten
+        self.tuoi = tuoi
+
+    def thong_tin(self):
+        print(f"{self.ten}, {self.tuoi} tuổi")
+
+class Cho(DongVat):
+    def __init__(self, ten, tuoi, giong):
+        # Gọi __init__ của lớp cha để gán ten + tuoi
+        super().__init__(ten, tuoi)
+
+        # Thêm thuộc tính riêng của Cho
+        self.giong = giong
+
+    def thong_tin_day_du(self):
+        # Gọi thong_tin() của lớp cha
+        super().thong_tin()
+        print(f"Giống: {self.giong}")
+
+cho = Cho("Milu", 3, "Poodle")
+cho.thong_tin_day_du()
+# Milu, 3 tuổi
+# Giống: Poodle</code></pre>
+
+        <div class="callout callout--info">
+            <div class="callout__title">ℹ️ Tại sao dùng super()?</div>
+            <div class="callout__body">
+                <p>Không dùng super: phải tự viết <code class="inline">self.ten = ten; self.tuoi = tuoi</code>
+                trong <code class="inline">Cho.__init__</code> → code trùng lặp.</p>
+                <p>Dùng super: gọi <code class="inline">super().__init__(ten, tuoi)</code> → code ngắn,
+                nếu lớp cha thay đổi thì lớp con tự cập nhật theo.</p>
+            </div>
+        </div>
+
+        <h2 id="override">6. Ghi đè (override) — đa hình đầu tiên</h2>
+
+        <p><strong>Ghi đè</strong> = lớp con viết lại phương thức của lớp cha (cùng tên, cùng tham số,
+        nhưng thân hàm khác).</p>
+
+        <pre data-file="vidu_override.py"><code>class DongVat:
+    def __init__(self, ten):
+        self.ten = ten
+
+    def keu(self):
+        print(f"{self.ten}: ...")     # mặc định không có tiếng
+
+class Cho(DongVat):
+    def keu(self):                     # GHI ĐÈ phương thức keu()
+        print(f"{self.ten}: Gâu gâu!")
+
+class Meo(DongVat):
+    def keu(self):                     # GHI ĐÈ phương thức keu()
+        print(f"{self.ten}: Meo meo!")
+
+class Bo(DongVat):
+    # Không ghi đè → dùng keu() của DongVat
+    pass
+
+# Cùng gọi keu() nhưng kết quả khác nhau → ĐA HÌNH
+cho = Cho("Milu")
+meo = Meo("Mimi")
+bo = Bo("Bò")
+
+cho.keu()    # Milu: Gâu gâu!
+meo.keu()    # Mimi: Meo meo!
+bo.keu()     # Bò: ...</code></pre>
+
+        <h2 id="abstract">7. Lớp trừu tượng + abstractmethod</h2>
+
+        <p>Đôi khi lớp cha muốn <strong>ép</strong> các lớp con <strong>bắt buộc</strong> phải ghi đè
+        một phương thức. Dùng <code class="inline">ABC</code> + <code class="inline">@abstractmethod</code>.</p>
+
+        <pre data-file="vidu_abstract.py"><code>from abc import ABC, abstractmethod
+
+# ABC = Abstract Base Class — lớp trừu tượng, không thể khởi tạo trực tiếp
+class HinhHoc(ABC):
+
+    @abstractmethod                  # bộ trang trí ép lớp con phải ghi đè
+    def tinh_dien_tich(self):
+        pass                          # chỉ khai báo, không có thân
+
+    def gioi_thieu(self):
+        print("Tôi là một hình học")
+
+# LỖI — không thể tạo đối tượng từ lớp trừu tượng
+# h = HinhHoc()                      # TypeError: Can't instantiate abstract class
+
+# Lớp con BẮT BUỘC phải ghi đè tinh_dien_tich()
+class HinhVuong(HinhHoc):
+    def __init__(self, canh):
+        self.canh = canh
+
+    def tinh_dien_tich(self):         # bắt buộc ghi đè!
+        return self.canh * self.canh
+
+class HinhTron(HinhHoc):
+    def __init__(self, ban_kinh):
+        self.ban_kinh = ban_kinh
+
+    def tinh_dien_tich(self):         # bắt buộc ghi đè!
+        return 3.14 * self.ban_kinh ** 2
+
+hv = HinhVuong(5)
+print(hv.tinh_dien_tich())            # 25
+hv.gioi_thieu()                       # Tôi là một hình học (kế thừa)
+
+ht = HinhTron(3)
+print(ht.tinh_dien_tich())            # 28.26</code></pre>
+
+        <div class="callout callout--warning">
+            <div class="callout__title">⚠️ Quên ghi đè = lỗi</div>
+            <div class="callout__body">
+                <p>Nếu lớp con không ghi đè phương thức <code class="inline">@abstractmethod</code>,
+                Python sẽ <strong>không cho tạo đối tượng</strong>:</p>
+                <pre data-file="lỗi thiếu override"><code>class HinhTamGiac(HinhHoc):
+    def __init__(self, a, b, c):
+        self.a, self.b, self.c = a, b, c
+    # QUÊN ghi đè tinh_dien_tich()!
+
+htg = HinhTamGiac(3, 4, 5)
+# LỖI: Can't instantiate abstract class HinhTamGiac with abstract method tinh_dien_tich</code></pre>
+            </div>
+        </div>
+
+        <h2 id="da-hinh">8. Đa hình (polymorphism) — cốt lõi đồ án</h2>
+
+        <p><strong>Đa hình</strong> = "nhiều hình thái". Cùng một lời gọi hàm, nhưng kết quả khác nhau
+        tùy loại đối tượng.</p>
+
+        <pre data-file="vidu_da_hinh.py"><code>class MatHang:
+    def __init__(self, ten, gia):
+        self.ten = ten
+        self.gia = gia
+
+    def tinh_gia_ban(self):
+        return self.gia                # mặc định = giá gốc
+
+class Sach(MatHang):
+    def tinh_gia_ban(self):
+        return self.gia * 1.10         # Sách: +10% bản quyền
+
+class TapChi(MatHang):
+    def tinh_gia_ban(self):
+        return self.gia * 1.05         # Tạp chí: +5%
+
+class BaoGiay(MatHang):
+    def tinh_gia_ban(self):
+        return self.gia                # Báo: không phụ thu
+
+# Tạo list 3 đối tượng khác loại
+ds = [
+    Sach("Truyện Kiều", 50000),
+    TapChi("Tạp chí KH", 30000),
+    BaoGiay("Báo Tuổi Trẻ", 5000),
+]
+
+# Cùng gọi tinh_gia_ban() — kết quả khác nhau tùy loại!
+for sp in ds:
+    print(f"{sp.ten}: {sp.tinh_gia_ban():.0f}đ")
+# Truyện Kiều: 55000đ
+# Tạp chí KH: 31500đ
+# Báo Tuổi Trẻ: 5000đ</code></pre>
+
+        <p>Đây chính là <strong>đa hình</strong>: cùng phương thức <code class="inline">tinh_gia_ban()</code>,
+        nhưng mỗi lớp con có cách tính riêng.</p>
+
+        <h2 id="mathang">9. Lớp MatHang trong đồ án</h2>
+
+        <p>Giờ xem code thực tế trong file <code class="inline">loi_thuat_toan/lop_doi_tuong.py</code>:</p>
+
+        <pre data-file="lop_doi_tuong.py — lớp MatHang"><code>from abc import ABC, abstractmethod
+
+class MatHang(ABC):
+    """
+    Lớp CHA trừu tượng đại diện cho một mặt hàng.
+    Không thể tạo MatHang() trực tiếp — phải tạo qua lớp con.
+    """
+
+    def __init__(self, ma_so, ten_san_pham, gia_co_ban, ton_kho):
+        # 4 thuộc tính chung — mọi loại mặt hàng đều có
+        self.ma_so = ma_so                  # mã số (PRIMARY KEY)
+        self.loai_hang = ''                  # lớp con sẽ ghi đè
+        self.ten_san_pham = ten_san_pham    # tên sản phẩm
+        # Validate giá không được âm
+        if gia_co_ban &lt; 0:
+            raise ValueError('Giá cơ bản không được âm.')
+        self.gia_co_ban = gia_co_ban
+        if ton_kho &lt; 0:
+            raise ValueError('Tồn kho không được âm.')
+        self.ton_kho = ton_kho
+
+    @abstractmethod                          # ép 5 lớp con phải ghi đè
+    def tinh_gia_ban(self):
+        """
+        Mỗi loại hàng có công thức giá bán riêng:
+            Sách      = giá × 1.10  (phụ thu 10% bản quyền)
+            Tạp chí   = giá × 1.05  (phụ thu 5%)
+            Báo giấy  = giá × 1.00  (không phụ thu)
+            Luận văn  = giá × 1.20  (phụ thu 20%)
+            Bản thảo  = giá × 1.15  (phụ thu 15%)
+        """
+        pass
+
+    def chuyen_thanh_dict(self):
+        """Chuyển đối tượng thành dict (để dễ gửi ra JSON)."""
+        return {
+            'ma_so': self.ma_so,
+            'loai_hang': self.loai_hang,
+            'ten_san_pham': self.ten_san_pham,
+            'gia_co_ban': self.gia_co_ban,
+            'ton_kho': self.ton_kho,
+            'gia_ban': self.tinh_gia_ban()   # ← ĐA HÌNH ở đây!
+        }
+
+    def __str__(self):
+        return (f'[{self.ma_so}] {self.loai_hang} - {self.ten_san_pham} | '
+                f'Giá bán: {self.tinh_gia_ban():.0f}đ | Tồn kho: {self.ton_kho}')</code></pre>
+
+        <div class="callout callout--success">
+            <div class="callout__title">✅ Điểm hay của đa hình</div>
+            <div class="callout__body">
+                <p>Trong <code class="inline">chuyen_thanh_dict()</code>, dòng <code class="inline">'gia_ban': self.tinh_gia_ban()</code>
+                gọi <code class="inline">tinh_gia_ban()</code> — nhưng hàm nào được gọi phụ thuộc vào đối tượng là
+                <code class="inline">Sach</code>, <code class="inline">TapChi</code>, hay lớp con nào.</p>
+                <p>Cùng 1 dòng code, nhiều kết quả → đó là đa hình!</p>
+            </div>
+        </div>
+
+        <h2 id="5-lop-con">10. 5 lớp con: Sach, TapChi, BaoGiay, LuanVan, BanThao</h2>
+
+        <p>Sơ đồ kế thừa:</p>
+
+        <div class="diagram">
+            <div class="diagram__title">Sơ đồ kế thừa OOP trong đồ án</div>
+            <div class="hierarchy">
+                <div class="hierarchy__parent">MatHang (ABC)</div>
+                <div class="hierarchy__line"></div>
+                <div class="hierarchy__children">
+                    <div class="hierarchy__child">Sach</div>
+                    <div class="hierarchy__child">TapChi</div>
+                    <div class="hierarchy__child">BaoGiay</div>
+                    <div class="hierarchy__child">LuanVan</div>
+                    <div class="hierarchy__child">BanThao</div>
+                </div>
+            </div>
+        </div>
+
+        <h3>Lớp Sach (Sách)</h3>
+        <pre data-file="lop_doi_tuong.py — Sach"><code>class Sach(MatHang):
+    """
+    Sách — kế thừa MatHang.
+    Thuộc tính riêng: tac_gia, nha_xuat_ban.
+    Công thức giá bán: gia_co_ban × 1.10 (phụ thu 10% bản quyền).
+    """
+
+    def __init__(self, ma_so, ten_san_pham, gia_co_ban, ton_kho, tac_gia, nha_xuat_ban):
+        # Gọi __init__ của lớp cha để gán 4 trường chung
+        super().__init__(ma_so, ten_san_pham, gia_co_ban, ton_kho)
+
+        # Gán nhãn loại hàng
+        self.loai_hang = 'Sách'
+
+        # Gán 2 trường riêng của Sách
+        self.tac_gia = tac_gia
+        self.nha_xuat_ban = nha_xuat_ban
+
+    def tinh_gia_ban(self):
+        """Override — Sách phụ thu 10%."""
+        return self.gia_co_ban * 1.1
+
+    def chuyen_thanh_dict(self):
+        """Ghi đè để bổ sung 2 trường riêng (tac_gia, nha_xuat_ban)."""
+        dict_co_ban = super().chuyen_thanh_dict()   # Lấy dict của cha
+        dict_co_ban['tac_gia'] = self.tac_gia        # Thêm trường riêng
+        dict_co_ban['nha_xuat_ban'] = self.nha_xuat_ban
+        return dict_co_ban</code></pre>
+
+        <h3>Lớp TapChi (Tạp chí)</h3>
+        <pre data-file="lop_doi_tuong.py — TapChi"><code>class TapChi(MatHang):
+    """
+    Tạp chí — kế thừa MatHang.
+    Thuộc tính riêng: so_phat_hanh.
+    Công thức giá bán: gia_co_ban × 1.05 (phụ thu 5%).
+    """
+
+    def __init__(self, ma_so, ten_san_pham, gia_co_ban, ton_kho, so_phat_hanh):
+        super().__init__(ma_so, ten_san_pham, gia_co_ban, ton_kho)
+        self.loai_hang = 'Tạp chí'
+        self.so_phat_hanh = so_phat_hanh        # VD: "Số 120"
+
+    def tinh_gia_ban(self):
+        """Override — Tạp chí phụ thu 5%."""
+        return self.gia_co_ban * 1.05
+
+    def chuyen_thanh_dict(self):
+        dict_co_ban = super().chuyen_thanh_dict()
+        dict_co_ban['so_phat_hanh'] = self.so_phat_hanh
+        return dict_co_ban</code></pre>
+
+        <h3>Lớp BaoGiay (Báo giấy)</h3>
+        <pre data-file="lop_doi_tuong.py — BaoGiay"><code>class BaoGiay(MatHang):
+    """
+    Báo giấy — kế thừa MatHang.
+    Thuộc tính riêng: ngay_xuat_ban.
+    Công thức giá bán: gia_co_ban × 1.00 (không phụ thu).
+    """
+
+    def __init__(self, ma_so, ten_san_pham, gia_co_ban, ton_kho, ngay_xuat_ban):
+        super().__init__(ma_so, ten_san_pham, gia_co_ban, ton_kho)
+        self.loai_hang = 'Báo giấy'
+        self.ngay_xuat_ban = ngay_xuat_ban     # VD: "2025-06-25"
+
+    def tinh_gia_ban(self):
+        """Override — Báo giấy không phụ thu."""
+        return self.gia_co_ban                  # trả nguyên giá
+
+    def chuyen_thanh_dict(self):
+        dict_co_ban = super().chuyen_thanh_dict()
+        dict_co_ban['ngay_xuat_ban'] = self.ngay_xuat_ban
+        return dict_co_ban</code></pre>
+
+        <h3>Lớp LuanVan (Luận văn)</h3>
+        <pre data-file="lop_doi_tuong.py — LuanVan"><code>class LuanVan(MatHang):
+    """
+    Luận văn — kế thừa MatHang.
+    Thuộc tính riêng: tac_gia, truong_dai_hoc, nam_bao_ve.
+    Công thức giá bán: gia_co_ban × 1.20 (phụ thu 20% giá trị học thuật).
+    """
+
+    def __init__(self, ma_so, ten_san_pham, gia_co_ban, ton_kho,
+                 tac_gia, truong_dai_hoc, nam_bao_ve):
+        super().__init__(ma_so, ten_san_pham, gia_co_ban, ton_kho)
+        self.loai_hang = 'Luận văn'
+        self.tac_gia = tac_gia
+        self.truong_dai_hoc = truong_dai_hoc
+        self.nam_bao_ve = nam_bao_ve
+
+    def tinh_gia_ban(self):
+        """Override — Luận văn phụ thu 20%."""
+        return self.gia_co_ban * 1.2
+
+    def chuyen_thanh_dict(self):
+        dict_co_ban = super().chuyen_thanh_dict()
+        dict_co_ban['tac_gia'] = self.tac_gia
+        dict_co_ban['truong_dai_hoc'] = self.truong_dai_hoc
+        dict_co_ban['nam_bao_ve'] = self.nam_bao_ve
+        return dict_co_ban</code></pre>
+
+        <h3>Lớp BanThao (Bản thảo)</h3>
+        <pre data-file="lop_doi_tuong.py — BanThao"><code>class BanThao(MatHang):
+    """
+    Bản thảo — kế thừa MatHang.
+    Thuộc tính riêng: tac_gia, tinh_trang.
+    Công thức giá bán: gia_co_ban × 1.15 (phụ thu 15% cho tài liệu gốc).
+    """
+
+    def __init__(self, ma_so, ten_san_pham, gia_co_ban, ton_kho,
+                 tac_gia, tinh_trang):
+        super().__init__(ma_so, ten_san_pham, gia_co_ban, ton_kho)
+        self.loai_hang = 'Bản thảo'
+        self.tac_gia = tac_gia
+        self.tinh_trang = tinh_trang           # VD: "Chưa duyệt" / "Đã duyệt"
+
+    def tinh_gia_ban(self):
+        """Override — Bản thảo phụ thu 15%."""
+        return self.gia_co_ban * 1.15
+
+    def chuyen_thanh_dict(self):
+        dict_co_ban = super().chuyen_thanh_dict()
+        dict_co_ban['tac_gia'] = self.tac_gia
+        dict_co_ban['tinh_trang'] = self.tinh_trang
+        return dict_co_ban</code></pre>
+
+        <h2 id="chuyen-dict">11. Phương thức chuyen_thanh_dict()</h2>
+
+        <p>Tại sao cần phương thức này? Vì <strong>JSON</strong> (dùng để gửi dữ liệu qua mạng) chỉ hiểu
+        được dict/list/str/int/float/bool — không hiểu "đối tượng Python". Nên phải chuyển.</p>
+
+        <pre data-file="vidu_chuyen_dict.py"><code># Tạo 3 đối tượng khác loại
+sach = Sach("MH001", "Truyện Kiều", 50000, 20, "Nguyễn Du", "NXB Văn học")
+tapchi = TapChi("MH002", "Tạp chí KH", 30000, 15, "Số 120")
+bao = BaoGiay("MH003", "Báo Tuổi Trẻ", 5000, 50, "2025-06-25")
+
+# Mỗi loại trả dict khác nhau (đa hình)
+print(sach.chuyen_thanh_dict())
+# {
+#   'ma_so': 'MH001', 'loai_hang': 'Sách', 'ten_san_pham': 'Truyện Kiều',
+#   'gia_co_ban': 50000, 'ton_kho': 20, 'gia_ban': 55000.0,
+#   'tac_gia': 'Nguyễn Du', 'nha_xuat_ban': 'NXB Văn học'
+# }
+
+print(tapchi.chuyen_thanh_dict())
+# {
+#   'ma_so': 'MH002', 'loai_hang': 'Tạp chí', 'ten_san_pham': 'Tạp chí KH',
+#   'gia_co_ban': 30000, 'ton_kho': 15, 'gia_ban': 31500.0,
+#   'so_phat_hanh': 'Số 120'
+# }
+
+print(bao.chuyen_thanh_dict())
+# {
+#   'ma_so': 'MH003', 'loai_hang': 'Báo giấy', 'ten_san_pham': 'Báo Tuổi Trẻ',
+#   'gia_co_ban': 5000, 'ton_kho': 50, 'gia_ban': 5000,
+#   'ngay_xuat_ban': '2025-06-25'
+# }</code></pre>
+
+        <div class="callout callout--tip">
+            <div class="callout__title">💡 Cách nhớ đa hình</div>
+            <div class="callout__body">
+                <p><strong>"Cùng 1 lời gọi, nhiều kết quả"</strong></p>
+                <ul>
+                    <li>Cùng gọi <code class="inline">sp.tinh_gia_ban()</code> → Sách ra 55000, Tạp chí ra 31500, Báo ra 5000.</li>
+                    <li>Cùng gọi <code class="inline">sp.chuyen_thanh_dict()</code> → mỗi loại trả dict với trường khác nhau.</li>
+                    <li>Cùng gọi <code class="inline">print(sp)</code> (gọi <code class="inline">__str__</code>) → in ra thông tin đúng loại.</li>
+                </ul>
+            </div>
+        </div>
+
+        <h2>🎯 Tổng kết bài 2</h2>
+
+        <p>Bạn đã học:</p>
+        <ul>
+            <li>✅ <strong>Lớp (class)</strong> là bản vẽ, <strong>đối tượng (object)</strong> là sản phẩm</li>
+            <li>✅ <code class="inline">__init__</code> là hàm tạo, tự chạy khi tạo đối tượng</li>
+            <li>✅ <code class="inline">self</code> = "chính đối tượng này"</li>
+            <li>✅ <strong>Kế thừa</strong>: lớp con dùng được thuộc tính/phương thức của lớp cha</li>
+            <li>✅ <code class="inline">super()</code>: gọi hàm của lớp cha</li>
+            <li>✅ <strong>Ghi đè (override)</strong>: lớp con viết lại hàm của lớp cha</li>
+            <li>✅ <code class="inline">ABC + @abstractmethod</code>: ép lớp con phải ghi đè</li>
+            <li>✅ <strong>Đa hình</strong>: cùng lời gọi, nhiều kết quả</li>
+            <li>✅ Lớp <code class="inline">MatHang</code> + 5 lớp con trong đồ án</li>
+            <li>✅ <code class="inline">chuyen_thanh_dict()</code> — đa hình + ghi đè</li>
+        </ul>
+
+        <div class="callout callout--success">
+            <div class="callout__title">✅ Bạn đã hiểu phần Tú làm</div>
+            <div class="callout__body">
+                <p>File <code class="inline">lop_doi_tuong.py</code> giờ không còn bí ẩn nữa. Tú phụ trách file này,
+                và 3 chức năng cn03/cn04/cn05 đều tạo/sửa/xóa đối tượng OOP. Bạn sẽ thấy điều này ở các bài sau.</p>
+            </div>
+        </div>
+
+        <div class="page-nav"></div>
+
+    </div>
+
+    <footer class="footer">
+        <p>Bài 2/20 — OOP Kế thừa & Đa hình</p>
+    </footer>
+</main>
+
+<script src="../js/highlight.js"></script>
+<script src="../js/main.js"></script>
+
+</body>
+</html>

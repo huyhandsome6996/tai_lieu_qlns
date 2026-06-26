@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CN01: Đăng nhập + Phân quyền — Học đồ án QLNS</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header class="header">
+    <a href="../index.html" class="header__brand">
+        <span class="header__brand-icon">📚</span>
+        <span>Học đồ án QLNS</span>
+    </a>
+    <div class="header__search">
+        <span class="header__search-icon">🔍</span>
+        <input type="text" placeholder="Tìm bài học...">
+    </div>
+    <button class="header__menu-toggle" type="button">☰</button>
+</header>
+
+<aside class="sidebar"></aside>
+
+<main class="main">
+    <div class="content">
+
+        <h1>🔐 CN01: Đăng nhập + Phân quyền</h1>
+
+        <p>Đây là chức năng đầu tiên người dùng gặp khi mở app. Hệ thống yêu cầu đăng nhập
+        bằng tên đăng nhập + mật khẩu. Sau khi đăng nhập thành công, hệ thống kiểm tra
+        <strong>vai trò</strong> (admin hoặc nhân viên) để quyết định quyền hạn.</p>
+
+        <div class="callout callout--info">
+            <div class="callout__title">📖 Mô tả yêu cầu barem</div>
+            <div class="callout__body">
+                <p><strong>Nhóm 1 — Đăng nhập + Phân quyền:</strong> Người dùng nhập tên/mật khẩu →
+                hệ thống kiểm tra trong SQLite → nếu đúng thì mở cửa sổ chính; nếu là admin thì
+                toàn quyền, nếu là nhân viên thì bị hạn chế (không được xóa sản phẩm).</p>
+            </div>
+        </div>
+
+        <div class="toc">
+            <div class="toc__title">📑 Mục lục</div>
+            <ol>
+                <li><a href="#cau-truc">Cấu trúc folder cn01</a></li>
+                <li><a href="#tt">File _tt: BoDangNhap (thuật toán)</a></li>
+                <li><a href="#ui">File _ui: CuaSoDangNhapUI (giao diện)</a></li>
+                <li><a href="#dk">File _dk: DieuKhienDangNhap (điều khiển)</a></li>
+                <li><a href="#luong">Luồng chạy từ main.py</a></li>
+                <li><a href="#phan-quyen">Cơ chế phân quyền Admin/Nhân viên</a></li>
+            </ol>
+        </div>
+
+        <h2 id="cau-truc">1. Cấu trúc folder cn01</h2>
+
+        <pre data-file="chuc_nang/cn01_dang_nhap_phan_quyen/"><code>cn01_dang_nhap_phan_quyen/
+├── __init__.py             ← File rỗng (package marker)
+├── dang_nhap_tt.py         ← Thuật toán: BoDangNhap
+├── dang_nhap_ui.py         ← Giao diện: CuaSoDangNhapUI
+└── dang_nhap_dk.py         ← Điều khiển: DieuKhienDangNhap</code></pre>
+
+        <h2 id="tt">2. File _tt: BoDangNhap (thuật toán)</h2>
+
+        <p>File này chỉ chứa <strong>logic</strong> — không import tkinter. Có 3 hàm chính:</p>
+        <ul>
+            <li><code class="inline">dang_nhap(ten, mk)</code>: kiểm tra tên/mật khẩu với SQLite.</li>
+            <li><code class="inline">dang_xuat()</code>: reset người dùng hiện tại về None.</li>
+            <li><code class="inline">la_admin()</code>: kiểm tra vai trò admin.</li>
+        </ul>
+
+        <pre data-file="dang_nhap_tt.py"><code># Import hàm kiểm tra đăng nhập từ thư viện thuật toán (loi_thuat_toan/).
+from loi_thuat_toan.nguoi_dung import kiem_tra_dang_nhap
+
+
+class BoDangNhap:
+    """
+    Bộ thuật toán đăng nhập.
+    Giữ người dùng đang đăng nhập hiện tại + cung cấp hàm tiện ích kiểm tra quyền.
+    """
+
+    def __init__(self):
+        """Khởi tạo: chưa có người dùng nào đăng nhập."""
+        # nguoi_dung_hien_tai = None nghĩa là chưa login.
+        self.nguoi_dung_hien_tai = None
+
+    def dang_nhap(self, ten_dang_nhap, mat_khau):
+        """
+        Kiểm tra đăng nhập.
+
+        Tham số:
+            ten_dang_nhap : str — tên đăng nhập user nhập.
+            mat_khau      : str — mật khẩu user nhập.
+
+        Trả về:
+            (True,  nguoi_dung) nếu đăng nhập đúng.
+            (False, thong_bao)  nếu sai tên/mật khẩu hoặc lỗi.
+        """
+        try:
+            # Gọi hàm kiểm tra từ thư viện (đã bọc try/except ở tầng dưới).
+            nguoi_dung = kiem_tra_dang_nhap(ten_dang_nhap, mat_khau)
+            # Nếu hàm trả về None → sai tên hoặc mật khẩu.
+            if nguoi_dung is None:
+                return False, 'Sai tên đăng nhập hoặc mật khẩu.'
+            # Lưu người dùng hiện tại vào bộ.
+            self.nguoi_dung_hien_tai = nguoi_dung
+            return True, nguoi_dung
+        except Exception as loi:
+            # Bất kỳ lỗi nào khác → trả về tuple (False, thông báo lỗi).
+            return False, f'Lỗi: {loi}'
+
+    def dang_xuat(self):
+        """Đăng xuất — reset người dùng hiện tại về None."""
+        self.nguoi_dung_hien_tai = None
+
+    def la_admin(self):
+        """Kiểm tra người dùng hiện tại có phải admin không."""
+        return (self.nguoi_dung_hien_tai is not None and
+                self.nguoi_dung_hien_tai.vai_tro == 'admin')</code></pre>
+
+        <h3>Giải thích từng dòng quan trọng</h3>
+
+        <p><strong>Hàm <code class="inline">kiem_tra_dang_nhap</code></strong> được import từ
+        <code class="inline">loi_thuat_toan/nguoi_dung.py</code> — file này đã được học ở bài
+        "Quản lý người dùng". Hàm đó sẽ:</p>
+        <ol>
+            <li>Kết nối SQLite, tìm user theo <code class="inline">ten_dang_nhap</code>.</li>
+            <li>Nếu không thấy → trả về <code class="inline">None</code>.</li>
+            <li>Nếu thấy → so sánh mật khẩu nhập với mật khẩu DB.</li>
+            <li>Nếu khớp → trả về đối tượng <code class="inline">NguoiDung</code>.</li>
+            <li>Nếu không khớp → trả về <code class="inline">None</code>.</li>
+        </ol>
+
+        <p><strong>Kiểu trả về của <code class="inline">dang_nhap</code></strong> là tuple 2 phần tử:</p>
+        <ul>
+            <li>Nếu thành công: <code class="inline">(True, nguoi_dung)</code></li>
+            <li>Nếu thất bại: <code class="inline">(False, 'thông báo lỗi')</code></li>
+        </ul>
+
+        <p>Kiểu trả về "tuple 2 giá trị" này rất phổ biến trong đồ án — caller chỉ cần kiểm tra
+        <code class="inline">ok</code> để biết thành công hay không:</p>
+
+        <pre data-file="Cách gọi"><code>ok, ket_qua = bo.dang_nhap('admin', '123')
+if ok:
+    print('Đăng nhập thành công:', ket_qua.ho_ten)
+else:
+    print('Lỗi:', ket_qua)   # ket_qua lúc này là chuỗi thông báo lỗi</code></pre>
+
+        <h2 id="ui">3. File _ui: CuaSoDangNhapUI (giao diện)</h2>
+
+        <p>File này chỉ chứa <strong>code Tkinter</strong> — vẽ form đăng nhập. Form này
+        <strong>modal</strong> (chặn tương tác cửa sổ cha cho đến khi đóng).</p>
+
+        <pre data-file="dang_nhap_ui.py"><code>import tkinter as tk
+from tkinter import ttk, messagebox
+
+
+class CuaSoDangNhapUI:
+    """Cửa sổ giao diện đăng nhập — chạy modal."""
+
+    def __init__(self, parent):
+        # Tạo Toplevel (cửa sổ con) — modal.
+        self.top = tk.Toplevel(parent)
+        self.top.title('Đăng nhập hệ thống')
+        self.top.geometry('380x220+500+250')
+        # Làm cửa sổ modal: chặn tương tác parent.
+        self.top.transient(parent)
+        self.top.grab_set()
+
+        # Ép cửa sổ nổi lên trên cùng (đè lên VS Code) để dễ nhìn thấy.
+        self.top.lift()
+        self.top.attributes('-topmost', True)
+        # Bỏ topmost đi ngay lập tức để sau này không bị kẹt dính trên cùng.
+        self.top.after(100, lambda: self.top.attributes('-topmost', False))
+        self.top.focus_force()
+
+        # Ban đầu chưa có người dùng — sẽ được gán nếu login OK.
+        self.nguoi_dung = None
+
+        # Gọi hàm tạo giao diện.
+        self._tao_giao_dien()
+
+    def _tao_giao_dien(self):
+        """Tạo các widget (label, entry, button) cho form đăng nhập."""
+        # Frame chứa nội dung, padding 20px các phía.
+        frame = ttk.Frame(self.top, padding=20)
+        frame.pack(fill='both', expand=True)
+
+        # Tiêu đề.
+        ttk.Label(frame, text='ĐĂNG NHẬP',
+                  font=('Arial', 16, 'bold')).grid(row=0, column=0, columnspan=2, pady=(0, 15))
+
+        # Label + Entry cho tên đăng nhập.
+        ttk.Label(frame, text='Tên đăng nhập:').grid(row=1, column=0, sticky='e', padx=5, pady=5)
+        self.entry_ten = ttk.Entry(frame, width=25)
+        self.entry_ten.grid(row=1, column=1, padx=5, pady=5)
+        self.entry_ten.focus()  # Focus vào ô này khi mở form.
+
+        # Label + Entry cho mật khẩu (show='*' để ẩn ký tự).
+        ttk.Label(frame, text='Mật khẩu:').grid(row=2, column=0, sticky='e', padx=5, pady=5)
+        self.entry_mk = ttk.Entry(frame, width=25, show='*')
+        self.entry_mk.grid(row=2, column=1, padx=5, pady=5)
+
+        # Bind phím Enter → chuyển focus sang ô mật khẩu (nếu đang ở ô tên).
+        self.entry_ten.bind('<Return>', lambda e: self.entry_mk.focus())
+
+        # Nút đăng nhập (columnspan=2 để rộng qua 2 cột).
+        self.btn_dn = ttk.Button(frame, text='Đăng nhập')
+        self.btn_dn.grid(row=3, column=0, columnspan=2, pady=15, sticky='ew')
+
+        # Gợi ý tài khoản mẫu.
+        ttk.Label(frame, text='(Mặc định: admin/123 hoặc nhanvien/123)',
+                  foreground='gray').grid(row=4, column=0, columnspan=2)
+
+    def lay_ten_dang_nhap(self):
+        """Trả về tên đăng nhập user nhập (đã strip khoảng trắng)."""
+        return self.entry_ten.get().strip()
+
+    def lay_mat_khau(self):
+        """Trả về mật khẩu user nhập (đã strip khoảng trắng)."""
+        return self.entry_mk.get().strip()
+
+    def xoa_mat_khau(self):
+        """Xóa ô mật khẩu — dùng khi sai mật khẩu để user nhập lại."""
+        self.entry_mk.delete(0, tk.END)
+
+    def bao_loi(self, thong_bao):
+        """Hiển thị hộp thoại lỗi."""
+        messagebox.showerror('Đăng nhập thất bại', thong_bao, parent=self.top)
+
+    def dong(self):
+        """Đóng cửa sổ đăng nhập."""
+        self.top.destroy()</code></pre>
+
+        <h3>Giải thích các cú pháp Tkinter mới</h3>
+
+        <h4>3.1. <code class="inline">tk.Toplevel(parent)</code></h4>
+        <p>Tạo cửa sổ con độc lập với cửa sổ cha (<code class="inline">parent</code>).
+        Khác với <code class="inline">Frame</code> (nhúng trong parent), <code class="inline">Toplevel</code>
+        có thanh tiêu đề riêng, có thể di chuyển độc lập.</p>
+
+        <h4>3.2. <code class="inline">transient(parent)</code> + <code class="inline">grab_set()</code></h4>
+        <p>Hai lệnh này biến cửa sổ thành <strong>modal</strong>:</p>
+        <ul>
+            <li><code class="inline">transient(parent)</code>: cửa sổ con luôn nằm trên parent, khi
+            parent bị ẩn thì con cũng ẩn theo.</li>
+            <li><code class="inline">grab_set()</code>: chặn mọi tương tác với parent — user
+            <strong>bắt buộc</strong> phải đóng form đăng nhập mới thao tác được với cửa sổ chính.</li>
+        </ul>
+
+        <h4>3.3. <code class="inline">attributes('-topmost', True)</code></h4>
+        <p>Ép cửa sổ nổi lên trên cùng của hệ điều hành — đè cả VS Code, Chrome, v.v. Dùng khi
+        mở form để đảm bảo user nhìn thấy ngay. Sau 100ms thì tắt để không bị "dính" trên cùng.</p>
+
+        <pre data-file="Topmost pattern"><code>self.top.attributes('-topmost', True)
+# Tắt topmost sau 100ms để không bị kẹt
+self.top.after(100, lambda: self.top.attributes('-topmost', False))</code></pre>
+
+        <h4>3.4. <code class="inline">show='*'</code> trong Entry</h4>
+        <p>Ẩn ký tự nhập (cho mật khẩu). Mỗi ký tự user nhập sẽ hiển thị là dấu <code class="inline">*</code>.</p>
+
+        <h4>3.5. <code class="inline">bind('&lt;Return&gt;', callback)</code></h4>
+        <p>Gắn phím Enter cho widget. Khi user nhấn Enter trong widget này, callback sẽ được gọi.
+        Callback phải nhận 1 tham số <code class="inline">event</code> (dùng <code class="inline">lambda e: ...</code>
+        để bỏ qua).</p>
+
+        <h4>3.6. <code class="inline">columnspan=2</code> trong grid</h4>
+        <p>Mặc định 1 widget chiếm 1 cột. <code class="inline">columnspan=2</code> cho phép widget
+        trải dài qua 2 cột. Dùng cho nút Đăng nhập để rộng vừa khít form.</p>
+
+        <h4>3.7. <code class="inline">sticky='ew'</code></h4>
+        <p>Kéo dãn widget để lấp đầy cell theo cả chiều East + West (trái + phải). Có 4 giá trị:</p>
+        <ul>
+            <li><code class="inline">'n'</code>: top (North)</li>
+            <li><code class="inline">'s'</code>: bottom (South)</li>
+            <li><code class="inline">'e'</code>: right (East)</li>
+            <li><code class="inline">'w'</code>: left (West)</li>
+            <li><code class="inline">'ew'</code>: lấp ngang</li>
+            <li><code class="inline">'ns'</code>: lấp dọc</li>
+            <li><code class="inline">'nsew'</code>: lấp cả 4 chiều</li>
+        </ul>
+
+        <h2 id="dk">4. File _dk: DieuKhienDangNhap (điều khiển)</h2>
+
+        <p>Lớp điều khiển đóng vai trò <strong>cầu nối</strong> giữa UI và Thuật toán:</p>
+        <ul>
+            <li>UI chỉ quan tâm tới giao diện (vẽ form, bắt sự kiện).</li>
+            <li>Thuật toán chỉ quan tâm tới logic (kiểm tra tên/mật khẩu).</li>
+            <li>Điều khiển: gắn sự kiện UI → gọi thuật toán → xử lý kết quả → cập nhật UI.</li>
+        </ul>
+
+        <pre data-file="dang_nhap_dk.py"><code># Import giao diện (UI) của chức năng đăng nhập.
+from .dang_nhap_ui import CuaSoDangNhapUI
+# Import thuật toán (logic) của chức năng đăng nhập.
+from .dang_nhap_tt import BoDangNhap
+
+
+class DieuKhienDangNhap:
+    """Lớp điều khiển — quản lý luồng đăng nhập / đăng xuất của ứng dụng."""
+
+    def __init__(self):
+        """Khởi tạo bộ điều khiển + bộ thuật toán đăng nhập."""
+        # Tạo 1 đối tượng BoDangNhap (logic) — dùng chung cho toàn app.
+        self.bo = BoDangNhap()
+
+    def hien_form_dang_nhap(self, parent):
+        """
+        Hiện form đăng nhập modal. Chờ user nhập → kiểm tra → đóng form.
+
+        Trả về:
+            NguoiDung nếu đăng nhập thành công, None nếu user đóng form.
+        """
+        # Tạo đối tượng UI (form đăng nhập).
+        form = CuaSoDangNhapUI(parent)
+
+        # Gắn sự kiện: phím Enter ở ô mật khẩu + nút "Đăng nhập" → xử lý đăng nhập.
+        form.entry_mk.bind('<Return>', lambda e: self._xu_ly_dang_nhap(form))
+        form.btn_dn.config(command=lambda: self._xu_ly_dang_nhap(form))
+
+        # Chờ đến khi form bị đóng (bởi nút đăng nhập thành công hoặc user tắt).
+        parent.wait_window(form.top)
+
+        # Trả về người dùng (None nếu user tắt form mà không đăng nhập).
+        return form.nguoi_dung
+
+    def _xu_ly_dang_nhap(self, form):
+        """Lấy dữ liệu từ form → gọi thuật toán → xử lý kết quả."""
+        # Lấy tên đăng nhập + mật khẩu từ form.
+        ten = form.lay_ten_dang_nhap()
+        mk = form.lay_mat_khau()
+
+        # Validate cơ bản: không được để trống.
+        if not ten or not mk:
+            form.bao_loi('Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.')
+            return
+
+        # Gọi hàm thuật toán đăng nhập.
+        ok, ket_qua = self.bo.dang_nhap(ten, mk)
+        if ok:
+            # Nếu OK → lưu người dùng vào form (để parent đọc) → đóng form.
+            form.nguoi_dung = ket_qua
+            form.dong()
+        else:
+            # Nếu sai → báo lỗi + xóa ô mật khẩu để user nhập lại.
+            form.bao_loi(ket_qua)
+            form.xoa_mat_khau()
+
+    def dang_xuat(self):
+        """Đăng xuất — gọi hàm đăng xuất của bộ thuật toán."""
+        self.bo.dang_xuat()
+
+    def la_admin(self):
+        """Trả về True nếu người dùng hiện tại là admin."""
+        return self.bo.la_admin()
+
+    @property
+    def nguoi_dung_hien_tai(self):
+        """Trả về người dùng đang đăng nhập hiện tại (None nếu chưa login)."""
+        return self.bo.nguoi_dung_hien_tai</code></pre>
+
+        <h3>Giải thích các cú pháp Python mới</h3>
+
+        <h4>4.1. Import相对 <code class="inline">from .dang_nhap_ui import ...</code></h4>
+        <p>Dấu chấm <code class="inline">.</code> trước tên module nghĩa là <strong>import từ
+        cùng folder</strong>. <code class="inline">.dang_nhap_ui</code> = file
+        <code class="inline">dang_nhap_ui.py</code> trong cùng folder với file hiện tại.</p>
+
+        <h4>4.2. <code class="inline">lambda e: ...</code></h4>
+        <p>Hàm ẩn danh (anonymous function). Dùng khi cần 1 hàm nhỏ, không muốn đặt tên.
+        <code class="inline">e</code> là tham số bắt buộc khi bind sự kiện (Tkinter luôn truyền
+        event object vào callback).</p>
+
+        <pre data-file="Lambda"><code># Cách 1: Định nghĩa hàm bình thường
+def xu_ly(event):
+    self._xu_ly_dang_nhap(form)
+form.btn_dn.bind('<Return>', xu_ly)
+
+# Cách 2: Dùng lambda — gọn hơn
+form.btn_dn.bind('<Return>', lambda e: self._xu_ly_dang_nhap(form))</code></pre>
+
+        <h4>4.3. <code class="inline">@property</code></h4>
+        <p>Decorator biến một method thành <strong>thuộc tính</strong> — gọi như biến, không
+        cần dấu ngoặc.</p>
+
+        <pre data-file="@property"><code>@property
+def nguoi_dung_hien_tai(self):
+    return self.bo.nguoi_dung_hien_tai
+
+# Cách dùng:
+dk = DieuKhienDangNhap()
+user = dk.nguoi_dung_hien_tai   # KHÔNG có dấu ngoặc ()
+# Tương đương với: user = dk.nguoi_dung_hien_tai()</code></pre>
+
+        <h4>4.4. <code class="inline">parent.wait_window(form.top)</code></h4>
+        <p>Block luồng chính cho đến khi cửa sổ <code class="inline">form.top</code> bị đóng.
+        Đây là cơ chế <strong>modal</strong>: code sau dòng này chỉ chạy khi user đã đóng form.</p>
+
+        <pre data-file="wait_window"><code>form = CuaSoDangNhapUI(parent)
+# ... gắn sự kiện ...
+parent.wait_window(form.top)        # ← DỪNG Ở ĐÂY cho đến khi form đóng
+# Code dưới đây chỉ chạy sau khi form đóng
+return form.nguoi_dung              # Đọc dữ liệu user đã nhập</code></pre>
+
+        <h2 id="luong">5. Luồng chạy từ main.py</h2>
+
+        <p>Khi user chạy <code class="inline">python main.py</code>, luồng chạy như sau:</p>
+
+        <div class="diagram">
+            <div class="diagram__title">Luồng đăng nhập</div>
+            <p>1. main.py tạo QuanLyTrungTam → gọi <code class="inline">khoi_tao()</code></p>
+            <p style="margin-top: 8px;">↓</p>
+            <p>2. Tạo Tk root + BoDangNhap</p>
+            <p style="margin-top: 8px;">↓</p>
+            <p>3. Tạo <code class="inline">CuaSoDangNhapUI(root)</code> — form modal hiện ra</p>
+            <p style="margin-top: 8px;">↓</p>
+            <p>4. Gắn sự kiện Enter + nút Đăng nhập → <code class="inline">_xu_ly_dang_nhap</code></p>
+            <p style="margin-top: 8px;">↓</p>
+            <p>5. <code class="inline">root.wait_window(form.top)</code> — dừng chờ</p>
+            <p style="margin-top: 8px;">↓</p>
+            <p>6. User nhập tên/mật khẩu → nhấn Enter hoặc nút Đăng nhập</p>
+            <p style="margin-top: 8px;">↓</p>
+            <p>7. <code class="inline">_xu_ly_dang_nhap</code> đọc form → gọi
+            <code class="inline">bo.dang_nhap(ten, mk)</code></p>
+            <p style="margin-top: 8px;">↓</p>
+            <p>8. <code class="inline">bo.dang_nhap</code> gọi
+            <code class="inline">kiem_tra_dang_nhap</code> → query SQLite</p>
+            <p style="margin-top: 8px;">↓</p>
+            <p>9. Nếu đúng → lưu user vào <code class="inline">form.nguoi_dung</code> →
+            <code class="inline">form.dong()</code></p>
+            <p style="margin-top: 8px;">↓</p>
+            <p>10. <code class="inline">wait_window</code> hết chờ → main.py tiếp tục</p>
+            <p style="margin-top: 8px;">↓</p>
+            <p>11. Nếu <code class="inline">form.nguoi_dung</code> != None → mở Cửa sổ chính</p>
+        </div>
+
+        <h2 id="phan-quyen">6. Cơ chế phân quyền Admin / Nhân viên</h2>
+
+        <p>Phân quyền dựa vào trường <code class="inline">vai_tro</code> trong bảng SQLite
+        <code class="inline">bang_nguoi_dung</code>:</p>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Vai trò</th>
+                        <th>ten_dang_nhap</th>
+                        <th>mat_khau</th>
+                        <th>Quyền</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge badge--huy">admin</span></td>
+                        <td>admin</td>
+                        <td>123</td>
+                        <td>Toàn quyền: xem, thêm, sửa, <strong>xóa</strong>, giỏ hàng</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge--ngo">nhan_vien</span></td>
+                        <td>nhanvien</td>
+                        <td>123</td>
+                        <td>Hạn chế: xem, thêm, sửa, giỏ hàng — <strong>KHÔNG</strong> được xóa</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>Cách kiểm tra quyền trong code</h3>
+
+        <p>Ở <code class="inline">cua_so_chinh_dk.py</code>, sau khi đăng nhập thành công, nếu
+        user là nhân viên thì nút Xóa bị <strong>vô hiệu hóa</strong>:</p>
+
+        <pre data-file="cua_so_chinh_dk.py — đoạn phân quyền"><code># Nếu là nhân viên → ẩn nút Xóa (vì không được phép xóa).
+if nguoi_dung.vai_tro != 'admin':
+    self.ui.btn_xoa.config(state='disabled')</code></pre>
+
+        <p>Và ở tầng thuật toán (<code class="inline">xoa_san_pham_tt.py</code>), có thêm lớp
+        bảo vệ thứ hai — kể cả nếu somehow gọi được hàm xóa, nó vẫn kiểm tra:</p>
+
+        <pre data-file="xoa_san_pham_tt.py — đoạn phân quyền"><code>def xoa_san_pham(danh_sach, bo_undoredo, ma_so, la_admin):
+    # === BƯỚC 1: KIỂM TRA PHÂN QUYỀN ===
+    if not la_admin:
+        return False, 'BẠN LÀ NHÂN VIÊN - KHÔNG ĐƯỢC PHÉP XÓA SẢN PHẨM.'
+    # ... tiếp tục logic xóa ...</code></pre>
+
+        <div class="callout callout--danger">
+            <div class="callout__title">🔒 Bảo vệ 2 lớp</div>
+            <div class="callout__body">
+                <p>Phân quyền được bảo vệ ở <strong>2 lớp độc lập</strong>:</p>
+                <ol>
+                    <li><strong>Lớp UI</strong>: vô hiệu nút Xóa → nhân viên không click được.</li>
+                    <li><strong>Lớp thuật toán</strong>: kiểm tra <code class="inline">la_admin</code>
+                    trước khi xóa → kể cả nếu gọi trực tiếp hàm <code class="inline">xoa_san_pham</code>,
+                    nó vẫn từ chối.</li>
+                </ol>
+                <p>Đây là best practice trong bảo mật — <strong>defense in depth</strong>
+                (phòng thủ nhiều lớp).</p>
+            </div>
+        </div>
+
+        <div class="callout callout--success">
+            <div class="callout__title">✅ Tóm tắt CN01</div>
+            <div class="callout__body">
+                <ul>
+                    <li>3 file: <code class="inline">_tt</code> (logic), <code class="inline">_ui</code> (giao diện Tkinter), <code class="inline">_dk</code> (cầu nối).</li>
+                    <li>Form đăng nhập là <strong>Toplevel modal</strong> — dùng <code class="inline">transient</code> + <code class="inline">grab_set</code> + <code class="inline">wait_window</code>.</li>
+                    <li>Phân quyền 2 lớp: UI vô hiệu nút + thuật toán kiểm tra <code class="inline">la_admin</code>.</li>
+                    <li>Tài khoản mặc định: <code class="inline">admin/123</code> (toàn quyền) + <code class="inline">nhanvien/123</code> (hạn chế).</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="page-nav"></div>
+
+    </div>
+
+    <footer class="footer">
+        <p>CN01 — Đăng nhập + Phân quyền | Học đồ án QLNS</p>
+    </footer>
+</main>
+
+<script src="../js/highlight.js"></script>
+<script src="../js/main.js"></script>
+
+</body>
+</html>

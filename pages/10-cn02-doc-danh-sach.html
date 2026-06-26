@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CN02: Đọc danh sách sản phẩm — Học đồ án QLNS</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header class="header">
+    <a href="../index.html" class="header__brand">
+        <span class="header__brand-icon">📚</span>
+        <span>Học đồ án QLNS</span>
+    </a>
+    <div class="header__search">
+        <span class="header__search-icon">🔍</span>
+        <input type="text" placeholder="Tìm bài học...">
+    </div>
+    <button class="header__menu-toggle" type="button">☰</button>
+</header>
+
+<aside class="sidebar"></aside>
+
+<main class="main">
+    <div class="content">
+
+        <h1>📋 CN02: Đọc danh sách sản phẩm</h1>
+
+        <p>Đây là chức năng <strong>phổ biến nhất</strong> — đọc toàn bộ sản phẩm từ DSLK đôi và
+        hiển thị lên bảng Treeview. Cứ mỗi lần thêm/sửa/xóa/undo/redo, hệ thống đều gọi lại
+        chức năng này để cập nhật bảng.</p>
+
+        <div class="callout callout--info">
+            <div class="callout__title">📖 Mô tả yêu cầu barem</div>
+            <div class="callout__body">
+                <p><strong>Nhóm 2 — Đọc danh sách:</strong> Khi đăng nhập thành công, bảng dữ liệu
+                hiển thị toàn bộ sản phẩm (mã, tên, loại, giá, tồn kho, giá bán, thông tin riêng).
+                Định dạng giá tiền có dấu phẩy hàng nghìn, dễ đọc.</p>
+            </div>
+        </div>
+
+        <div class="toc">
+            <div class="toc__title">📑 Mục lục</div>
+            <ol>
+                <li><a href="#cau-truc">Cấu trúc folder cn02</a></li>
+                <li><a href="#tt">File _tt: lay_danh_sach</a></li>
+                <li><a href="#ui">File _ui: BangSanPhamUI (Treeview)</a></li>
+                <li><a href="#dk">File _dk: DieuKhienDocDanhSach</a></li>
+                <li><a href="#treeview">Cú pháp Treeview</a></li>
+                <li><a href="#tong-tien">Format tiền: f-string <code>{x:,.0f}</code></a></li>
+            </ol>
+        </div>
+
+        <h2 id="cau-truc">1. Cấu trúc folder cn02</h2>
+
+        <pre data-file="chuc_nang/cn02_doc_danh_sach/"><code>cn02_doc_danh_sach/
+├── __init__.py
+├── doc_danh_sach_tt.py     ← Hàm lay_danh_sach
+├── doc_danh_sach_ui.py     ← Lớp BangSanPhamUI (Treeview)
+└── doc_danh_sach_dk.py     ← Lớp DieuKhienDocDanhSach</code></pre>
+
+        <h2 id="tt">2. File _tt: lay_danh_sach</h2>
+
+        <p>File thuật toán rất ngắn — chỉ gọi hàm <code class="inline">chuyen_thanh_danh_sach()</code>
+        của DSLK đôi (đã học ở bài DSLK).</p>
+
+        <pre data-file="doc_danh_sach_tt.py"><code># Import lớp DSLK đôi từ thư viện thuật toán.
+from loi_thuat_toan.danh_sach_lien_ket import DoublyLinkedList
+
+
+def lay_danh_sach(danh_sach: DoublyLinkedList):
+    """
+    Đọc toàn bộ mặt hàng trong DSLK đôi và trả về list dict.
+
+    Tham số:
+        danh_sach : đối tượng DoublyLinkedList chứa các MatHang.
+
+    Trả về:
+        List[dict] — mỗi dict là 1 mặt hàng.
+        Trả về [] nếu lỗi hoặc DSLK rỗng.
+    """
+    try:
+        # Nếu DSLK chưa khởi tạo → trả về danh sách rỗng.
+        if danh_sach is None:
+            return []
+        # Gọi hàm có sẵn của DoublyLinkedList để chuyển DSLK → list dict.
+        return danh_sach.chuyen_thanh_danh_sach()
+    except Exception as loi:
+        # Lỗi bất kỳ → in ra + trả về danh sách rỗng để UI không bị crash.
+        print(f'[LOI doc_danh_sach] {loi}')
+        return []</code></pre>
+
+        <h3>Giải thích cú pháp</h3>
+
+        <h4>2.1. Type hint <code class="inline">danh_sach: DoublyLinkedList</code></h4>
+        <p>Dấu hai chấm <code class="inline">:</code> khai báo kiểu dữ liệu tham số. Đây chỉ là
+        <strong>gợi ý</strong> (Python không ép buộc) — giúp người đọc biết tham số phải là
+        DoublyLinkedList, không phải int hay str.</p>
+
+        <h4>2.2. Try-except bảo vệ UI</h4>
+        <p>Khi gọi hàm đọc dữ liệu, có thể xảy ra lỗi (DSLK chưa khởi tạo, Node bị tham chiếu rác,
+        v.v.). Bọc trong try-except để khi lỗi, hàm trả về <code class="inline">[]</code> thay vì
+        crash — UI sẽ hiển thị bảng trống thay vì sập toàn app.</p>
+
+        <div class="callout callout--warning">
+            <div class="callout__title">⚠️ Nguyên tắc: Không bao giờ để UI crash</div>
+            <div class="callout__body">
+                <p>Mọi hàm thuật toán có thể gây lỗi đều phải bọc try-except. Khi lỗi:</p>
+                <ol>
+                    <li>In lỗi ra console (<code class="inline">print(...)</code>) để dev debug.</li>
+                    <li>Trả về giá trị an toàn (<code class="inline">[]</code>, <code class="inline">{}</code>,
+                    <code class="inline">None</code>, <code class="inline">False</code>).</li>
+                </ol>
+                <p>UI chỉ cần kiểm tra giá trị trả về — không cần try-except lại.</p>
+            </div>
+        </div>
+
+        <h2 id="ui">3. File _ui: BangSanPhamUI (Treeview)</h2>
+
+        <p>Đây là phần quan trọng nhất — tạo <strong>bảng Treeview</strong> để hiển thị danh sách
+        sản phẩm. Treeview là widget tiêu chuẩn của Tkinter cho bảng dữ liệu.</p>
+
+        <pre data-file="doc_danh_sach_ui.py"><code>import tkinter as tk
+from tkinter import ttk
+
+
+class BangSanPhamUI:
+    """Bảng dữ liệu sản phẩm dùng Treeview."""
+
+    # Định nghĩa cột của bảng — dùng tuple để gọn.
+    COT = ('ma', 'ten', 'loai', 'gia_cb', 'ton', 'gia_ban', 'rieng')
+
+    def __init__(self, parent):
+        """Tạo bảng Treeview trong parent."""
+        # Tạo Treeview với 7 cột, show='headings' để ẩn cột #0 (cây).
+        self.tree = ttk.Treeview(parent, columns=self.COT, show='headings', height=15)
+
+        # Định nghĩa header (tiêu đề cột) + căn lề + độ rộng.
+        self.tree.heading('ma', text='Mã số')
+        self.tree.heading('ten', text='Tên sản phẩm')
+        self.tree.heading('loai', text='Loại')
+        self.tree.heading('gia_cb', text='Giá cơ bản')
+        self.tree.heading('ton', text='Tồn kho')
+        self.tree.heading('gia_ban', text='Giá bán (đã tính)')
+        self.tree.heading('rieng', text='Thông tin riêng')
+        self.tree.column('ma', width=70, anchor='center')
+        self.tree.column('ten', width=200)
+        self.tree.column('loai', width=80, anchor='center')
+        self.tree.column('gia_cb', width=100, anchor='e')
+        self.tree.column('ton', width=70, anchor='center')
+        self.tree.column('gia_ban', width=110, anchor='e')
+        self.tree.column('rieng', width=250)
+
+        # Tạo scrollbar dọc để cuộn danh sách dài.
+        scrollbar = ttk.Scrollbar(parent, orient='vertical', command=self.tree.yview)
+        self.tree.configure(yscrollcommand=scrollbar.set)
+
+        # Đặt widget vào parent: tree bên trái, scrollbar bên phải.
+        self.tree.pack(side='left', fill='both', expand=True)
+        scrollbar.pack(side='right', fill='y')
+
+    def xoa_tat_ca_dong(self):
+        """Xóa toàn bộ dòng trong bảng — dùng trước khi vẽ lại."""
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+
+    def them_dong(self, sp_dict):
+        """Thêm 1 dòng vào bảng từ dict sản phẩm."""
+        rieng = self._str_truong_rieng(sp_dict)
+        gia_cb  = f"{sp_dict.get('gia_co_ban', 0):,.0f}"
+        gia_ban = f"{sp_dict.get('gia_ban', 0):,.0f}"
+        self.tree.insert('', 'end', values=(
+            sp_dict.get('ma_so', ''),
+            sp_dict.get('ten_san_pham', ''),
+            sp_dict.get('loai_hang', ''),
+            gia_cb,
+            sp_dict.get('ton_kho', 0),
+            gia_ban,
+            rieng
+        ))
+
+    def lay_ma_dang_chon(self):
+        """Trả về mã số của dòng đang được chọn. None nếu chưa chọn."""
+        selected = self.tree.selection()
+        if not selected:
+            return None
+        values = self.tree.item(selected[0], 'values')
+        return values[0]   # values[0] là cột "Mã số"
+
+    def _str_truong_rieng(self, sp):
+        """Tạo chuỗi hiển thị thông tin riêng theo loại hàng."""
+        loai = sp.get('loai_hang', '')
+        if loai == 'Sách':
+            return f"Tác giả: {sp.get('tac_gia', '')} | NXB: {sp.get('nha_xuat_ban', '')}"
+        elif loai == 'Tạp chí':
+            return f"Số phát hành: {sp.get('so_phat_hanh', '')}"
+        elif loai == 'Báo giấy':
+            return f"Ngày XB: {sp.get('ngay_xuat_ban', '')}"
+        elif loai == 'Luận văn':
+            return f"Tác giả: {sp.get('tac_gia', '')} | Trường: {sp.get('truong_dai_hoc', '')}"
+        elif loai == 'Bản thảo':
+            return f"Tác giả: {sp.get('tac_gia', '')} | TT: {sp.get('tinh_trang', '')}"
+        return ''</code></pre>
+
+        <h2 id="dk">4. File _dk: DieuKhienDocDanhSach</h2>
+
+        <pre data-file="doc_danh_sach_dk.py"><code>from .doc_danh_sach_tt import lay_danh_sach
+from loi_thuat_toan.danh_sach_lien_ket import DoublyLinkedList
+
+
+class DieuKhienDocDanhSach:
+    """Lớp điều khiển — gắn kết UI và thuật toán đọc danh sách."""
+
+    def __init__(self, ui_bang, danh_sach: DoublyLinkedList):
+        self.ui = ui_bang
+        self.danh_sach = danh_sach
+
+    def nap_lai(self):
+        """Đọc toàn bộ danh sách từ DSLK → vẽ lại bảng."""
+        ds = lay_danh_sach(self.danh_sach)
+        self.ui.xoa_tat_ca_dong()
+        for sp in ds:
+            self.ui.them_dong(sp)
+        return len(ds)   # Trả về số lượng để caller hiển thị thanh trạng thái
+
+    def hien_thi_danh_sach(self, ds_dict):
+        """Hiển thị 1 list dict bất kỳ lên bảng (không tải lại từ DSLK)."""
+        self.ui.xoa_tat_ca_dong()
+        for sp in ds_dict:
+            self.ui.them_dong(sp)
+        return len(ds_dict)
+
+    def lay_ma_dang_chon(self):
+        """Trả về mã số dòng đang chọn — dùng cho Sửa/Xóa/Thêm vào giỏ."""
+        return self.ui.lay_ma_dang_chon()</code></pre>
+
+        <p><strong>2 hàm khác nhau:</strong></p>
+        <ul>
+            <li><code class="inline">nap_lai()</code>: đọc lại từ DSLK toàn cục → vẽ lại bảng.
+            Dùng sau khi thêm/sửa/xóa/undo/redo.</li>
+            <li><code class="inline">hien_thi_danh_sach(ds_dict)</code>: hiển thị list dict tùy ý
+            (không tải từ DSLK). Dùng cho kết quả tìm kiếm/sắp xếp.</li>
+        </ul>
+
+        <h2 id="treeview">5. Cú pháp Treeview</h2>
+
+        <h3>5.1. Tạo Treeview</h3>
+        <pre data-file="Tạo Treeview"><code>self.tree = ttk.Treeview(parent, columns=COT, show='headings', height=15)</code></pre>
+
+        <p>Các tham số quan trọng:</p>
+        <ul>
+            <li><code class="inline">parent</code>: widget cha chứa Treeview.</li>
+            <li><code class="inline">columns</code>: tuple tên các cột (VD: <code class="inline">('ma', 'ten', 'loai')</code>).</li>
+            <li><code class="inline">show='headings'</code>: chỉ hiển thị phần header — ẩn cột
+            <code class="inline">#0</code> (cột cây mặc định của Treeview). Nếu muốn Treeview
+            hoạt động như cây thư mục thì dùng <code class="inline">show='tree headings'</code>.</li>
+            <li><code class="inline">height=15</code>: số dòng hiển thị (15 dòng). Nếu nhiều hơn,
+            sẽ có scrollbar cuộn.</li>
+        </ul>
+
+        <h3>5.2. Định nghĩa header + cột</h3>
+        <pre data-file="Header + column"><code># Đặt tên hiển thị cho header
+self.tree.heading('ma', text='Mã số')
+self.tree.heading('ten', text='Tên sản phẩm')
+
+# Cấu hình cột: độ rộng + căn lề
+self.tree.column('ma', width=70, anchor='center')
+self.tree.column('ten', width=200)
+self.tree.column('gia_cb', width=100, anchor='e')</code></pre>
+
+        <p><strong>anchor</strong> (căn lề trong cell):</p>
+        <ul>
+            <li><code class="inline">'w'</code>: trái (West)</li>
+            <li><code class="inline">'e'</code>: phải (East) — dùng cho số tiền</li>
+            <li><code class="inline">'center'</code>: giữa</li>
+            <li><code class="inline">'n'</code>, <code class="inline">'s'</code>: trên, dưới</li>
+        </ul>
+
+        <h3>5.3. Thêm dòng</h3>
+        <pre data-file="insert"><code>self.tree.insert('', 'end', values=('MH001', 'Truyện Kiều', 'Sách', 50000, 20, 55000, 'Tác giả: Nguyễn Du'))</code></pre>
+
+        <ul>
+            <li>Tham số 1 (<code class="inline">''</code>): ID của Node cha. <code class="inline">''</code>
+            = root (dòng cấp cao nhất).</li>
+            <li>Tham số 2 (<code class="inline">'end'</code>): vị trí — <code class="inline">'end'</code>
+            = cuối danh sách. Có thể dùng <code class="inline">'0'</code>, <code class="inline">'1'</code>
+            để chèn vào vị trí cụ thể.</li>
+            <li><code class="inline">values=(...)</code>: tuple chứa giá trị các cột theo thứ tự
+            đã khai báo trong <code class="inline">columns</code>.</li>
+        </ul>
+
+        <h3>5.4. Lấy danh sách dòng</h3>
+        <pre data-file="get_children"><code># Lấy tất cả ID dòng trong Treeview
+for item in self.tree.get_children():
+    self.tree.delete(item)   # Xóa từng dòng</code></pre>
+
+        <p><code class="inline">get_children()</code> trả về tuple các ID dòng. Để xóa toàn bộ,
+        lặp qua từng ID và gọi <code class="inline">delete(item)</code>.</p>
+
+        <h3>5.5. Lấy dòng đang chọn</h3>
+        <pre data-file="selection"><code>selected = self.tree.selection()      # Tuple ID dòng đang chọn
+if not selected:
+    return None
+values = self.tree.item(selected[0], 'values')   # Lấy tuple values
+ma_so = values[0]                                # values[0] = cột đầu tiên</code></pre>
+
+        <p><strong>Lưu ý:</strong> <code class="inline">selection()</code> trả về <strong>tuple</strong>
+        (vì Treeview hỗ trợ chọn nhiều dòng). Muốn lấy 1 dòng đầu tiên, dùng
+        <code class="inline">selected[0]</code>.</p>
+
+        <h3>5.6. Scrollbar cho Treeview</h3>
+        <pre data-file="Scrollbar"><code># Tạo scrollbar dọc
+scrollbar = ttk.Scrollbar(parent, orient='vertical', command=self.tree.yview)
+# Kết nối: khi cuộn scrollbar → cuộn tree
+self.tree.configure(yscrollcommand=scrollbar.set)
+
+# Đặt widget: tree trái, scrollbar phải
+self.tree.pack(side='left', fill='both', expand=True)
+scrollbar.pack(side='right', fill='y')</code></pre>
+
+        <p><strong>2 dòng kết nối 2 chiều:</strong></p>
+        <ul>
+            <li><code class="inline">command=self.tree.yview</code>: khi user kéo scrollbar →
+            tree cuộn theo.</li>
+            <li><code class="inline">yscrollcommand=scrollbar.set</code>: khi tree cuộn (bằng
+            phím, mouse wheel) → scrollbar cập nhật vị trí.</li>
+        </ul>
+
+        <h2 id="tong-tien">6. Format tiền: f-string <code>{x:,.0f}</code></h2>
+
+        <p>Trong <code class="inline">them_dong</code>, có dòng:</p>
+        <pre data-file="Format tiền"><code>gia_cb = f"{sp_dict.get('gia_co_ban', 0):,.0f}"
+# 50000 → '50,000'
+# 1200000 → '1,200,000'</code></pre>
+
+        <h3>Giải thích cú pháp format</h3>
+        <p><code class="inline">f"{x:,.0f}"</code> là f-string với format spec:</p>
+        <ul>
+            <li><code class="inline">,</code>: thêm dấu phẩy hàng nghìn (1000 → 1,000).</li>
+            <li><code class="inline">.0f</code>: làm tròn 0 chữ số thập phân (f = float).</li>
+        </ul>
+
+        <p>Các ví dụ khác:</p>
+        <pre data-file="Format examples"><code>x = 1234567.891
+
+f"{x:,.0f}"     # '1,234,568'      (0 số thập phân)
+f"{x:,.2f}"     # '1,234,567.89'   (2 số thập phân)
+f"{x:,.2e}"     # '1.23e+06'       (ký hiệu khoa học)
+f"{x:>15,.0f}"  # '      1,234,568' (căn phải, rộng 15 ký tự)
+f"{x:<15,.0f}"  # '1,234,568      ' (căn trái)
+f"{x:^15,.0f}"  # '   1,234,568   ' (căn giữa)</code></pre>
+
+        <div class="callout callout--tip">
+            <div class="callout__title">💡 Hàm <code>format()</code> cũng tương tự</div>
+            <div class="callout__body">
+                <p>Nếu không dùng f-string, có thể dùng hàm <code class="inline">format()</code>:</p>
+                <pre data-file="format() function"><code>gia_cb = format(50000, ',.0f')   # '50,000'
+# Tương đương: f"{50000:,.0f}"</code></pre>
+            </div>
+        </div>
+
+        <div class="callout callout--success">
+            <div class="callout__title">✅ Tóm tắt CN02</div>
+            <div class="callout__body">
+                <ul>
+                    <li>Thuật toán rất ngắn: chỉ gọi <code class="inline">chuyen_thanh_danh_sach()</code> của DSLK.</li>
+                    <li>UI tạo Treeview 7 cột với scrollbar dọc.</li>
+                    <li>Điều khiển có 2 hàm: <code class="inline">nap_lai()</code> (tải từ DSLK) và
+                    <code class="inline">hien_thi_danh_sach()</code> (hiển thị list tùy ý).</li>
+                    <li>Format tiền: <code class="inline">f"{x:,.0f}"</code> → dấu phẩy hàng nghìn.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="page-nav"></div>
+
+    </div>
+
+    <footer class="footer">
+        <p>CN02 — Đọc danh sách sản phẩm | Học đồ án QLNS</p>
+    </footer>
+</main>
+
+<script src="../js/highlight.js"></script>
+<script src="../js/main.js"></script>
+
+</body>
+</html>

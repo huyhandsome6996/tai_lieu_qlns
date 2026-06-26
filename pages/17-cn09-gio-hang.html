@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CN09: Giỏ hàng + Thanh toán (Queue FIFO) — Học đồ án QLNS</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header class="header">
+    <a href="../index.html" class="header__brand">
+        <span class="header__brand-icon">📚</span>
+        <span>Học đồ án QLNS</span>
+    </a>
+    <div class="header__search">
+        <span class="header__search-icon">🔍</span>
+        <input type="text" placeholder="Tìm bài học...">
+    </div>
+    <button class="header__menu-toggle" type="button">☰</button>
+</header>
+
+<aside class="sidebar"></aside>
+
+<main class="main">
+    <div class="content">
+
+        <h1>🛒 CN09: Giỏ hàng + Thanh toán (Queue FIFO)</h1>
+
+        <p>Đây là chức năng cuối cùng, áp dụng cấu trúc <strong>Queue FIFO</strong>. Khách chọn
+        sản phẩm trong bảng chính → enqueue vào giỏ. Khi thanh toán, hệ thống dequeue toàn bộ theo
+        thứ tự FIFO (món nào vào trước ra trước) → tính tổng tiền → hiện hóa đơn.</p>
+
+        <div class="callout callout--info">
+            <div class="callout__title">📖 Mô tả yêu cầu barem</div>
+            <div class="callout__body">
+                <p><strong>Nhóm 9 — Giỏ hàng + Thanh toán:</strong> Hệ thống dùng Queue FIFO. Khi
+                khách thêm sản phẩm vào giỏ → enqueue. Khi thanh toán → dequeue toàn bộ → tính tổng
+                tiền (dùng đa hình <code class="inline">tinh_gia_ban()</code>) → hiện hóa đơn chi tiết.</p>
+            </div>
+        </div>
+
+        <div class="toc">
+            <div class="toc__title">📑 Mục lục</div>
+            <ol>
+                <li><a href="#cau-truc">Cấu trúc folder cn09</a></li>
+                <li><a href="#tt">File _tt: 4 hàm thao tác giỏ hàng</a></li>
+                <li><a href="#ui">File _ui: KhungGioHangUI</a></li>
+                <li><a href="#dk">File _dk: DieuKhienGioHang</a></li>
+                <li><a href="#da-hinh">Đa hình khi tính tổng tiền</a></li>
+                <li><a href="#callback">Callback lấy mã đang chọn bảng chính</a></li>
+            </ol>
+        </div>
+
+        <h2 id="cau-truc">1. Cấu trúc folder cn09</h2>
+
+        <pre data-file="chuc_nang/cn09_gio_hang/"><code>cn09_gio_hang/
+├── __init__.py
+├── gio_hang_tt.py     ← 4 hàm: them_vao_gio, xem_gio_hang, xoa_khoi_gio, thanh_toan
+├── gio_hang_ui.py     ← Lớp KhungGioHangUI
+└── gio_hang_dk.py     ← Lớp DieuKhienGioHang</code></pre>
+
+        <h2 id="tt">2. File _tt: 4 hàm thao tác giỏ hàng</h2>
+
+        <pre data-file="gio_hang_tt.py"><code>from loi_thuat_toan.cau_truc_du_lieu import HangDoi
+from loi_thuat_toan.danh_sach_lien_ket import DoublyLinkedList
+
+
+# ============================================================
+# THÊM VÀO GIỎ (ENQUEUE)
+# ============================================================
+def them_vao_gio(danh_sach, gio_hang, ma_so):
+    """Enqueue 1 sản phẩm vào giỏ hàng."""
+    try:
+        # Tìm sản phẩm trong DSLK
+        sp = danh_sach.tim_theo_ma_so(ma_so)
+        if sp is None:
+            return False, f'Không tìm thấy sản phẩm mã {ma_so}.'
+
+        # Tạo dict món hàng (chỉ lấy thông tin cần thiết)
+        mon = {
+            'ma_so':        sp.ma_so,
+            'ten_san_pham': sp.ten_san_pham,
+            'gia_ban':      sp.tinh_gia_ban(),   # ← ĐA HÌNH
+            'loai_hang':    sp.loai_hang
+        }
+        # Enqueue vào cuối hàng đợi
+        gio_hang.them_vao(mon)
+        return True, f'Đã thêm "{sp.ten_san_pham}" vào giỏ.'
+    except Exception as loi:
+        return False, f'Lỗi: {loi}'
+
+
+# ============================================================
+# XEM GIỎ HÀNG
+# ============================================================
+def xem_gio_hang(gio_hang):
+    """Xem toàn bộ giỏ + tính tổng tiền."""
+    try:
+        # Lấy list dict các món trong giỏ (theo thứ tự FIFO)
+        ds = gio_hang.xem_danh_sach()
+        # Tính tổng tiền — cộng dồn gia_ban của từng món
+        tong = sum(mon.get('gia_ban', 0) for mon in ds)
+        return ds, tong, gio_hang.so_luong
+    except Exception as loi:
+        print(f'[LOI xem_gio_hang] {loi}')
+        return [], 0, 0
+
+
+# ============================================================
+# XÓA KHỎI GIỎ
+# ============================================================
+def xoa_khoi_gio(gio_hang, ma_so):
+    """Xóa 1 món khỏi giỏ theo mã số (user đổi ý)."""
+    try:
+        if gio_hang.xoa_theo_ma(ma_so):
+            return True, f'Đã xóa "{ma_so}" khỏi giỏ.'
+        return False, f'Không có "{ma_so}" trong giỏ.'
+    except Exception as loi:
+        return False, f'Lỗi: {loi}'
+
+
+# ============================================================
+# THANH TOÁN (DEQUEUE ALL)
+# ============================================================
+def thanh_toan(gio_hang):
+    """Dequeue toàn bộ giỏ → trả hóa đơn chi tiết."""
+    try:
+        if gio_hang.rong():
+            return False, 'Giỏ hàng trống.', None
+
+        # Dequeue toàn bộ — lấy từng món từ đầu hàng đến khi rỗng
+        cac_mon = []
+        tong = 0
+        while not gio_hang.rong():
+            mon = gio_hang.lay_ra()   # Dequeue từ đầu (FIFO)
+            cac_mon.append(mon)
+            tong += mon.get('gia_ban', 0)
+
+        # Gói hóa đơn
+        hoa_don = {
+            'cac_mon':   cac_mon,
+            'tong_tien': tong,
+            'so_mon':    len(cac_mon)
+        }
+        return True, f'Đã thanh toán {len(cac_mon)} món, tổng {tong:,.0f}đ.', hoa_don
+    except Exception as loi:
+        return False, f'Lỗi: {loi}', None</code></pre>
+
+        <h3>4 hàm tương ứng 4 thao tác Queue</h3>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Hàm</th>
+                        <th>Thao tác Queue</th>
+                        <th>Mô tả</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>them_vao_gio</code></td>
+                        <td>Enqueue (thêm vào cuối)</td>
+                        <td>Tìm sp trong DSLK → tạo dict → enqueue</td>
+                    </tr>
+                    <tr>
+                        <td><code>xem_gio_hang</code></td>
+                        <td>Peek all (xem tất cả, không xóa)</td>
+                        <td>Trả về list dict + tổng tiền</td>
+                    </tr>
+                    <tr>
+                        <td><code>xoa_khoi_gio</code></td>
+                        <td>Xóa theo mã (không phải dequeue)</td>
+                        <td>Khách đổi ý, bỏ 1 món bất kỳ</td>
+                    </tr>
+                    <tr>
+                        <td><code>thanh_toan</code></td>
+                        <td>Dequeue all (lấy toàn bộ)</td>
+                        <td>Lấy từng món từ đầu → tính tổng → trả hóa đơn</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h2 id="ui">3. File _ui: KhungGioHangUI</h2>
+
+        <pre data-file="gio_hang_ui.py"><code>from tkinter import ttk
+
+
+class KhungGioHangUI:
+    """Khung giỏ hàng + nút thanh toán."""
+
+    def __init__(self, parent):
+        # LabelFrame có tiêu đề + icon giỏ hàng
+        frame = ttk.LabelFrame(parent, text='🛒 Giỏ hàng (Queue FIFO)', padding=10)
+        frame.pack(fill='both', expand=True)
+        self.frame = frame
+
+        # === BẢNG TREEVIEW CHỨA MÓN TRONG GIỎ ===
+        columns_gio = ('ma', 'ten', 'gia', 'loai')
+        self.tree_gio = ttk.Treeview(frame, columns=columns_gio, show='headings', height=8)
+        self.tree_gio.heading('ma', text='Mã')
+        self.tree_gio.heading('ten', text='Tên')
+        self.tree_gio.heading('gia', text='Giá bán')
+        self.tree_gio.heading('loai', text='Loại')
+        self.tree_gio.column('ma', width=60, anchor='center')
+        self.tree_gio.column('ten', width=150)
+        self.tree_gio.column('gia', width=90, anchor='e')
+        self.tree_gio.column('loai', width=70, anchor='center')
+        self.tree_gio.pack(fill='both', expand=True)
+
+        # === KHUNG CHỨA 3 NÚT BẤM ===
+        frame_nut = ttk.Frame(frame)
+        frame_nut.pack(fill='x', pady=5)
+
+        self.btn_them = ttk.Button(frame_nut, text='+ Thêm vào giỏ')
+        self.btn_them.pack(side='left', padx=2)
+
+        self.btn_xoa = ttk.Button(frame_nut, text='- Bỏ khỏi giỏ')
+        self.btn_xoa.pack(side='left', padx=2)
+
+        self.btn_thanh_toan = ttk.Button(frame_nut, text='💰 Thanh toán')
+        self.btn_thanh_toan.pack(side='right', padx=2)
+
+        # Label tổng tiền — màu xanh, font bold
+        self.lbl_tong_gio = ttk.Label(frame, text='Tổng: 0đ (0 món)',
+                                       font=('Arial', 11, 'bold'), foreground='green')
+        self.lbl_tong_gio.pack(side='right', pady=5, padx=10)
+
+    def xoa_tat_ca_dong(self):
+        for item in self.tree_gio.get_children():
+            self.tree_gio.delete(item)
+
+    def them_dong(self, mon_dict):
+        self.tree_gio.insert('', 'end', values=(
+            mon_dict.get('ma_so', ''),
+            mon_dict.get('ten_san_pham', ''),
+            f"{mon_dict.get('gia_ban', 0):,.0f}",
+            mon_dict.get('loai_hang', '')
+        ))
+
+    def lay_ma_dang_chon(self):
+        selected = self.tree_gio.selection()
+        if not selected:
+            return None
+        values = self.tree_gio.item(selected[0], 'values')
+        return values[0]
+
+    def cap_nhat_tong(self, tong_tien, so_luong):
+        self.lbl_tong_gio.config(text=f'Tổng: {tong_tien:,.0f}đ ({so_luong} món)')</code></pre>
+
+        <h2 id="dk">4. File _dk: DieuKhienGioHang</h2>
+
+        <pre data-file="gio_hang_dk.py"><code>from .gio_hang_tt import them_vao_gio, xem_gio_hang, xoa_khoi_gio, thanh_toan
+from tkinter import messagebox
+
+
+class DieuKhienGioHang:
+    def __init__(self, ui_gio, danh_sach, gio_hang):
+        self.ui = ui_gio
+        self.danh_sach = danh_sach
+        self.gio_hang = gio_hang
+
+    def gan_su_kien(self, lay_ma_dang_chon_bang_chinh):
+        """Gắn command cho 3 nút + lưu callback."""
+        self._lay_ma_bang_chinh = lay_ma_dang_chon_bang_chinh
+        self.ui.btn_them.config(command=self.xu_ly_them_vao_gio)
+        self.ui.btn_xoa.config(command=self.xu_ly_xoa_khoi_gio)
+        self.ui.btn_thanh_toan.config(command=self.xu_ly_thanh_toan)
+
+    def xu_ly_them_vao_gio(self):
+        """Enqueue sản phẩm đang chọn trong bảng chính vào giỏ."""
+        ma = self._lay_ma_bang_chinh()
+        if not ma:
+            messagebox.showwarning('Chưa chọn', 'Vui lòng chọn 1 dòng trong bảng sản phẩm.')
+            return
+        ok, msg = them_vao_gio(self.danh_sach, self.gio_hang, ma)
+        if ok:
+            self.cap_nhat_gio_hang()
+        else:
+            messagebox.showerror('Lỗi', msg)
+
+    def xu_ly_xoa_khoi_gio(self):
+        """Xóa 1 món đang chọn trong bảng giỏ."""
+        ma = self.ui.lay_ma_dang_chon()
+        if not ma:
+            messagebox.showwarning('Chưa chọn', 'Vui lòng chọn món cần bỏ trong giỏ.')
+            return
+        ok, msg = xoa_khoi_gio(self.gio_hang, ma)
+        if ok:
+            self.cap_nhat_gio_hang()
+        else:
+            messagebox.showerror('Lỗi', msg)
+
+    def xu_ly_thanh_toan(self):
+        """Dequeue toàn bộ giỏ → hiện hóa đơn."""
+        ok, msg, hoa_don = thanh_toan(self.gio_hang)
+        if ok:
+            # Tạo chuỗi chi tiết hóa đơn
+            chi_tiet = '\n'.join([f"  - {m['ten_san_pham']}: {m['gia_ban']:,.0f}đ"
+                                   for m in hoa_don['cac_mon']])
+            messagebox.showinfo(
+                'Thanh toán thành công',
+                f"{msg}\n\nChi tiết:\n{chi_tiet}\n\nTổng: {hoa_don['tong_tien']:,.0f}đ"
+            )
+            self.cap_nhat_gio_hang()
+        else:
+            messagebox.showwarning('Thông báo', msg)
+
+    def cap_nhat_gio_hang(self):
+        """Vẽ lại bảng giỏ + cập nhật label tổng tiền."""
+        ds, tong, so_luong = xem_gio_hang(self.gio_hang)
+        self.ui.xoa_tat_ca_dong()
+        for mon in ds:
+            self.ui.them_dong(mon)
+        self.ui.cap_nhat_tong(tong, so_luong)</code></pre>
+
+        <h2 id="da-hinh">5. Đa hình khi tính tổng tiền</h2>
+
+        <p>Trong <code class="inline">them_vao_gio</code> có dòng:</p>
+
+        <pre data-file="Đa hình"><code>mon = {
+    'ma_so':        sp.ma_so,
+    'ten_san_pham': sp.ten_san_pham,
+    'gia_ban':      sp.tinh_gia_ban(),   # ← ĐA HÌNH ở đây!
+    'loai_hang':    sp.loai_hang
+}</code></pre>
+
+        <p>Cùng 1 lời gọi <code class="inline">sp.tinh_gia_ban()</code>, nhưng tùy loại đối tượng:</p>
+        <ul>
+            <li>Nếu <code class="inline">sp</code> là <code class="inline">Sach</code> → <code class="inline">gia × 1.1</code></li>
+            <li>Nếu <code class="inline">sp</code> là <code class="inline">TapChi</code> → <code class="inline">gia × 1.05</code></li>
+            <li>Nếu <code class="inline">sp</code> là <code class="inline">BaoGiay</code> → <code class="inline">gia × 1.0</code></li>
+            <li>Nếu <code class="inline">sp</code> là <code class="inline">LuanVan</code> → <code class="inline">gia × 1.2</code></li>
+            <li>Nếu <code class="inline">sp</code> là <code class="inline">BanThao</code> → <code class="inline">gia × 1.15</code></li>
+        </ul>
+
+        <p>Đây là <strong>đa hình OOP</strong> — code chỉ 1 dòng nhưng xử lý đúng cho 5 loại.</p>
+
+        <h3>Tính tổng tiền trong thanh_toan</h3>
+
+        <pre data-file="Tính tổng"><code>tong = 0
+while not gio_hang.rong():
+    mon = gio_hang.lay_ra()                # Dequeue từ đầu
+    cac_mon.append(mon)
+    tong += mon.get('gia_ban', 0)          # Cộng dồn giá bán</code></pre>
+
+        <p>Vì mỗi món trong giỏ đã lưu sẵn <code class="inline">gia_ban</code> (đã tính đa hình
+        lúc enqueue), nên khi thanh toán chỉ cần cộng dồn — không cần tính lại.</p>
+
+        <h2 id="callback">6. Callback lấy mã đang chọn bảng chính</h2>
+
+        <p>Đây là pattern thú vị: nút "Thêm vào giỏ" cần biết <strong>mã sản phẩm đang chọn trong
+        bảng chính</strong> — nhưng bảng chính không nằm trong khung giỏ hàng!</p>
+
+        <p>Giải pháp: truyền 1 <strong>callback</strong> vào Điều khiển giỏ hàng:</p>
+
+        <pre data-file="Callback pattern"><code># Trong cua_so_chinh_dk.py
+self.dk_gio_hang.gan_su_kien(
+    lay_ma_dang_chon_bang_chinh=self.ui.ui_bang.lay_ma_dang_chon
+)
+
+# Trong DieuKhienGioHang.xu_ly_them_vao_gio
+def xu_ly_them_vao_gio(self):
+    # Gọi callback để lấy mã đang chọn trong bảng chính
+    ma = self._lay_ma_bang_chinh()
+    if not ma:
+        messagebox.showwarning('Chưa chọn', '...')
+        return
+    # ... gọi them_vao_gio</code></pre>
+
+        <p>Callback <code class="inline">self.ui.ui_bang.lay_ma_dang_chon</code> là method của
+        <code class="inline">BangSanPhamUI</code> — trả về mã của dòng đang chọn trong Treeview
+        bảng chính. Khi gọi <code class="inline">self._lay_ma_bang_chinh()</code> (có dấu ngoặc),
+        nó thực thi callback đó.</p>
+
+        <div class="callout callout--tip">
+            <div class="callout__title">💡 Tại sao dùng callback?</div>
+            <div class="callout__body">
+                <p>Vì <code class="inline">DieuKhienGioHang</code> được khởi tạo trước khi bảng
+                chính có dữ liệu. Nó không nên giữ reference trực tiếp đến bảng chính (lặp vòng).
+                Truyền callback giúp module giỏ hàng <strong>không cần biết</strong> bảng chính là
+                gì — chỉ cần gọi callback là lấy được mã.</p>
+                <p>Đây là pattern <strong>dependency injection</strong> — giảm phụ thuộc giữa các module.</p>
+            </div>
+        </div>
+
+        <h2>Ví dụ hóa đơn</h2>
+
+        <p>Khi user nhấn "💰 Thanh toán", hệ thống dequeue toàn bộ giỏ và hiện messagebox:</p>
+
+        <pre data-file="Hóa đơn mẫu"><code>Thanh toán thành công
+
+Đã thanh toán 3 món, tổng 100,000đ.
+
+Chi tiết:
+  - Truyện Kiều: 55,000đ
+  - Tạp chí Khoa học 06/25: 31,500đ
+  - Báo Tuổi Trẻ 25/06: 5,000đ
+
+Tổng: 100,000đ</code></pre>
+
+        <p>Sau khi đóng hộp thoại, giỏ hàng tự động làm rỗng (vì đã dequeue hết).</p>
+
+        <h2>So sánh Queue vs Stack trong đồ án</h2>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Khía cạnh</th>
+                        <th>Stack (CN08 Undo/Redo)</th>
+                        <th>Queue (CN09 Giỏ hàng)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Nguyên lý</td>
+                        <td>LIFO — vào sau ra trước</td>
+                        <td>FIFO — vào trước ra trước</td>
+                    </tr>
+                    <tr>
+                        <td>Ứng dụng thực tế</td>
+                        <td>Hoàn tác/làm lại thao tác</td>
+                        <td>Xếp hàng thanh toán</td>
+                    </tr>
+                    <tr>
+                        <td>Số con trỏ</td>
+                        <td>1 (đỉnh)</td>
+                        <td>2 (đầu + cuối)</td>
+                    </tr>
+                    <tr>
+                        <td>Push/Enqueue</td>
+                        <td><code>day_vao</code> — thêm vào đỉnh</td>
+                        <td><code>them_vao</code> — thêm vào cuối</td>
+                    </tr>
+                    <tr>
+                        <td>Pop/Dequeue</td>
+                        <td><code>lay_ra</code> — lấy từ đỉnh</td>
+                        <td><code>lay_ra</code> — lấy từ đầu</td>
+                    </tr>
+                    <tr>
+                        <td>2 Stack/Queue trong đồ án</td>
+                        <td>1 Undo + 1 Redo</td>
+                        <td>1 giỏ hàng duy nhất</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="callout callout--success">
+            <div class="callout__title">✅ Tóm tắt CN09</div>
+            <div class="callout__body">
+                <ul>
+                    <li>4 thao tác Queue: them_vao_gio (enqueue), xem_gio_hang (peek all),
+                    xoa_khoi_gio (xóa theo mã), thanh_toan (dequeue all).</li>
+                    <li>Đa hình OOP khi tính giá bán: <code class="inline">sp.tinh_gia_ban()</code>.</li>
+                    <li>UI: LabelFrame + Treeview 4 cột + 3 nút + label tổng tiền (xanh).</li>
+                    <li>Dùng callback để lấy mã đang chọn trong bảng chính (không lặp vòng).</li>
+                    <li>Hóa đơn = list dict + tổng tiền + số món.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="page-nav"></div>
+
+    </div>
+
+    <footer class="footer">
+        <p>CN09 — Giỏ hàng + Thanh toán (Queue FIFO) | Học đồ án QLNS</p>
+    </footer>
+</main>
+
+<script src="../js/highlight.js"></script>
+<script src="../js/main.js"></script>
+
+</body>
+</html>

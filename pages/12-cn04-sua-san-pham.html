@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CN04: Sửa sản phẩm — Học đồ án QLNS</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header class="header">
+    <a href="../index.html" class="header__brand">
+        <span class="header__brand-icon">📚</span>
+        <span>Học đồ án QLNS</span>
+    </a>
+    <div class="header__search">
+        <span class="header__search-icon">🔍</span>
+        <input type="text" placeholder="Tìm bài học...">
+    </div>
+    <button class="header__menu-toggle" type="button">☰</button>
+</header>
+
+<aside class="sidebar"></aside>
+
+<main class="main">
+    <div class="content">
+
+        <h1>✏️ CN04: Sửa sản phẩm</h1>
+
+        <p>Chức năng Sửa cho phép cập nhật thông tin sản phẩm đã có. User chọn 1 dòng trong bảng
+        → nhấn Sửa (hoặc double-click) → form Sửa hiện ra với dữ liệu cũ → user chỉnh → lưu.</p>
+
+        <p>Khác biệt với Thêm: form Sửa <strong>khóa mã số và loại hàng</strong> (không cho đổi),
+        chỉ cho sửa các trường còn lại.</p>
+
+        <div class="callout callout--info">
+            <div class="callout__title">📖 Mô tả yêu cầu barem</div>
+            <div class="callout__body">
+                <p><strong>Nhóm 4 — Sửa sản phẩm:</strong> User chọn dòng → mở form Sửa với dữ liệu
+                cũ → user chỉnh → hệ thống cập nhật DSLK + SQLite + ghi Undo (lưu cả dữ liệu cũ
+                và dữ liệu mới để Undo có thể khôi phục).</p>
+            </div>
+        </div>
+
+        <div class="toc">
+            <div class="toc__title">📑 Mục lục</div>
+            <ol>
+                <li><a href="#cau-truc">Cấu trúc folder cn04</a></li>
+                <li><a href="#tt">File _tt: sua_san_pham</a></li>
+                <li><a href="#dk">File _dk: DieuKhienSuaSanPham</a></li>
+                <li><a href="#double-click">Cơ chế double-click mở Sửa</a></li>
+                <li><a href="#undo">Ghi lịch sử Undo khi Sửa</a></li>
+            </ol>
+        </div>
+
+        <h2 id="cau-truc">1. Cấu trúc folder cn04</h2>
+
+        <pre data-file="chuc_nang/cn04_sua_san_pham/"><code>cn04_sua_san_pham/
+├── __init__.py
+├── sua_san_pham_tt.py     ← Thuật toán
+├── sua_san_pham_ui.py     ← Re-export FormThemSuaUI từ _shared
+└── sua_san_pham_dk.py     ← Điều khiển</code></pre>
+
+        <p>Khác với cn03, cn04 không có file UI riêng — chỉ re-export
+        <code class="inline">FormThemSuaUI</code> từ <code class="inline">_shared</code>. Khi tạo
+        form, truyền <code class="inline">du_lieu_cu</code> để báo "đây là chế độ Sửa".</p>
+
+        <h2 id="tt">2. File _tt: sua_san_pham</h2>
+
+        <pre data-file="sua_san_pham_tt.py"><code>from loi_thuat_toan.ket_noi_sqlite import cap_nhat_san_pham
+from loi_thuat_toan.danh_sach_lien_ket import DoublyLinkedList
+
+
+def sua_san_pham(danh_sach, bo_undoredo, du_lieu):
+    """Cập nhật sản phẩm theo mã số."""
+    try:
+        # Lấy mã số sản phẩm cần sửa
+        ma_so = du_lieu.get('ma_so', '').strip()
+        if not ma_so:
+            return False, 'Mã số không được trống.'
+
+        # Tìm sản phẩm cần sửa trong DSLK
+        sp_cu = danh_sach.tim_theo_ma_so(ma_so)
+        if sp_cu is None:
+            return False, f'Không tìm thấy sản phẩm mã {ma_so}.'
+
+        # Lưu lại dữ liệu cũ (để Undo khôi phục)
+        du_lieu_cu = sp_cu.chuyen_thanh_dict()
+
+        # Tạo dict dữ liệu mới — chỉ cập nhật trường chung + trường riêng theo loại
+        du_lieu_moi = {
+            'ten_san_pham': du_lieu.get('ten_san_pham', '').strip(),
+            'gia_co_ban':   float(du_lieu.get('gia_co_ban', 0)),
+            'ton_kho':      int(du_lieu.get('ton_kho', 0)),
+        }
+        # Thêm trường riêng theo loại của sản phẩm
+        loai_hang = sp_cu.loai_hang
+        if loai_hang == 'Sách':
+            du_lieu_moi['tac_gia'] = du_lieu.get('tac_gia', '').strip()
+            du_lieu_moi['nha_xuat_ban'] = du_lieu.get('nha_xuat_ban', '').strip()
+        elif loai_hang == 'Tạp chí':
+            du_lieu_moi['so_phat_hanh'] = du_lieu.get('so_phat_hanh', '').strip()
+        elif loai_hang == 'Báo giấy':
+            du_lieu_moi['ngay_xuat_ban'] = du_lieu.get('ngay_xuat_ban', '').strip()
+        elif loai_hang == 'Luận văn':
+            du_lieu_moi['tac_gia'] = du_lieu.get('tac_gia', '').strip()
+            du_lieu_moi['truong_dai_hoc'] = du_lieu.get('truong_dai_hoc', '').strip()
+        elif loai_hang == 'Bản thảo':
+            du_lieu_moi['tac_gia'] = du_lieu.get('tac_gia', '').strip()
+            du_lieu_moi['tinh_trang'] = du_lieu.get('trang_thai', '').strip()
+
+        # Cập nhật DSLK (RAM) + SQLite (ổ cứng)
+        danh_sach.cap_nhat_node(ma_so, du_lieu_moi)
+        cap_nhat_san_pham(sp_cu)
+
+        # Ghi Undo: thao tác 'sua' + dữ liệu cũ + dữ liệu mới
+        bo_undoredo['undo'].day_vao({
+            'loai': 'sua',
+            'du_lieu_cu': du_lieu_cu,
+            'du_lieu_moi': sp_cu.chuyen_thanh_dict()
+        })
+        # Xóa Redo
+        bo_undoredo['redo'].xoa_tat_ca()
+
+        return True, f'Đã cập nhật "{du_lieu_moi["ten_san_pham"]}".'
+    except ValueError:
+        return False, 'Giá / tồn kho phải là số.'
+    except Exception as loi:
+        return False, f'Lỗi: {loi}'</code></pre>
+
+        <h3>Điểm khác so với Thêm</h3>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Điểm khác</th>
+                        <th>CN03 Thêm</th>
+                        <th>CN04 Sửa</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>ma_so</td>
+                        <td>User nhập mới</td>
+                        <td>Lấy từ dòng đang chọn (form khóa ô mã)</td>
+                    </tr>
+                    <tr>
+                        <td>Validate trùng mã</td>
+                        <td>Có (vì mã mới có thể trùng mã cũ)</td>
+                        <td>Không cần (mã không đổi)</td>
+                    </tr>
+                    <tr>
+                        <td>Tạo đối tượng mới?</td>
+                        <td>Có (Sach/TapChi/...)</td>
+                        <td>Không — chỉ cập nhật thuộc tính của đối tượng cũ</td>
+                    </tr>
+                    <tr>
+                        <td>Undo entry</td>
+                        <td><code>{'loai': 'them', 'du_lieu_cu': None, 'du_lieu_moi': dict}</code></td>
+                        <td><code>{'loai': 'sua', 'du_lieu_cu': dict, 'du_lieu_moi': dict}</code></td>
+                    </tr>
+                    <tr>
+                        <td>SQLite</td>
+                        <td>INSERT (thêm dòng mới)</td>
+                        <td>UPDATE (cập nhật dòng cũ)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>Cú pháp mới: <code>cap_nhat_node(ma_so, du_lieu_moi)</code></h3>
+
+        <p>Hàm này của DSLK đôi (đã học ở bài 5) — duyệt tìm Node có
+        <code class="inline">ma_so</code> khớp, rồi cập nhật từng trường trong
+        <code class="inline">du_lieu_moi</code> dict:</p>
+
+        <pre data-file="cap_nhat_node của DSLK"><code>def cap_nhat_node(self, ma_so, du_lieu_moi):
+    node_hien_tai = self.head
+    while node_hien_tai is not None:
+        if hasattr(node_hien_tai.data, 'ma_so') and node_hien_tai.data.ma_so == ma_so:
+            doi_tuong = node_hien_tai.data
+            # Lặp từng cặp (tên_trường, giá_trị) trong dict và gán vào đối tượng
+            for thuoc_tinh, gia_tri in du_lieu_moi.items():
+                if hasattr(doi_tuong, thuoc_tinh):
+                    setattr(doi_tuong, thuoc_tinh, gia_tri)
+            return doi_tuong
+        node_hien_tai = node_hien_tai.next
+    return None</code></pre>
+
+        <p><strong>setattr(obj, name, value)</strong> là hàm builtin của Python — tương đương
+        <code class="inline">obj.name = value</code> nhưng tên thuộc tính là chuỗi động. Dùng khi
+        không biết trước tên thuộc tính (lấy từ dict).</p>
+
+        <h2 id="dk">3. File _dk: DieuKhienSuaSanPham</h2>
+
+        <pre data-file="sua_san_pham_dk.py"><code>from .sua_san_pham_tt import sua_san_pham
+from .sua_san_pham_ui import FormThemSuaUI
+
+
+class DieuKhienSuaSanPham:
+    def __init__(self, danh_sach, bo_undoredo):
+        self.danh_sach = danh_sach
+        self.bo_undoredo = bo_undoredo
+
+    def mo_form_sua(self, parent, ma_so):
+        """Mở form Sửa modal → chờ user chỉnh → lưu → đóng form."""
+        # Tìm sản phẩm cần sửa trong DSLK
+        sp_cu = self.danh_sach.tim_theo_ma_so(ma_so)
+        if sp_cu is None:
+            return False   # Không tìm thấy → trả về False để caller báo lỗi
+
+        # Lấy dict dữ liệu cũ để đổ vào form
+        du_lieu_cu = sp_cu.chuyen_thanh_dict()
+
+        # Tạo form Sửa (du_lieu_cu != None → chế độ Sửa)
+        form = FormThemSuaUI(parent, du_lieu_cu=du_lieu_cu)
+        # Gắn sự kiện nút Lưu
+        form.btn_luu.config(command=lambda: self._xu_ly_luu(form))
+
+        # Chờ đến khi form đóng
+        parent.wait_window(form.top)
+
+        return form.ket_qua is not None
+
+    def _xu_ly_luu(self, form):
+        """Đọc dữ liệu từ form → gọi thuật toán → thông báo kết quả."""
+        du_lieu = form.lay_du_lieu()
+        # Đảm bảo mã số không bị đổi (form khóa ô mã nhưng phòng hờ)
+        du_lieu['ma_so'] = form.du_lieu_cu['ma_so']
+
+        ok, msg = sua_san_pham(self.danh_sach, self.bo_undoredo, du_lieu)
+        if ok:
+            form.ket_qua = du_lieu
+            form.bao_thanh_cong(msg)
+            form.dong()
+        else:
+            form.bao_loi(msg)</code></pre>
+
+        <h3>Điểm khác so với Điều khiển Thêm</h3>
+
+        <ol>
+            <li>Nhận thêm tham số <code class="inline">ma_so</code> từ caller (mã của dòng đang chọn).</li>
+            <li>Tìm sản phẩm trong DSLK bằng <code class="inline">tim_theo_ma_so(ma_so)</code>.</li>
+            <li>Lấy dict dữ liệu cũ → truyền vào form (kích hoạt chế độ Sửa).</li>
+            <li>Trong <code class="inline">_xu_ly_luu</code>: đảm bảo mã số không bị đổi — gán lại
+            <code class="inline">du_lieu['ma_so'] = form.du_lieu_cu['ma_so']</code> phòng hờ.</li>
+        </ol>
+
+        <h2 id="double-click">4. Cơ chế double-click mở Sửa</h2>
+
+        <p>Đồ án cho phép user <strong>double-click</strong> vào dòng trong bảng để mở form Sửa
+        nhanh — tiện hơn là chọn dòng rồi nhấn nút Sửa.</p>
+
+        <h3>Bind trong cua_so_chinh_ui.py</h3>
+
+        <pre data-file="Bind double-click"><code>def bind_double_click_bang(self, ham_xu_ly):
+    """Gắn sự kiện double-click vào dòng bảng → hàm xử lý (mở form Sửa)."""
+    self.ui_bang.tree.bind('<Double-1>', lambda e: ham_xu_ly())</code></pre>
+
+        <p><strong>&lt;Double-1&gt;</strong> = double-click chuột trái (button-1). Các event chuột khác:</p>
+        <ul>
+            <li><code class="inline">&lt;Button-1&gt;</code>: click chuột trái</li>
+            <li><code class="inline">&lt;Button-2&gt;</code>: click chuột giữa (wheel)</li>
+            <li><code class="inline">&lt;Button-3&gt;</code>: click chuột phải</li>
+            <li><code class="inline">&lt;Double-1&gt;</code>: double-click trái</li>
+            <li><code class="inline">&lt;Triple-1&gt;</code>: triple-click trái</li>
+            <li><code class="inline">&lt;ButtonRelease-1&gt;</code>: nhả chuột trái</li>
+        </ul>
+
+        <h3>Gắn bind từ cua_so_chinh_dk.py</h3>
+
+        <pre data-file="Gắn bind double-click"><code># Trong DieuKhienCuaSoChinh.__init__
+self.ui.bind_double_click_bang(self._sua_san_pham)
+
+def _sua_san_pham(self):
+    """Lấy mã đang chọn → mở form Sửa → nếu lưu → refresh_all."""
+    ma = self.ui.ui_bang.lay_ma_dang_chon()
+    if not ma:
+        messagebox.showwarning('Chưa chọn', 'Vui lòng chọn 1 dòng để sửa.')
+        return
+    da_sua = self.dk_sua.mo_form_sua(self.root, ma)
+    if da_sua:
+        self.refresh_all()</code></pre>
+
+        <h2 id="undo">5. Ghi lịch sử Undo khi Sửa</h2>
+
+        <p>Khác với Thêm (chỉ có <code class="inline">du_lieu_moi</code>), Undo entry của Sửa
+        chứa <strong>cả dữ liệu cũ và dữ liệu mới</strong>:</p>
+
+        <pre data-file="Undo entry Sửa"><code>{
+    'loai': 'sua',
+    'du_lieu_cu': {                       # Dữ liệu TRƯỚC khi sửa
+        'ma_so': 'MH001',
+        'ten_san_pham': 'Truyện Kiều',
+        'gia_co_ban': 50000,
+        'ton_kho': 20,
+        ...
+    },
+    'du_lieu_moi': {                      # Dữ liệu SAU khi sửa
+        'ma_so': 'MH001',
+        'ten_san_pham': 'Truyện Kiều (bản mới)',
+        'gia_co_ban': 55000,
+        'ton_kho': 25,
+        ...
+    }
+}</code></pre>
+
+        <p>Khi Undo thao tác Sửa:</p>
+        <ol>
+            <li>Lấy <code class="inline">du_lieu_cu</code> từ entry.</li>
+            <li>Gọi <code class="inline">cap_nhat_node(ma, du_lieu_cu)</code> để khôi phục dữ liệu cũ.</li>
+            <li>Gọi <code class="inline">cap_nhat_san_pham(sp)</code> để cập nhật SQLite.</li>
+        </ol>
+
+        <p>Khi Redo:</p>
+        <ol>
+            <li>Lấy <code class="inline">du_lieu_moi</code> từ entry.</li>
+            <li>Gọi <code class="inline">cap_nhat_node(ma, du_lieu_moi)</code> để áp dụng lại dữ liệu mới.</li>
+            <li>Gọi <code class="inline">cap_nhat_san_pham(sp)</code>.</li>
+        </ol>
+
+        <div class="callout callout--tip">
+            <div class="callout__title">💡 Lý do phải lưu cả dữ liệu cũ</div>
+            <div class="callout__body">
+                <p>Khác với Undo Thêm (chỉ cần mã để xóa), Undo Sửa cần <strong>toàn bộ dữ liệu cũ</strong>
+                để khôi phục lại. Nếu chỉ lưu mã, ta không biết tên/giá/tồn kho cũ là gì để hoàn tác.</p>
+            </div>
+        </div>
+
+        <div class="callout callout--success">
+            <div class="callout__title">✅ Tóm tắt CN04</div>
+            <div class="callout__body">
+                <ul>
+                    <li>Form Sửa dùng chung UI với form Thêm (chế độ <code class="inline">du_lieu_cu</code>).</li>
+                    <li>Form khóa mã số + loại hàng (không cho đổi khi sửa).</li>
+                    <li>Thuật toán dùng <code class="inline">cap_nhat_node</code> của DSLK +
+                    <code class="inline">cap_nhat_san_pham</code> của SQLite.</li>
+                    <li>Undo entry lưu <strong>cả dữ liệu cũ + mới</strong> để có thể khôi phục cả 2 chiều.</li>
+                    <li>Double-click vào dòng cũng mở form Sửa (event <code class="inline">&lt;Double-1&gt;</code>).</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="page-nav"></div>
+
+    </div>
+
+    <footer class="footer">
+        <p>CN04 — Sửa sản phẩm | Học đồ án QLNS</p>
+    </footer>
+</main>
+
+<script src="../js/highlight.js"></script>
+<script src="../js/main.js"></script>
+
+</body>
+</html>

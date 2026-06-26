@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CN06: Tìm kiếm + Sắp xếp — Học đồ án QLNS</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header class="header">
+    <a href="../index.html" class="header__brand">
+        <span class="header__brand-icon">📚</span>
+        <span>Học đồ án QLNS</span>
+    </a>
+    <div class="header__search">
+        <span class="header__search-icon">🔍</span>
+        <input type="text" placeholder="Tìm bài học...">
+    </div>
+    <button class="header__menu-toggle" type="button">☰</button>
+</header>
+
+<aside class="sidebar"></aside>
+
+<main class="main">
+    <div class="content">
+
+        <h1>🔍 CN06: Tìm kiếm + Sắp xếp</h1>
+
+        <p>Chức năng này gộp 2 thao tác: <strong>Tìm kiếm</strong> (theo tên/mã/loại) và
+        <strong>Sắp xếp</strong> (theo giá/tên/tồn kho bằng Merge Sort). UI là 1 thanh công cụ
+        ngang gồm ô nhập từ khóa + combobox tiêu chí + nút bấm.</p>
+
+        <div class="callout callout--info">
+            <div class="callout__title">📖 Mô tả yêu cầu barem</div>
+            <div class="callout__body">
+                <p><strong>Nhóm 6 — Tìm kiếm + Sắp xếp:</strong> Khi user nhập từ khóa và chọn
+                tiêu chí (tên/mã/loại), hệ thống duyệt DSLK và trả về các sản phẩm khớp. Khi user
+                nhấn Sắp xếp, hệ thống dùng <strong>Merge Sort O(n log n)</strong> để sắp xếp DSLK
+                theo tiêu chí (giá bán/tên/tồn kho).</p>
+            </div>
+        </div>
+
+        <div class="toc">
+            <div class="toc__title">📑 Mục lục</div>
+            <ol>
+                <li><a href="#cau-truc">Cấu trúc folder cn06</a></li>
+                <li><a href="#tt">File _tt: tim_kiem + sap_xep</a></li>
+                <li><a href="#ui">File _ui: ThanhTimKiemSapXepUI</a></li>
+                <li><a href="#dk">File _dk: DieuKhienTimKiemSapXep</a></li>
+                <li><a href="#combobox">Cú pháp Combobox</a></li>
+                <li><a href="#stringvar">StringVar trong Combobox</a></li>
+            </ol>
+        </div>
+
+        <h2 id="cau-truc">1. Cấu trúc folder cn06</h2>
+
+        <pre data-file="chuc_nang/cn06_tim_kiem_sap_xep/"><code>cn06_tim_kiem_sap_xep/
+├── __init__.py
+├── tim_kiem_sap_xep_tt.py     ← 2 hàm: tim_kiem + sap_xep
+├── tim_kiem_sap_xep_ui.py     ← Lớp ThanhTimKiemSapXepUI
+└── tim_kiem_sap_xep_dk.py     ← Lớp DieuKhienTimKiemSapXep</code></pre>
+
+        <h2 id="tt">2. File _tt: tim_kiem + sap_xep</h2>
+
+        <pre data-file="tim_kiem_sap_xep_tt.py"><code>from loi_thuat_toan.danh_sach_lien_ket import DoublyLinkedList
+
+
+def tim_kiem(danh_sach, tu_khoa, tieu_chi='ten'):
+    """
+    Tìm kiếm sản phẩm theo từ khóa + tiêu chí.
+
+    Tham số:
+        danh_sach : DSLK đôi toàn cục.
+        tu_khoa   : chuỗi user nhập (đã strip).
+        tieu_chi  : 'ten' | 'ma' | 'loại'.
+
+    Trả về:
+        List[dict] — danh sách các sản phẩm khớp.
+    """
+    try:
+        tu_khoa = tu_khoa.strip()
+        # Nếu từ khóa rỗng → trả về toàn bộ danh sách
+        if not tu_khoa:
+            return danh_sach.chuyen_thanh_danh_sach()
+
+        if tieu_chi == 'ma':
+            # Tìm chính xác theo mã → trả về list có 0 hoặc 1 phần tử
+            sp = danh_sach.tim_theo_ma_so(tu_khoa)
+            return [sp.chuyen_thanh_dict()] if sp else []
+
+        elif tieu_chi == 'loai':
+            # Tìm theo loại hàng (so khớp chứa)
+            kq = danh_sach.tim_theo_the_loai(tu_khoa)
+        else:
+            # Mặc định: tìm theo tên
+            kq = danh_sach.tim_kiem(tu_khoa)
+
+        # Chuyển list đối tượng → list dict
+        return [sp.chuyen_thanh_dict() for sp in kq if hasattr(sp, 'chuyen_thanh_dict')]
+    except Exception as loi:
+        print(f'[LOI tim_kiem] {loi}')
+        return []
+
+
+def sap_xep(danh_sach, tieu_chi='gia_ban'):
+    """
+    Sắp xếp DSLK bằng Merge Sort (O(n log n)) + trả về list dict.
+
+    Tham số:
+        danh_sach : DSLK đôi toàn cục.
+        tieu_chi  : 'gia_ban' | 'ten_san_pham' | 'ton_kho'.
+    """
+    try:
+        # Gọi hàm sap_xep_tron của DSLK (đã tự cài đặt Merge Sort)
+        danh_sach.sap_xep_tron(tieu_chi)
+        return danh_sach.chuyen_thanh_danh_sach()
+    except Exception as loi:
+        print(f'[LOI sap_xep] {loi}')
+        return []</code></pre>
+
+        <h3>3 tiêu chí tìm kiếm</h3>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>tieu_chi</th>
+                        <th>Hàm DSLK gọi</th>
+                        <th>So khớp</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>'ten'</code> (mặc định)</td>
+                        <td><code>tim_kiem(tu_khoa)</code></td>
+                        <td>Tên sản phẩm chứa từ khóa (không phân biệt HOA/thường)</td>
+                    </tr>
+                    <tr>
+                        <td><code>'ma'</code></td>
+                        <td><code>tim_theo_ma_so(tu_khoa)</code></td>
+                        <td>Khớp chính xác mã số</td>
+                    </tr>
+                    <tr>
+                        <td><code>'loai'</code></td>
+                        <td><code>tim_theo_the_loai(tu_khoa)</code></td>
+                        <td>Loại hàng chứa từ khóa</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>3 tiêu chí sắp xếp</h3>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>tieu_chi</th>
+                        <th>Sắp xếp theo</th>
+                        <th>Kiểu dữ liệu</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>'gia_ban'</code> (mặc định)</td>
+                        <td>Giá bán (tăng dần)</td>
+                        <td>float</td>
+                    </tr>
+                    <tr>
+                        <td><code>'ten_san_pham'</code></td>
+                        <td>Tên sản phẩm (A→Z)</td>
+                        <td>str</td>
+                    </tr>
+                    <tr>
+                        <td><code>'ton_kho'</code></td>
+                        <td>Tồn kho (tăng dần)</td>
+                        <td>int</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h2 id="ui">3. File _ui: ThanhTimKiemSapXepUI</h2>
+
+        <pre data-file="tim_kiem_sap_xep_ui.py"><code>import tkinter as tk
+from tkinter import ttk
+
+
+class ThanhTimKiemSapXepUI:
+    """Thanh công cụ Tìm kiếm + Sắp xếp."""
+
+    def __init__(self, parent):
+        # === NHÓM TÌM KIẾM ===
+        ttk.Label(parent, text='Tìm:').pack(side='left', padx=2)
+        self.entry_tu_khoa = ttk.Entry(parent, width=15)
+        self.entry_tu_khoa.pack(side='left', padx=2)
+
+        # Combobox tiêu chí tìm
+        self.var_tk_tieu_chi = tk.StringVar(value='ten')
+        ttk.Combobox(parent, textvariable=self.var_tk_tieu_chi,
+                     values=['ten', 'ma', 'loai'], state='readonly', width=6).pack(side='left', padx=2)
+
+        self.btn_tim = ttk.Button(parent, text='Tìm', width=6)
+        self.btn_tim.pack(side='left', padx=2)
+        self.btn_lam_moi = ttk.Button(parent, text='↻ Làm mới', width=9)
+        self.btn_lam_moi.pack(side='left', padx=2)
+
+        # Separator ngăn cách 2 nhóm
+        ttk.Separator(parent, orient='vertical').pack(side='left', fill='y', padx=8)
+
+        # === NHÓM SẮP XẾP ===
+        ttk.Label(parent, text='Sắp xếp:').pack(side='left', padx=2)
+        self.var_sx_tieu_chi = tk.StringVar(value='gia_ban')
+        ttk.Combobox(parent, textvariable=self.var_sx_tieu_chi,
+                     values=['gia_ban', 'ten_san_pham', 'ton_kho'],
+                     state='readonly', width=12).pack(side='left', padx=2)
+        self.btn_sap_xep = ttk.Button(parent, text='Sắp xếp', width=9)
+        self.btn_sap_xep.pack(side='left', padx=2)
+
+    def lay_tu_khoa(self):
+        return self.entry_tu_khoa.get().strip()
+
+    def lay_tieu_chi_tim(self):
+        return self.var_tk_tieu_chi.get()
+
+    def lay_tieu_chi_sap_xep(self):
+        return self.var_sx_tieu_chi.get()
+
+    def bind_enter_tim(self, ham_xu_ly):
+        """Gắn phím Enter trong ô từ khóa → hàm xử lý tìm."""
+        self.entry_tu_khoa.bind('<Return>', lambda e: ham_xu_ly())</code></pre>
+
+        <h2 id="dk">4. File _dk: DieuKhienTimKiemSapXep</h2>
+
+        <pre data-file="tim_kiem_sap_xep_dk.py"><code>from .tim_kiem_sap_xep_tt import tim_kiem, sap_xep
+from chuc_nang.cn02_doc_danh_sach.doc_danh_sach_tt import lay_danh_sach
+
+
+class DieuKhienTimKiemSapXep:
+    def __init__(self, ui_thanh, danh_sach, ui_bang):
+        self.ui = ui_thanh
+        self.danh_sach = danh_sach
+        self.ui_bang = ui_bang
+
+    def gan_su_kien(self):
+        """Gắn command cho các nút trên thanh UI."""
+        self.ui.btn_tim.config(command=self.xu_ly_tim)
+        self.ui.btn_lam_moi.config(command=self.xu_ly_lam_moi)
+        self.ui.btn_sap_xep.config(command=self.xu_ly_sap_xep)
+        self.ui.bind_enter_tim(self.xu_ly_tim)
+
+    def xu_ly_tim(self):
+        """Đọc từ khóa + tiêu chí → gọi thuật toán → đổ kết quả vào bảng."""
+        tu_khoa = self.ui.lay_tu_khoa()
+        tieu_chi = self.ui.lay_tieu_chi_tim()
+        kq = tim_kiem(self.danh_sach, tu_khoa, tieu_chi)
+        # Đổ vào bảng
+        self.ui_bang.xoa_tat_ca_dong()
+        for sp in kq:
+            self.ui_bang.them_dong(sp)
+        return len(kq)
+
+    def xu_ly_lam_moi(self):
+        """Tải lại toàn bộ danh sách từ DSLK."""
+        ds = lay_danh_sach(self.danh_sach)
+        self.ui_bang.xoa_tat_ca_dong()
+        for sp in ds:
+            self.ui_bang.them_dong(sp)
+        return len(ds)
+
+    def xu_ly_sap_xep(self):
+        """Sắp xếp DSLK theo tiêu chí → đổ kết quả vào bảng."""
+        tieu_chi = self.ui.lay_tieu_chi_sap_xep()
+        kq = sap_xep(self.danh_sach, tieu_chi)
+        self.ui_bang.xoa_tat_ca_dong()
+        for sp in kq:
+            self.ui_bang.them_dong(sp)
+        return len(kq)</code></pre>
+
+        <h3>3 hàm xử lý tương tự nhau</h3>
+
+        <p>Cả 3 hàm <code class="inline">xu_ly_tim</code>, <code class="inline">xu_ly_lam_moi</code>,
+        <code class="inline">xu_ly_sap_xep</code> đều theo pattern:</p>
+
+        <ol>
+            <li>Lấy dữ liệu từ UI (từ khóa, tiêu chí).</li>
+            <li>Gọi thuật toán tương ứng.</li>
+            <li>Nhận về list dict kết quả.</li>
+            <li>Xóa toàn bộ dòng trong bảng.</li>
+            <li>Thêm từng dict vào bảng.</li>
+        </ol>
+
+        <h2 id="combobox">5. Cú pháp Combobox</h2>
+
+        <p><strong>Combobox</strong> là widget dạng dropdown — user click để chọn 1 giá trị từ
+        danh sách có sẵn. Trong đồ án, dùng cho chọn tiêu chí tìm/sắp xếp.</p>
+
+        <h3>Tạo Combobox cơ bản</h3>
+
+        <pre data-file="Combobox cơ bản"><code># Combobox không có biến liên kết
+combo = ttk.Combobox(parent, values=['ten', 'ma', 'loai'], state='readonly', width=6)
+combo.pack()
+
+# Lấy giá trị đang chọn
+gia_tri = combo.get()
+
+# Set giá trị
+combo.set('ma')</code></pre>
+
+        <p>Các tham số quan trọng:</p>
+        <ul>
+            <li><code class="inline">values</code>: list/tuple các giá trị dropdown.</li>
+            <li><code class="inline">state='readonly'</code>: chỉ cho chọn từ list, không cho gõ
+            tự do. Nếu bỏ qua, user có thể gõ chữ vào Combobox.</li>
+            <li><code class="inline">state='disabled'</code>: vô hiệu hóa (xám).</li>
+            <li><code class="inline">width=6</code>: độ rộng tính theo ký tự.</li>
+        </ul>
+
+        <h3>Sự kiện Combobox</h3>
+
+        <pre data-file="Bind Combobox"><code>combo.bind('<<ComboboxSelected>>', callback)</code></pre>
+
+        <p><code class="inline">&lt;&lt;ComboboxSelected&gt;&gt;</code> là event ảo — kích hoạt
+        khi user chọn 1 item trong dropdown.</p>
+
+        <h2 id="stringvar">6. StringVar trong Combobox</h2>
+
+        <p>Trong code UI, có dòng:</p>
+
+        <pre data-file="StringVar + Combobox"><code>self.var_tk_tieu_chi = tk.StringVar(value='ten')
+ttk.Combobox(parent, textvariable=self.var_tk_tieu_chi,
+             values=['ten', 'ma', 'loai'], state='readonly', width=6)</code></pre>
+
+        <h3>StringVar là gì?</h3>
+
+        <p><code class="inline">StringVar</code> là biến "đặc biệt" của Tkinter — khi giá trị biến
+        thay đổi, mọi widget liên kết sẽ tự động cập nhật. <strong>Đây là cơ chế "data binding"</strong>
+        trong Tkinter.</p>
+
+        <pre data-file="Ví dụ StringVar"><code># Tạo StringVar với giá trị mặc định 'ten'
+var = tk.StringVar(value='ten')
+
+# Liên kết Combobox với var
+combo = ttk.Combobox(parent, textvariable=var, values=['ten', 'ma', 'loai'])
+
+# Khi user chọn 'ma' trong combobox:
+# → var tự động thành 'ma' (KHÔNG cần gọi combo.get())
+
+# Đọc giá trị:
+print(var.get())   # In ra 'ma'
+
+# Set giá trị:
+var.set('loai')
+# → combobox tự động hiển thị 'loai'</code></pre>
+
+        <h3>Tại sao dùng StringVar thay vì combo.get()?</h3>
+
+        <p>Vì code gọn hơn — không cần lưu reference Combobox, chỉ cần lưu StringVar:</p>
+
+        <pre data-file="So sánh"><code># Cách 1: Không dùng StringVar — phải lưu reference
+self.combo = ttk.Combobox(parent, values=['ten', 'ma', 'loai'])
+self.combo.pack()
+# ...
+gia_tri = self.combo.get()    # Phải gọi .get() trên widget
+
+# Cách 2: Dùng StringVar — gọn hơn
+self.var = tk.StringVar(value='ten')
+ttk.Combobox(parent, textvariable=self.var, values=['ten', 'ma', 'loai']).pack()
+# ...
+gia_tri = self.var.get()      # Không cần lưu combo reference</code></pre>
+
+        <div class="callout callout--tip">
+            <div class="callout__title">💡 Các biến Tkinter tương tự</div>
+            <div class="callout__body">
+                <p>Ngoài StringVar, còn có:</p>
+                <ul>
+                    <li><code class="inline">IntVar</code>: biến số nguyên.</li>
+                    <li><code class="inline">DoubleVar</code>: biến số thực.</li>
+                    <li><code class="inline">BooleanVar</code>: biến boolean.</li>
+                </ul>
+                <p>Dùng cho widget Checkbox, Radiobutton, Scale.</p>
+            </div>
+        </div>
+
+        <h2>So sánh Tìm vs Làm mới vs Sắp xếp</h2>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nút</th>
+                        <th>Hàm gọi</th>
+                        <th>Tác dụng</th>
+                        <th>Đụng vào DSLK?</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Tìm</td>
+                        <td><code>tim_kiem</code></td>
+                        <td>Trả về list dict các sp khớp từ khóa</td>
+                        <td>Không — chỉ đọc</td>
+                    </tr>
+                    <tr>
+                        <td>Làm mới</td>
+                        <td><code>lay_danh_sach</code></td>
+                        <td>Trả về toàn bộ list dict (như bỏ filter)</td>
+                        <td>Không — chỉ đọc</td>
+                    </tr>
+                    <tr>
+                        <td>Sắp xếp</td>
+                        <td><code>sap_xep</code></td>
+                        <td>Sắp xếp DSLK (thay đổi thứ tự Nodes)</td>
+                        <td><strong>CÓ</strong> — sửa thứ tự DSLK</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="callout callout--warning">
+            <div class="callout__title">⚠️ Sắp xếp thay đổi DSLK vĩnh viễn</div>
+            <div class="callout__body">
+                <p>Khi nhấn "Sắp xếp", hàm <code class="inline">sap_xep_tron</code> sẽ <strong>sắp
+                xếp lại DSLK trong RAM</strong> — thay đổi thứ tự các Nodes. Sau đó, mọi thao tác
+                đọc danh sách (CN02, CN06 Tìm) đều thấy thứ tự mới.</p>
+                <p>Nếu muốn quay lại thứ tự ban đầu, cần thoát app + mở lại (vì SQLite không bị
+                sắp xếp — chỉ DSLK trong RAM bị).</p>
+            </div>
+        </div>
+
+        <div class="callout callout--success">
+            <div class="callout__title">✅ Tóm tắt CN06</div>
+            <div class="callout__body">
+                <ul>
+                    <li>2 hàm thuật toán: <code class="inline">tim_kiem</code> (3 tiêu chí) +
+                    <code class="inline">sap_xep</code> (3 tiêu chí — gọi Merge Sort của DSLK).</li>
+                    <li>UI là 1 thanh ngang: Entry + Combobox + Button cho từng nhóm.</li>
+                    <li>Dùng StringVar để data binding với Combobox.</li>
+                    <li>3 nút xử lý theo pattern: đọc UI → gọi thuật toán → xóa bảng → thêm kết quả.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="page-nav"></div>
+
+    </div>
+
+    <footer class="footer">
+        <p>CN06 — Tìm kiếm + Sắp xếp | Học đồ án QLNS</p>
+    </footer>
+</main>
+
+<script src="../js/highlight.js"></script>
+<script src="../js/main.js"></script>
+
+</body>
+</html>

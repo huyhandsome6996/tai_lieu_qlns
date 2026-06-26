@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CN03: Thêm sản phẩm — Học đồ án QLNS</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header class="header">
+    <a href="../index.html" class="header__brand">
+        <span class="header__brand-icon">📚</span>
+        <span>Học đồ án QLNS</span>
+    </a>
+    <div class="header__search">
+        <span class="header__search-icon">🔍</span>
+        <input type="text" placeholder="Tìm bài học...">
+    </div>
+    <button class="header__menu-toggle" type="button">☰</button>
+</header>
+
+<aside class="sidebar"></aside>
+
+<main class="main">
+    <div class="content">
+
+        <h1>➕ CN03: Thêm sản phẩm</h1>
+
+        <p>Đây là chức năng <strong>đa hình OOP</strong> rõ ràng nhất. Khi user chọn loại hàng
+        (Sách / Tạp chí / Báo giấy / Luận văn / Bản thảo), form tự động hiển thị các trường riêng
+        tương ứng. Lúc lưu, hệ thống tạo đối tượng lớp con phù hợp, gọi hàm
+        <code class="inline">tinh_gia_ban()</code> để tính giá bán theo công thức riêng của loại đó.</p>
+
+        <div class="callout callout--info">
+            <div class="callout__title">📖 Mô tả yêu cầu barem</div>
+            <div class="callout__body">
+                <p><strong>Nhóm 3 — Thêm sản phẩm:</strong> User mở form → nhập loại, mã, tên, giá,
+                tồn kho, các trường riêng theo loại → hệ thống validate → tạo đối tượng OOP → lưu
+                vào DSLK + SQLite → ghi lịch sử Undo.</p>
+            </div>
+        </div>
+
+        <div class="toc">
+            <div class="toc__title">📑 Mục lục</div>
+            <ol>
+                <li><a href="#cau-truc">Cấu trúc folder cn03 + _shared</a></li>
+                <li><a href="#ui">Form Thêm dùng chung (FormThemSuaUI)</a></li>
+                <li><a href="#truong-rieng">Cơ chế trường riêng động theo loại</a></li>
+                <li><a href="#tt">File _tt: them_san_pham (đa hình)</a></li>
+                <li><a href="#dk">File _dk: DieuKhienThemSanPham</a></li>
+                <li><a href="#undo">Ghi lịch sử Undo khi Thêm</a></li>
+            </ol>
+        </div>
+
+        <h2 id="cau-truc">1. Cấu trúc folder cn03 + _shared</h2>
+
+        <pre data-file="chuc_nang/cn03_them_san_pham/"><code>chuc_nang/
+├── _shared/                              ← UI dùng chung cho Thêm + Sửa
+│   └── form_them_sua_ui.py               ← Lớp FormThemSuaUI
+└── cn03_them_san_pham/
+    ├── __init__.py
+    ├── them_san_pham_tt.py                ← Thuật toán
+    ├── them_san_pham_ui.py                ← (Re-export FormThemSuaUI từ _shared)
+    └── them_san_pham_dk.py                ← Điều khiển</code></pre>
+
+        <div class="callout callout--tip">
+            <div class="callout__title">💡 Tại sao có folder _shared?</div>
+            <div class="callout__body">
+                <p>Vì form Thêm và form Sửa gần như giống hệt nhau (chỉ khác: Sửa thì khóa mã +
+                loại, đổ dữ liệu cũ vào form). Nên tách UI ra <code class="inline">_shared/</code>
+                để <strong>tái sử dụng</strong> — tránh lặp code.</p>
+                <p>File <code class="inline">them_san_pham_ui.py</code> chỉ là 1 dòng:
+                <code class="inline">from chuc_nang._shared.form_them_sua_ui import FormThemSuaUI</code>.</p>
+            </div>
+        </div>
+
+        <h2 id="ui">2. Form Thêm dùng chung (FormThemSuaUI)</h2>
+
+        <pre data-file="_shared/form_them_sua_ui.py"><code>import tkinter as tk
+from tkinter import ttk, messagebox
+
+# Danh sách 5 loại hàng hợp lệ
+CAC_LOAI_HANG = ['Sách', 'Tạp chí', 'Báo giấy', 'Luận văn', 'Bản thảo']
+
+
+class FormThemSuaUI:
+    """
+    Hộp thoại modal Thêm/Sửa sản phẩm.
+    - Khi du_lieu_cu=None: chế độ Thêm mới.
+    - Khi du_lieu_cu=dict: chế độ Sửa (đổ dữ liệu cũ vào form, khóa mã + loại).
+    """
+
+    def __init__(self, parent, du_lieu_cu=None):
+        self.du_lieu_cu = du_lieu_cu
+        self.ket_qua = None
+
+        # Tạo cửa sổ Toplevel modal
+        self.top = tk.Toplevel(parent)
+        self.top.title('Sửa sản phẩm' if du_lieu_cu else 'Thêm sản phẩm')
+        self.top.geometry('450x520+450+150')
+        self.top.transient(parent)
+        self.top.grab_set()
+
+        self._tao_giao_dien()
+
+    def _tao_giao_dien(self):
+        """Tạo form với các trường động theo loại hàng."""
+        frame = ttk.Frame(self.top, padding=20)
+        frame.pack(fill='both', expand=True)
+
+        # === CÁC TRƯỜNG CHUNG ===
+        ttk.Label(frame, text='Loại hàng:').grid(row=0, column=0, sticky='e', padx=5, pady=5)
+        self.var_loai = tk.StringVar()
+        self.combo_loai = ttk.Combobox(frame, textvariable=self.var_loai,
+                                        values=CAC_LOAI_HANG, state='readonly', width=22)
+        self.combo_loai.grid(row=0, column=1, padx=5, pady=5)
+        # Khi user đổi loại → cập nhật lại các trường riêng
+        self.combo_loai.bind('<<ComboboxSelected>>', lambda e: self._cap_nhat_truong_rieng())
+
+        ttk.Label(frame, text='Mã số:').grid(row=1, column=0, sticky='e', padx=5, pady=5)
+        self.entry_ma = ttk.Entry(frame, width=25)
+        self.entry_ma.grid(row=1, column=1, padx=5, pady=5)
+
+        ttk.Label(frame, text='Tên sản phẩm:').grid(row=2, column=0, sticky='e', padx=5, pady=5)
+        self.entry_ten = ttk.Entry(frame, width=25)
+        self.entry_ten.grid(row=2, column=1, padx=5, pady=5)
+
+        ttk.Label(frame, text='Giá cơ bản (đ):').grid(row=3, column=0, sticky='e', padx=5, pady=5)
+        self.entry_gia = ttk.Entry(frame, width=25)
+        self.entry_gia.grid(row=3, column=1, padx=5, pady=5)
+
+        ttk.Label(frame, text='Tồn kho:').grid(row=4, column=0, sticky='e', padx=5, pady=5)
+        self.entry_ton = ttk.Entry(frame, width=25)
+        self.entry_ton.grid(row=4, column=1, padx=5, pady=5)
+
+        # === KHUNG TRƯỜNG RIÊNG (động theo loại) ===
+        ttk.Separator(frame, orient='horizontal').grid(row=5, column=0, columnspan=2,
+                                                        sticky='ew', pady=10)
+        ttk.Label(frame, text='Thông tin riêng theo loại:',
+                  font=('Arial', 10, 'italic')).grid(row=6, column=0, columnspan=2, sticky='w')
+
+        self.frame_rieng = ttk.Frame(frame)
+        self.frame_rieng.grid(row=7, column=0, columnspan=2, sticky='ew', pady=5)
+        self.entries_rieng = {}   # Dict lưu các entry trường riêng
+
+        # === NÚT BẤM ===
+        frame_nut = ttk.Frame(frame)
+        frame_nut.grid(row=8, column=0, columnspan=2, pady=15)
+        self.btn_luu = ttk.Button(frame_nut, text='Lưu')
+        self.btn_luu.pack(side='left', padx=10)
+        ttk.Button(frame_nut, text='Hủy', command=self.top.destroy).pack(side='left', padx=10)
+
+        # === NẾU LÀ SỬA → ĐỔ DỮ LIỆU CŨ VÀO FORM ===
+        if self.du_lieu_cu:
+            self.var_loai.set(self.du_lieu_cu.get('loai_hang', ''))
+            self.combo_loai.config(state='disabled')
+            self.entry_ma.insert(0, self.du_lieu_cu.get('ma_so', ''))
+            self.entry_ma.config(state='disabled')
+            self.entry_ten.insert(0, self.du_lieu_cu.get('ten_san_pham', ''))
+            self.entry_gia.insert(0, str(self.du_lieu_cu.get('gia_co_ban', '')))
+            self.entry_ton.insert(0, str(self.du_lieu_cu.get('ton_kho', '')))
+            self._cap_nhat_truong_rieng()
+        else:
+            # Chế độ Thêm: mặc định chọn loại đầu tiên
+            self.var_loai.set(CAC_LOAI_HANG[0])
+            self._cap_nhat_truong_rieng()
+
+    def _cap_nhat_truong_rieng(self):
+        """Xóa các entry cũ + tạo entry mới theo loại đang chọn."""
+        # Xóa widget cũ trong frame_rieng
+        for w in self.frame_rieng.winfo_children():
+            w.destroy()
+        self.entries_rieng.clear()
+
+        loai = self.var_loai.get()
+        # Định nghĩa trường riêng cho từng loại
+        truong_rieng = {
+            'Sách':      [('tac_gia', 'Tác giả:'), ('nha_xuat_ban', 'Nhà xuất bản:')],
+            'Tạp chí':   [('so_phat_hanh', 'Số phát hành:')],
+            'Báo giấy':  [('ngay_xuat_ban', 'Ngày xuất bản:')],
+            'Luận văn':  [('tac_gia', 'Tác giả:'), ('truong_dai_hoc', 'Trường ĐH:')],
+            'Bản thảo':  [('tac_gia', 'Tác giả:'), ('trang_thai', 'Tình trạng:')],
+        }
+        ds_truong = truong_rieng.get(loai, [])
+
+        # Tạo từng cặp label + entry
+        for i, (key, label) in enumerate(ds_truong):
+            ttk.Label(self.frame_rieng, text=label).grid(row=i, column=0, sticky='e', padx=5, pady=3)
+            e = ttk.Entry(self.frame_rieng, width=25)
+            e.grid(row=i, column=1, padx=5, pady=3)
+            self.entries_rieng[key] = e
+            # Nếu là sửa → đổ giá trị cũ vào
+            if self.du_lieu_cu and key in self.du_lieu_cu:
+                e.insert(0, str(self.du_lieu_cu[key]))
+            elif key == 'trang_thai' and not self.du_lieu_cu:
+                # Mặc định "Chưa duyệt" cho Bản thảo mới
+                e.insert(0, 'Chưa duyệt')
+
+    def lay_du_lieu(self):
+        """Đọc toàn bộ dữ liệu form → trả về dict."""
+        du_lieu = {
+            'loai_hang':    self.var_loai.get().strip(),
+            'ma_so':        self.entry_ma.get().strip(),
+            'ten_san_pham': self.entry_ten.get().strip(),
+            'gia_co_ban':   self.entry_gia.get().strip(),
+            'ton_kho':      self.entry_ton.get().strip(),
+        }
+        # Thêm trường riêng
+        for key, entry in self.entries_rieng.items():
+            du_lieu[key] = entry.get().strip()
+        return du_lieu
+
+    def bao_loi(self, thong_bao):
+        messagebox.showerror('Lỗi', thong_bao, parent=self.top)
+
+    def bao_thanh_cong(self, thong_bao):
+        messagebox.showinfo('Thành công', thong_bao, parent=self.top)
+
+    def dong(self):
+        self.top.destroy()</code></pre>
+
+        <h2 id="truong-rieng">3. Cơ chế trường riêng động theo loại</h2>
+
+        <p>Đây là phần "ma thuật" của form Thêm/Sửa — khi user đổi loại hàng trong combobox,
+        các entry trường riêng tự động thay đổi. Ví dụ:</p>
+        <ul>
+            <li>Chọn <strong>Sách</strong> → hiện 2 entry: Tác giả + Nhà xuất bản</li>
+            <li>Chọn <strong>Tạp chí</strong> → hiện 1 entry: Số phát hành</li>
+            <li>Chọn <strong>Báo giấy</strong> → hiện 1 entry: Ngày xuất bản</li>
+            <li>Chọn <strong>Luận văn</strong> → hiện 2 entry: Tác giả + Trường ĐH</li>
+            <li>Chọn <strong>Bản thảo</strong> → hiện 2 entry: Tác giả + Tình trạng</li>
+        </ul>
+
+        <h3>3.1. Cấu trúc dữ liệu định nghĩa trường</h3>
+
+        <pre data-file="truong_rieng dict"><code>truong_rieng = {
+    'Sách':      [('tac_gia', 'Tác giả:'), ('nha_xuat_ban', 'Nhà xuất bản:')],
+    'Tạp chí':   [('so_phat_hanh', 'Số phát hành:')],
+    'Báo giấy':  [('ngay_xuat_ban', 'Ngày xuất bản:')],
+    'Luận văn':  [('tac_gia', 'Tác giả:'), ('truong_dai_hoc', 'Trường ĐH:')],
+    'Bản thảo':  [('tac_gia', 'Tác giả:'), ('trang_thai', 'Tình trạng:')],
+}</code></pre>
+
+        <p>Đây là <strong>dict</strong> với key = tên loại, value = list tuple (key_truong, label).
+        Khi user chọn loại, ta tra dict để lấy danh sách trường tương ứng.</p>
+
+        <h3>3.2. Bind sự kiện combobox</h3>
+
+        <pre data-file="Bind ComboboxSelected"><code>self.combo_loai.bind('<<ComboboxSelected>>', lambda e: self._cap_nhat_truong_rieng())</code></pre>
+
+        <p>Sự kiện <code class="inline">&lt;&lt;ComboboxSelected&gt;&gt;</code> (có 2 dấu
+        <code class="inline">&lt;</code> và <code class="inline">&gt;</code> ở mỗi bên) là event
+        ảo của Combobox — được kích hoạt khi user chọn 1 item trong dropdown.</p>
+
+        <h3>3.3. Xóa widget cũ + tạo widget mới</h3>
+
+        <pre data-file="Cap_nhat_truong_rieng"><code># Xóa widget cũ trong frame_rieng
+for w in self.frame_rieng.winfo_children():
+    w.destroy()
+self.entries_rieng.clear()
+
+# Tạo widget mới theo loại
+for i, (key, label) in enumerate(ds_truong):
+    ttk.Label(self.frame_rieng, text=label).grid(row=i, column=0, ...)
+    e = ttk.Entry(self.frame_rieng, width=25)
+    e.grid(row=i, column=1, ...)
+    self.entries_rieng[key] = e   # Lưu reference để sau đọc giá trị</code></pre>
+
+        <p><strong>winfo_children()</strong> trả về list tất cả widget con của
+        <code class="inline">frame_rieng</code>. Gọi <code class="inline">destroy()</code> cho
+        từng cái để xóa sạch. Sau đó tạo lại widget mới theo loại được chọn.</p>
+
+        <h2 id="tt">4. File _tt: them_san_pham (đa hình)</h2>
+
+        <p>Đây là phần <strong>đa hình OOP</strong> rõ ràng nhất — tùy loại hàng mà tạo đối tượng
+        lớp con tương ứng:</p>
+
+        <pre data-file="them_san_pham_tt.py"><code>from loi_thuat_toan.lop_doi_tuong import Sach, TapChi, BaoGiay, LuanVan, BanThao
+from loi_thuat_toan.ket_noi_sqlite import luu_mot_san_pham
+from loi_thuat_toan.danh_sach_lien_ket import DoublyLinkedList
+from loi_thuat_toan.cau_truc_du_lieu import NganXep
+
+
+def them_san_pham(danh_sach, bo_undoredo, du_lieu):
+    """Thêm 1 sản phẩm mới. Trả về (True, msg) hoặc (False, msg)."""
+    try:
+        # Lấy + làm sạch các trường chung
+        loai_hang = du_lieu.get('loai_hang', '').strip()
+        ma_so     = du_lieu.get('ma_so', '').strip()
+        ten       = du_lieu.get('ten_san_pham', '').strip()
+        gia       = float(du_lieu.get('gia_co_ban', 0))   # Ép kiểu float
+        ton       = int(du_lieu.get('ton_kho', 0))        # Ép kiểu int
+
+        # Validate cơ bản
+        if not ma_so or not ten or not loai_hang:
+            return False, 'Vui lòng điền đầy đủ mã, tên, loại.'
+        if gia < 0 or ton < 0:
+            return False, 'Giá / tồn kho không được âm.'
+        # Validate mã không được trùng
+        if danh_sach.tim_theo_ma_so(ma_so) is not None:
+            return False, f'Mã "{ma_so}" đã tồn tại.'
+
+        # Tạo đối tượng theo loại — OOP ĐA HÌNH
+        if loai_hang == 'Sách':
+            sp = Sach(ma_so, ten, gia, ton,
+                      du_lieu.get('tac_gia', '').strip(),
+                      du_lieu.get('nha_xuat_ban', '').strip())
+        elif loai_hang == 'Tạp chí':
+            sp = TapChi(ma_so, ten, gia, ton,
+                        du_lieu.get('so_phat_hanh', '').strip())
+        elif loai_hang == 'Báo giấy':
+            sp = BaoGiay(ma_so, ten, gia, ton,
+                         du_lieu.get('ngay_xuat_ban', '').strip())
+        elif loai_hang == 'Luận văn':
+            sp = LuanVan(ma_so, ten, gia, ton,
+                         du_lieu.get('tac_gia', '').strip(),
+                         du_lieu.get('truong_dai_hoc', '').strip(), '')
+        elif loai_hang == 'Bản thảo':
+            sp = BanThao(ma_so, ten, gia, ton,
+                         du_lieu.get('tac_gia', '').strip(),
+                         du_lieu.get('trang_thai', 'Chưa duyệt').strip())
+        else:
+            return False, 'Loại hàng không hợp lệ.'
+
+        # Lưu vào DSLK (RAM) + SQLite (ổ cứng)
+        danh_sach.them_vao_cuoi(sp)
+        luu_mot_san_pham(sp)
+
+        # Ghi vào Stack Undo: thao tác 'them'
+        bo_undoredo['undo'].day_vao({
+            'loai': 'them',
+            'du_lieu_cu': None,
+            'du_lieu_moi': sp.chuyen_thanh_dict()
+        })
+        # Xóa Redo vì có thao tác mới
+        bo_undoredo['redo'].xoa_tat_ca()
+
+        return True, f'Đã thêm "{ten}" vào cửa hàng.'
+    except ValueError:
+        return False, 'Giá / tồn kho phải là số.'
+    except Exception as loi:
+        return False, f'Lỗi: {loi}'</code></pre>
+
+        <h3>Giải thích cú pháp</h3>
+
+        <h4>4.1. Ép kiểu float / int</h4>
+        <pre data-file="Ép kiểu"><code>gia = float(du_lieu.get('gia_co_ban', 0))   # '50000' → 50000.0
+ton = int(du_lieu.get('ton_kho', 0))        # '20' → 20</code></pre>
+
+        <p>Vì dữ liệu từ Entry luôn là chuỗi (<code class="inline">str</code>), cần ép kiểu để
+        lưu vào SQLite đúng kiểu (REAL cho giá, INTEGER cho tồn kho).</p>
+
+        <p>Nếu user nhập chữ (VD: 'abc') vào ô giá, <code class="inline">float('abc')</code> sẽ
+        raise <code class="inline">ValueError</code> → bắt bằng
+        <code class="inline">except ValueError</code> → trả về thông báo lỗi thân thiện.</p>
+
+        <h4>4.2. Đa hình ở đâu?</h4>
+
+        <p>Khi gọi <code class="inline">sp.chuyen_thanh_dict()</code> để ghi vào Undo Stack, hàm
+        này gọi tiếp <code class="inline">self.tinh_gia_ban()</code> — và tùy loại đối tượng mà
+        ra công thức khác nhau:</p>
+
+        <ul>
+            <li><strong>Sach</strong>: <code class="inline">gia_co_ban × 1.1</code></li>
+            <li><strong>TapChi</strong>: <code class="inline">gia_co_ban × 1.05</code></li>
+            <li><strong>BaoGiay</strong>: <code class="inline">gia_co_ban × 1.0</code></li>
+            <li><strong>LuanVan</strong>: <code class="inline">gia_co_ban × 1.2</code></li>
+            <li><strong>BanThao</strong>: <code class="inline">gia_co_ban × 1.15</code></li>
+        </ul>
+
+        <p>Đó chính là <strong>đa hình</strong> — cùng một lời gọi hàm
+        (<code class="inline">tinh_gia_ban()</code>), nhưng kết quả khác nhau tùy loại đối tượng.</p>
+
+        <h2 id="dk">5. File _dk: DieuKhienThemSanPham</h2>
+
+        <pre data-file="them_san_pham_dk.py"><code>from .them_san_pham_tt import them_san_pham
+from .them_san_pham_ui import FormThemSuaUI
+
+
+class DieuKhienThemSanPham:
+    def __init__(self, danh_sach, bo_undoredo):
+        self.danh_sach = danh_sach
+        self.bo_undoredo = bo_undoredo
+
+    def mo_form_them(self, parent):
+        """Mở form Thêm modal → chờ user nhập → lưu → đóng form."""
+        # Tạo form Thêm (du_lieu_cu=None → chế độ Thêm)
+        form = FormThemSuaUI(parent, du_lieu_cu=None)
+        # Gắn sự kiện nút Lưu
+        form.btn_luu.config(command=lambda: self._xu_ly_luu(form))
+
+        # Chờ đến khi form đóng
+        parent.wait_window(form.top)
+
+        # Trả về True nếu có kết quả (đã thêm)
+        return form.ket_qua is not None
+
+    def _xu_ly_luu(self, form):
+        """Đọc dữ liệu từ form → gọi thuật toán → thông báo kết quả."""
+        du_lieu = form.lay_du_lieu()
+        ok, msg = them_san_pham(self.danh_sach, self.bo_undoredo, du_lieu)
+        if ok:
+            form.ket_qua = du_lieu    # Lưu kết quả để caller biết là đã thêm
+            form.bao_thanh_cong(msg)
+            form.dong()
+        else:
+            form.bao_loi(msg)         # Giữ form để user sửa</code></pre>
+
+        <h3>Luồng chạy</h3>
+
+        <div class="diagram">
+            <div class="diagram__title">Luồng Thêm sản phẩm</div>
+            <p>1. User click nút "➕ Thêm" trên cửa sổ chính</p>
+            <p style="margin-top: 8px;">↓</p>
+            <p>2. <code class="inline">cua_so_chinh_dk._them_san_pham()</code> gọi
+            <code class="inline">dk_them.mo_form_them(root)</code></p>
+            <p style="margin-top: 8px;">↓</p>
+            <p>3. Tạo <code class="inline">FormThemSuaUI</code> modal → hiện form</p>
+            <p style="margin-top: 8px;">↓</p>
+            <p>4. <code class="inline">wait_window(form.top)</code> — dừng chờ</p>
+            <p style="margin-top: 8px;">↓</p>
+            <p>5. User chọn loại → combobox thay đổi → form tự cập nhật trường riêng</p>
+            <p style="margin-top: 8px;">↓</p>
+            <p>6. User nhập đủ thông tin → nhấn "Lưu"</p>
+            <p style="margin-top: 8px;">↓</p>
+            <p>7. <code class="inline">_xu_ly_luu(form)</code> đọc form → gọi
+            <code class="inline">them_san_pham()</code></p>
+            <p style="margin-top: 8px;">↓</p>
+            <p>8. Validate + tạo đối tượng OOP + lưu DSLK + SQLite + Undo</p>
+            <p style="margin-top: 8px;">↓</p>
+            <p>9. Nếu OK → <code class="inline">form.dong()</code> →
+            <code class="inline">wait_window</code> hết chờ</p>
+            <p style="margin-top: 8px;">↓</p>
+            <p>10. <code class="inline">refresh_all()</code> nạp lại bảng</p>
+        </div>
+
+        <h2 id="undo">6. Ghi lịch sử Undo khi Thêm</h2>
+
+        <p>Khi thêm thành công, hệ thống đẩy 1 dict lên Stack Undo:</p>
+
+        <pre data-file="Undo entry"><code>{
+    'loai': 'them',                         # Loại thao tác
+    'du_lieu_cu': None,                     # Thêm → không có dữ liệu cũ
+    'du_lieu_moi': sp.chuyen_thanh_dict()   # Dữ liệu sản phẩm mới thêm
+}</code></pre>
+
+        <p>Khi user nhấn Undo (CN08), hệ thống sẽ:</p>
+        <ol>
+            <li>Lấy thao tác này ra khỏi Stack Undo.</li>
+            <li>Vì <code class="inline">loai == 'them'</code> → đảo ngược = <strong>XÓA</strong>
+            sản phẩm vừa thêm.</li>
+            <li>Lấy <code class="inline">du_lieu_moi['ma_so']</code> → gọi
+            <code class="inline">danh_sach.xoa_node(ma)</code> + <code class="inline">xoa_mot_san_pham(ma)</code>.</li>
+            <li>Đẩy thao tác sang Stack Redo (để có thể redo).</li>
+        </ol>
+
+        <div class="callout callout--warning">
+            <div class="callout__title">⚠️ Xóa Redo sau thao tác mới</div>
+            <div class="callout__body">
+                <p>Khi có thao tác mới (them/sua/xoa), toàn bộ Redo Stack bị xóa. Vì:</p>
+                <p>Sau khi Undo A → có thể Redo A. Nhưng nếu thay vì Redo, user thực hiện thao tác
+                mới B, thì lịch sử đã "rẽ nhánh" — A không còn hợp lệ trong nhánh mới.</p>
+                <p>Đây là quy tắc chuẩn của mọi hệ thống Undo/Redo (Word, Excel, VS Code, v.v.).</p>
+            </div>
+        </div>
+
+        <div class="callout callout--success">
+            <div class="callout__title">✅ Tóm tắt CN03</div>
+            <div class="callout__body">
+                <ul>
+                    <li>Form Thêm/Sửa dùng chung (folder <code class="inline">_shared/</code>).</li>
+                    <li>Trường riêng động theo loại (combobox change → tạo entry mới).</li>
+                    <li>Thuật toán <strong>đa hình</strong>: tùy loại → tạo Sach/TapChi/BaoGiay/LuanVan/BanThao.</li>
+                    <li>Mỗi lần thêm: lưu DSLK + SQLite + ghi Undo (xóa Redo).</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="page-nav"></div>
+
+    </div>
+
+    <footer class="footer">
+        <p>CN03 — Thêm sản phẩm | Học đồ án QLNS</p>
+    </footer>
+</main>
+
+<script src="../js/highlight.js"></script>
+<script src="../js/main.js"></script>
+
+</body>
+</html>

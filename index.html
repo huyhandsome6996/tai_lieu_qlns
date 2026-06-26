@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trang chủ — Học đồ án Quản lý Nhà sách</title>
+    <meta name="description" content="Trang web học chi tiết đồ án Quản lý Nhà sách (Tkinter). Giải thích tường tận từng hàm, từng cú pháp, từng thuật toán.">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+    <a href="index.html" class="header__brand">
+        <span class="header__brand-icon">📚</span>
+        <span>Học đồ án QLNS</span>
+    </a>
+    <div class="header__search">
+        <span class="header__search-icon">🔍</span>
+        <input type="text" placeholder="Tìm bài học...">
+    </div>
+    <button class="header__menu-toggle" type="button">☰</button>
+</header>
+
+<!-- Sidebar -->
+<aside class="sidebar"></aside>
+
+<!-- Main content -->
+<main class="main">
+    <div class="content">
+
+        <h1>📚 Chào mừng đến trang học đồ án Quản lý Nhà sách</h1>
+
+        <p>Trang web này được thiết kế để giúp bạn <strong>hiểu tường tận</strong> mọi thứ trong đồ án
+        <code class="inline">quanlynhasach</code> (phiên bản Tkinter). Mỗi khái niệm, mỗi hàm,
+        mỗi cú pháp đều được giải thích chi tiết — vì bạn từng nói mình mất gốc và học không hiểu.</p>
+
+        <div class="callout callout--tip">
+            <div class="callout__title">💡 Cách học hiệu quả</div>
+            <div class="callout__body">
+                <p>Học theo thứ tự từ trên xuống dưới trong sidebar trái. Mỗi bài đều có nút
+                <strong>"Bài tiếp theo →"</strong> ở cuối để chuyển bài.</p>
+                <p>Nếu gặp đoạn code nào khó hiểu, hãy copy code sang editor Python (như Thonny, VSCode)
+                rồi chạy thử — đọc code mà không chạy thì khó hiểu lắm.</p>
+            </div>
+        </div>
+
+        <h2>🎯 Đồ án này là gì?</h2>
+
+        <p>Đồ án <strong>Quản lý Nhà sách</strong> là bài kiểm tra cuối kì môn <em>Lập trình Nâng cao</em>.
+        Ứng dụng gồm:</p>
+
+        <ul>
+            <li><strong>Giao diện đồ họa</strong> bằng Tkinter (Python thuần, không cần cài thêm).</li>
+            <li><strong>Cơ sở dữ liệu</strong> SQLite để lưu mặt hàng + tài khoản người dùng.</li>
+            <li><strong>9 chức năng</strong> từ đăng nhập → thêm/sửa/xóa → tìm kiếm → thống kê → giỏ hàng.</li>
+            <li><strong>Cấu trúc dữ liệu tự cài</strong>: DSLK đôi, Stack LIFO, Queue FIFO (không dùng <code class="inline">list</code> Python).</li>
+            <li><strong>Thuật toán</strong>: Merge Sort O(n log n) — sắp xếp trên con trỏ DSLK.</li>
+            <li><strong>OOP</strong>: kế thừa + đa hình với 5 lớp con (Sách, Tạp chí, Báo giấy, Luận văn, Bản thảo).</li>
+        </ul>
+
+        <h2>📋 Lộ trình học (20 bài)</h2>
+
+        <p>Tổng cộng có <strong>20 bài học</strong>, chia làm 4 nhóm. Bạn nên học theo thứ tự:</p>
+
+        <div class="card-grid">
+
+            <div class="card">
+                <div class="card__title">🧱 Nhóm 1: Kiến thức nền (4 bài)</div>
+                <div class="card__body">
+                    Python cơ bản → OOP → Tkinter → SQLite.
+                    Học xong nhóm này mới hiểu code đồ án.
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card__title">⚙️ Nhóm 2: Thuật toán (4 bài)</div>
+                <div class="card__body">
+                    DSLK đôi → Merge Sort → Stack LIFO → Queue FIFO.
+                    Đây là phần "tự cài" khó nhất đồ án.
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card__title">🎛️ Nhóm 3: 9 Chức năng (9 bài)</div>
+                <div class="card__body">
+                    CN01 Đăng nhập → CN02 Đọc DS → ... → CN09 Giỏ hàng.
+                    Mỗi chức năng = 1 folder có 3 file _tt/_ui/_dk.
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card__title">🎯 Nhóm 4: Tổng thể (2 bài)</div>
+                <div class="card__body">
+                    Cách main.py khởi động + QuanLyTrungTam điều phối.
+                    Bảng phân chia công việc cho 3 thành viên.
+                </div>
+            </div>
+
+        </div>
+
+        <h2>🗂️ Cấu trúc folder đồ án</h2>
+
+        <p>Đồ án nằm trong folder <code class="inline">do_an_tkinter/</code>, cấu trúc như sau:</p>
+
+        <pre data-file="Cấu trúc thư mục"><code>do_an_tkinter/
+├── main.py                      ← Điểm vào ứng dụng
+├── test_app.py                  ← 47 test tự động
+├── quan_ly_trung_tam.py         ← Re-export lớp QuanLyTrungTam
+│
+├── loi_thuat_toan/              ← 7 module thuật toán (dùng chung)
+│   ├── lop_doi_tuong.py         ← OOP: MatHang + 5 con
+│   ├── danh_sach_lien_ket.py    ← DSLK đôi + Merge Sort
+│   ├── cau_truc_du_lieu.py      ← Stack LIFO + Queue FIFO
+│   ├── ket_noi_sqlite.py        ← SQLite CRUD
+│   ├── nguoi_dung.py            ← Đăng nhập + phân quyền
+│   ├── kiem_thu.py              ← Test cho thuật toán
+│   └── __init__.py              ← File rỗng (package marker)
+│
+├── khung_chinh/                 ← Cửa sổ chính
+│   ├── khung_chinh_tt.py        ← QuanLyTrungTam (state container)
+│   ├── cua_so_chinh_ui.py       ← Vẽ UI cửa sổ chính
+│   └── cua_so_chinh_dk.py       ← Điều khiển + gắn sự kiện
+│
+└── chuc_nang/                   ← 9 chức năng (mỗi CN = 1 folder)
+    ├── _shared/                 ← UI dùng chung
+    │   └── form_them_sua_ui.py  ← Form Thêm/Sửa (đa hình UI)
+    │
+    ├── cn01_dang_nhap_phan_quyen/
+    │   ├── dang_nhap_tt.py      ← _tt = thuật toán
+    │   ├── dang_nhap_ui.py      ← _ui = giao diện
+    │   └── dang_nhap_dk.py      ← _dk = điều khiển
+    │
+    ├── cn02_doc_danh_sach/      ← Cấu trúc tương tự
+    ├── cn03_them_san_pham/
+    ├── cn04_sua_san_pham/
+    ├── cn05_xoa_san_pham/
+    ├── cn06_tim_kiem_sap_xep/
+    ├── cn07_thong_ke/
+    ├── cn08_hoan_tac_lam_lai/
+    └── cn09_gio_hang/</code></pre>
+
+        <div class="callout callout--info">
+            <div class="callout__title">📖 Quy ước hậu tố tên file</div>
+            <div class="callout__body">
+                <p>Trong mỗi folder chức năng (<code class="inline">cn01</code> → <code class="inline">cn09</code>), có 3 file:</p>
+                <ul>
+                    <li><code class="inline">_tt</code> = <strong>Thuật toán</strong> — logic thuần, không import tkinter.</li>
+                    <li><code class="inline">_ui</code> = <strong>Giao diện</strong> — chỉ vẽ widget Tkinter.</li>
+                    <li><code class="inline">_dk</code> = <strong>Điều khiển</strong> — kết nối _ui với _tt, gắn sự kiện.</li>
+                </ul>
+            </div>
+        </div>
+
+        <h2>🏃 Bắt đầu học ngay</h2>
+
+        <p>Nhấn vào bài đầu tiên để bắt đầu:</p>
+
+        <div class="card-grid">
+            <a href="pages/01-python-co-ban.html" class="card" style="text-decoration: none; color: inherit;">
+                <div class="card__title">🐍 Bài 1: Python cơ bản</div>
+                <div class="card__body">
+                    Biến, kiểu dữ liệu, if/else, vòng lặp, hàm, list/dict.
+                    Nền tảng trước khi học OOP.
+                </div>
+            </a>
+            <a href="pages/03-tkinter-co-ban.html" class="card" style="text-decoration: none; color: inherit;">
+                <div class="card__title">🖼️ Bài 3: Tkinter cơ bản</div>
+                <div class="card__body">
+                    Cửa sổ, Label, Entry, Button, Treeview, sự kiện.
+                    Cú pháp tạo giao diện.
+                </div>
+            </a>
+            <a href="pages/05-dslk.html" class="card" style="text-decoration: none; color: inherit;">
+                <div class="card__title">🔗 Bài 5: DSLK đôi</div>
+                <div class="card__body">
+                    Con trỏ, Node, head, tail, prev, next.
+                    Cấu trúc dữ liệu tự cài.
+                </div>
+            </a>
+        </div>
+
+        <h2>❓ Câu hỏi thường gặp</h2>
+
+        <h3>Tôi rất ngu lập trình, học được không?</h3>
+        <p>Được. Trang này được viết cho người <strong>mất gốc</strong>. Mỗi cú pháp mới đều được
+        giải thích "cái này là gì, tại sao dùng, viết sao". Bạn đọc chậm + chạy code thử là hiểu.</p>
+
+        <h3>Tôi cần cài gì để chạy code?</h3>
+        <p>Chỉ cần <strong>Python 3.10+</strong> (có sẵn Tkinter). Tải tại <a href="https://python.org" target="_blank">python.org</a>.
+        SQLite cũng có sẵn trong Python (module <code class="inline">sqlite3</code>).</p>
+
+        <h3>Tôi có thể chạy thử code ở đâu?</h3>
+        <p>Có 3 cách:</p>
+        <ul>
+            <li><strong>Editor</strong>: VSCode, Thonny, PyCharm — paste code vào rồi F5.</li>
+            <li><strong>Online</strong>: <a href="https://replit.com" target="_blank">replit.com</a> (chạy Tkinter cần replit GUI).</li>
+            <li><strong>CMD/Terminal</strong>: lưu code thành <code class="inline">test.py</code> rồi chạy <code class="inline">python test.py</code>.</li>
+        </ul>
+
+        <h3>Repo GitHub của đồ án?</h3>
+        <p><a href="https://github.com/huyhandsome6996/quanlynhasach" target="_blank">github.com/huyhandsome6996/quanlynhasach</a></p>
+
+        <div class="page-nav"></div>
+
+    </div>
+
+    <footer class="footer">
+        <p>Trang web học dành cho nhóm 3 thành viên — Hồ Quang Huy, Bùi Gia Ngọ, Phan Anh Tú.</p>
+        <p>Đồ án môn Lập trình Nâng cao — Phiên bản Tkinter</p>
+    </footer>
+</main>
+
+<script src="js/highlight.js"></script>
+<script src="js/main.js"></script>
+
+</body>
+</html>

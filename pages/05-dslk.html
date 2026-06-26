@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 5: Danh sách liên kết đôi — Học đồ án QLNS</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header class="header">
+    <a href="../index.html" class="header__brand">
+        <span class="header__brand-icon">📚</span>
+        <span>Học đồ án QLNS</span>
+    </a>
+    <div class="header__search">
+        <span class="header__search-icon">🔍</span>
+        <input type="text" placeholder="Tìm bài học...">
+    </div>
+    <button class="header__menu-toggle" type="button">☰</button>
+</header>
+
+<aside class="sidebar"></aside>
+
+<main class="main">
+    <div class="content">
+
+        <h1>🔗 Bài 5: Danh sách liên kết đôi (Doubly Linked List)</h1>
+
+        <p><strong>Danh sách liên kết đôi (DSLK đôi)</strong> là cấu trúc dữ liệu tự cài đặt —
+        không dùng <code class="inline">list</code> Python. Đây là phần <strong>Huy</strong> phụ trách.</p>
+
+        <div class="callout callout--danger">
+            <div class="callout__title">🚨 Đây là phần KHÓ NHẤT đồ án</div>
+            <div class="callout__body">
+                <p>Nếu bạn chưa từng nghe "con trỏ", "node", "linked list" — đọc kỹ bài này.
+                Huy phụ trách vì đây là phần khó nhất, không ai trong nhóm đã học.</p>
+            </div>
+        </div>
+
+        <div class="toc">
+            <div class="toc__title">📑 Mục lục</div>
+            <ol>
+                <li><a href="#what">DSLK là gì? Tại sao không dùng list Python?</a></li>
+                <li><a href="#node">Node — mắt xích của DSLK</a></li>
+                <li><a href="#structure">Cấu trúc DSLK đôi</a></li>
+                <li><a href="#append">them_vao_cuoi — thêm vào cuối</a></li>
+                <li><a href="#delete">xoa_node — xóa phần tử</a></li>
+                <li><a href="#search">Tìm kiếm (3 cách)</a></li>
+                <li><a href="#update">cap_nhat_node — sửa phần tử</a></li>
+                <li><a href="#traverse">Duyệt + chuyen_thanh_danh_sach</a></li>
+            </ol>
+        </div>
+
+        <h2 id="what">1. DSLK là gì? Tại sao không dùng list Python?</h2>
+
+        <p><strong>List Python</strong> là dãy các phần tử liền nhau trong bộ nhớ:</p>
+
+        <div class="diagram">
+            <div class="diagram__title">List Python — phần tử liền nhau</div>
+            <div>
+                <span class="dslk-node">[0] 10</span>
+                <span class="dslk-node">[1] 20</span>
+                <span class="dslk-node">[2] 30</span>
+                <span class="dslk-node">[3] 40</span>
+            </div>
+            <p style="margin-top:12px; font-size:0.9rem; color:#666;">
+                Truy cập <code class="inline">ds[2]</code> → ngay ra 30 (O(1)).
+                Nhưng chèn/xóa giữa danh sách → phải dời tất cả phần tử phía sau (O(n)).
+            </p>
+        </div>
+
+        <p><strong>DSLK</strong> — các phần tử (Node) rải rác trong bộ nhớ, liên kết qua <strong>con trỏ</strong>:</p>
+
+        <div class="diagram">
+            <div class="diagram__title">DSLK đôi — Node rải rác, liên kết qua con trỏ</div>
+            <div>
+                <span class="dslk-node">10<br>⬅️ ➡️</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node">20<br>⬅️ ➡️</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node">30<br>⬅️ ➡️</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node">40<br>⬅️ ➡️</span>
+            </div>
+            <p style="margin-top:12px; font-size:0.9rem; color:#666;">
+                Mỗi Node biết Node trước + Node sau.
+                Chèn/xóa giữa → chỉ cần sửa vài con trỏ (O(1) nếu có Node tham chiếu).
+            </p>
+        </div>
+
+        <h3>Tại sao đồ án dùng DSLK?</h3>
+        <p>Vì đề bài yêu cầu "tự cài đặt cấu trúc dữ liệu, không dùng built-in" — để sinh viên
+        hiểu sâu về con trỏ + bộ nhớ. Đây là yêu cầu cốt lõi của môn Lập trình Nâng cao.</p>
+
+        <h3>DSLK ĐÔI khác DSLK ĐƠN ở đâu?</h3>
+        <ul>
+            <li><strong>DSLK đơn</strong>: mỗi Node chỉ có 1 con trỏ <code class="inline">next</code> → chỉ duyệt được 1 chiều (tiến).</li>
+            <li><strong>DSLK đôi</strong>: mỗi Node có 2 con trỏ <code class="inline">truoc</code> + <code class="inline">next</code> → duyệt được 2 chiều (tiến + lùi).</li>
+        </ul>
+
+        <h2 id="node">2. Node — mắt xích của DSLK</h2>
+
+        <p>Mỗi Node chứa 3 thứ: <strong>dữ liệu</strong> + <strong>con trỏ trước</strong> + <strong>con trỏ sau</strong>.</p>
+
+        <pre data-file="danh_sach_lien_ket.py — Node"><code>class Node:
+    """
+    Lớp Node — đơn vị cơ bản của DSLK đôi.
+
+    Mỗi Node chứa:
+        data  : Dữ liệu (thường là đối tượng MatHang).
+        truoc : Con trỏ tới Node phía trước.
+        next  : Con trỏ tới Node phía sau.
+    """
+
+    def __init__(self, data):
+        self.data = data        # Dữ liệu (đối tượng sản phẩm)
+        self.truoc = None       # Ban đầu chưa liên kết Node trước
+        self.next = None        # Ban đầu chưa liên kết Node sau
+
+    def __str__(self):
+        return str(self.data)   # In Node → in dữ liệu bên trong</code></pre>
+
+        <div class="callout callout--info">
+            <div class="callout__title">ℹ️ "Con trỏ" trong Python</div>
+            <div class="callout__body">
+                <p>Python không có con trỏ kiểu C. Thay vào đó, biến Python là <strong>tham chiếu</strong> (reference)
+                tới đối tượng. Khi gán <code class="inline">node.truoc = node_khac</code>, <code class="inline">node.truoc</code>
+                "trỏ tới" đối tượng <code class="inline">node_khac</code>.</p>
+                <p><code class="inline">None</code> = "không trỏ tới đâu cả" (null).</p>
+            </div>
+        </div>
+
+        <h2 id="structure">3. Cấu trúc DSLK đôi</h2>
+
+        <p>Lớp <code class="inline">DoublyLinkedList</code> quản lý toàn bộ danh sách. Chỉ cần giữ
+        <strong>head</strong> (đầu) + <strong>cuoi</strong> (cuối) là duyệt được hết.</p>
+
+        <pre data-file="danh_sach_lien_ket.py — DoublyLinkedList"><code>class DoublyLinkedList:
+    """
+    Lớp quản lý DSLK đôi.
+
+    Thuộc tính:
+        head      : Trỏ tới Node đầu (None nếu rỗng).
+        cuoi      : Trỏ tới Node cuối (None nếu rỗng).
+        so_luong  : Số Node hiện có (để tránh duyệt mỗi lần đếm).
+    """
+
+    def __init__(self):
+        self.head = None        # Chưa có Node đầu
+        self.cuoi = None        # Chưa có Node cuối
+        self.so_luong = 0       # Đếm số phần tử</code></pre>
+
+        <p>Minh họa DSLK rỗng vs DSLK có 3 Node:</p>
+
+        <div class="diagram">
+            <div class="diagram__title">DSLK rỗng</div>
+            <p><code>head = None, cuoi = None, so_luong = 0</code></p>
+        </div>
+
+        <div class="diagram">
+            <div class="diagram__title">DSLK có 3 Node: A → B → C</div>
+            <div>
+                <span class="dslk-node">Node A<br>data="Sách 1"</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node">Node B<br>data="Sách 2"</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node">Node C<br>data="Sách 3"</span>
+            </div>
+            <p style="margin-top:12px; font-size:0.9rem; color:#666;">
+                <code>head</code> → A, <code>cuoi</code> → C, <code>so_luong</code> = 3<br>
+                A.truoc = None (không có Node trước A)<br>
+                A.next = B<br>
+                B.truoc = A, B.next = C<br>
+                C.truoc = B, C.next = None
+            </p>
+        </div>
+
+        <h2 id="append">4. them_vao_cuoi — thêm vào cuối</h2>
+
+        <pre data-file="danh_sach_lien_ket.py — them_vao_cuoi"><code>def them_vao_cuoi(self, data):
+    """
+    Thêm phần tử mới vào CUỐI danh sách.
+    Độ phức tạp: O(1) nhờ duy trì sẵn con trỏ `cuoi`.
+    """
+    # Bọc dữ liệu vào Node mới
+    node_moi = Node(data)
+
+    if self.head is None:
+        # Trường hợp 1: danh sách đang RỖNG
+        # Node mới là cả đầu lẫn cuối
+        self.head = node_moi
+        self.cuoi = node_moi
+    else:
+        # Trường hợp 2: đã có phần tử
+        # Nối Node mới SAU Node cuối hiện tại
+        self.cuoi.next = node_moi        # Node cuối trỏ next tới Node mới
+        node_moi.truoc = self.cuoi       # Node mới trỏ truoc ngược lại
+        self.cuoi = node_moi             # Cập nhật cuoi = Node mới
+
+    self.so_luong += 1                   # Tăng bộ đếm</code></pre>
+
+        <h3>Mô phỏng từng bước</h3>
+        <p>Giả sử DSLK đang có 2 Node: <code>A ⇄ B</code>. Thêm Node <code>C</code> vào cuối:</p>
+
+        <div class="diagram">
+            <div class="diagram__title">Bước 1: Tạo node_moi = Node(C)</div>
+            <div>
+                <span class="dslk-node">A</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node">B</span>
+                <span style="margin: 0 20px;">+</span>
+                <span class="dslk-node" style="border-color: #d69e2e;">C (mới)<br>truoc=None, next=None</span>
+            </div>
+        </div>
+
+        <div class="diagram">
+            <div class="diagram__title">Bước 2: self.cuoi.next = node_moi (B.next = C)</div>
+            <div>
+                <span class="dslk-node">A</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node">B<br>next → C</span>
+                <span class="dslk-arrow">→</span>
+                <span class="dslk-node" style="border-color: #d69e2e;">C</span>
+            </div>
+        </div>
+
+        <div class="diagram">
+            <div class="diagram__title">Bước 3: node_moi.truoc = self.cuoi (C.truoc = B)</div>
+            <div>
+                <span class="dslk-node">A</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node">B</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node" style="border-color: #d69e2e;">C</span>
+            </div>
+        </div>
+
+        <div class="diagram">
+            <div class="diagram__title">Bước 4: self.cuoi = node_moi (cuoi = C)</div>
+            <div>
+                <span class="dslk-node">A</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node">B</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node" style="border-color: #d69e2e;">C ← cuoi</span>
+            </div>
+            <p style="margin-top:12px; font-size:0.9rem; color:#666;">
+                <code>so_luong</code> tăng từ 2 lên 3.
+            </p>
+        </div>
+
+        <h2 id="delete">5. xoa_node — xóa phần tử</h2>
+
+        <p>Xóa có 3 trường hợp: xóa Node đầu, xóa Node cuối, xóa Node giữa.</p>
+
+        <pre data-file="danh_sach_lien_ket.py — xoa_node"><code>def xoa_node(self, ma_so):
+    """
+    Xóa Node đầu tiên có data.ma_so == ma_so.
+    Trả về: True nếu xóa được, False nếu không tìm thấy.
+    """
+    node_hien_tai = self.head                       # Bắt đầu từ đầu
+
+    while node_hien_tai is not None:                # Lặp đến hết
+        # Kiểm tra Node hiện tại có ma_so khớp không
+        if hasattr(node_hien_tai.data, 'ma_so') and \
+           node_hien_tai.data.ma_so == ma_so:
+
+            # Trường hợp 1: Node cần xóa là Node ĐẦU
+            if node_hien_tai == self.head:
+                self.head = node_hien_tai.next      # Đẩy head sang Node kế
+                if self.head is not None:
+                    self.head.truoc = None          # Node đầu mới không có truoc
+                else:
+                    self.cuoi = None                # Nếu rỗng → reset cả cuoi
+
+            # Trường hợp 2: Node cần xóa là Node CUỐI
+            elif node_hien_tai == self.cuoi:
+                self.cuoi = node_hien_tai.truoc     # Lùi cuoi về Node trước
+                self.cuoi.next = None               # Cắt liên kết tới Node bị xóa
+
+            # Trường hợp 3: Node ở GIỮA → nối prev và next bỏ qua Node hiện tại
+            else:
+                node_hien_tai.truoc.next = node_hien_tai.next
+                node_hien_tai.next.truoc = node_hien_tai.truoc
+
+            self.so_luong -= 1
+            return True                              # Đã xóa
+
+        node_hien_tai = node_hien_tai.next          # Tiến sang Node kế
+
+    return False                                    # Duyệt hết mà không thấy</code></pre>
+
+        <h3>Mô phỏng xóa Node giữa</h3>
+        <p>DSLK: <code>A ⇄ B ⇄ C ⇄ D</code>. Xóa Node B:</p>
+
+        <div class="diagram">
+            <div class="diagram__title">Trước khi xóa</div>
+            <div>
+                <span class="dslk-node">A</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node" style="border-color: red;">B (xóa)</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node">C</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node">D</span>
+            </div>
+        </div>
+
+        <div class="diagram">
+            <div class="diagram__title">Bước 1: B.truoc.next = B.next (A.next = C)</div>
+            <div>
+                <span class="dslk-node">A<br>next → C</span>
+                <span class="dslk-arrow">→</span>
+                <span class="dslk-node" style="opacity:0.3; border-color: red;">B</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node">C</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node">D</span>
+            </div>
+        </div>
+
+        <div class="diagram">
+            <div class="diagram__title">Bước 2: B.next.truoc = B.truoc (C.truoc = A)</div>
+            <div>
+                <span class="dslk-node">A</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node" style="opacity:0.3; border-color: red;">B</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node">C<br>truoc → A</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node">D</span>
+            </div>
+        </div>
+
+        <div class="diagram">
+            <div class="diagram__title">Sau khi xóa: A ⇄ C ⇄ D</div>
+            <div>
+                <span class="dslk-node">A</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node">C</span>
+                <span class="dslk-arrow">⇄</span>
+                <span class="dslk-node">D</span>
+            </div>
+            <p style="margin-top:12px; font-size:0.9rem; color:#666;">
+                Node B bị cắt khỏi danh sách. Python GC sẽ tự dọn rác.
+            </p>
+        </div>
+
+        <h2 id="search">6. Tìm kiếm (3 cách)</h2>
+
+        <pre data-file="danh_sach_lien_ket.py — tìm kiếm"><code># Cách 1: tìm chính xác theo mã số → trả về 1 đối tượng
+def tim_theo_ma_so(self, ma_so):
+    """Tìm chính xác theo mã. O(n). Trả về đối tượng hoặc None."""
+    node_hien_tai = self.head
+    while node_hien_tai is not None:
+        if hasattr(node_hien_tai.data, 'ma_so') and \
+           node_hien_tai.data.ma_so == ma_so:
+            return node_hien_tai.data           # trả về data, không phải Node
+        node_hien_tai = node_hien_tai.next
+    return None                                 # không tìm thấy
+
+# Cách 2: tìm theo tên (so khớp CHỨA, không phân biệt HOA/thường)
+def tim_kiem(self, tu_khoa):
+    """Trả về list các đối tượng có tên chứa tu_khoa."""
+    ket_qua = []
+    node_hien_tai = self.head
+    tu_khoa_chu_thuong = tu_khoa.lower()        # chuẩn hóa
+    while node_hien_tai is not None:
+        if hasattr(node_hien_tai.data, 'ten_san_pham'):
+            ten_chu_thuong = node_hien_tai.data.ten_san_pham.lower()
+            # in → kiểm tra "chứa"
+            if tu_khoa_chu_thuong in ten_chu_thuong:
+                ket_qua.append(node_hien_tai.data)
+        node_hien_tai = node_hien_tai.next
+    return ket_qua
+
+# Cách 3: tìm theo loại hàng
+def tim_theo_the_loai(self, the_loai):
+    """Trả về list các đối tượng có loại khớp."""
+    ket_qua = []
+    node_hien_tai = self.head
+    the_loai_chu_thuong = the_loai.lower()
+    while node_hien_tai is not None:
+        if hasattr(node_hien_tai.data, 'loai_hang'):
+            if the_loai_chu_thuong in node_hien_tai.data.loai_hang.lower():
+                ket_qua.append(node_hien_tai.data)
+        node_hien_tai = node_hien_tai.next
+    return ket_qua</code></pre>
+
+        <h3>Tìm kiếm nâng cao (theo cả mã + tên + loại)</h3>
+        <pre data-file="danh_sach_lien_ket.py — tim_kiem_nang_cao"><code>def tim_kiem_nang_cao(self, tu_khoa):
+    """Tìm đồng thời theo MÃ + TÊN + LOẠI. Dùng set để tránh trùng."""
+    ket_qua = []
+    ma_da_them = set()                          # set không chứa phần tử trùng
+    node_hien_tai = self.head
+    tu_khoa_lower = tu_khoa.lower()
+
+    while node_hien_tai is not None:
+        data = node_hien_tai.data
+        da_khop = False
+
+        # Kiểm tra khớp theo mã số
+        if hasattr(data, 'ma_so') and tu_khoa_lower in data.ma_so.lower():
+            da_khop = True
+
+        # Nếu chưa khớp → kiểm tra theo tên
+        if not da_khop and hasattr(data, 'ten_san_pham') and \
+           tu_khoa_lower in data.ten_san_pham.lower():
+            da_khop = True
+
+        # Nếu vẫn chưa khớp → kiểm tra theo loại
+        if not da_khop and hasattr(data, 'loai_hang') and \
+           tu_khoa_lower in data.loai_hang.lower():
+            da_khop = True
+
+        # Nếu khớp và chưa thêm → thêm vào kết quả
+        if da_khop and data.ma_so not in ma_da_them:
+            ket_qua.append(data)
+            ma_da_them.add(data.ma_so)         # đánh dấu đã thêm
+
+        node_hien_tai = node_hien_tai.next
+
+    return ket_qua</code></pre>
+
+        <div class="callout callout--info">
+            <div class="callout__title">ℹ️ Tại sao dùng set?</div>
+            <div class="callout__body">
+                <p>Nếu sản phẩm có mã <code class="inline">"S001"</code> và tên <code class="inline">"S001 - Sách"</code>,
+                tìm "S001" sẽ khớp cả 2 điều kiện → nếu không dùng set, sản phẩm bị thêm 2 lần.</p>
+                <p>Set kiểm tra <code class="inline">in</code> nhanh hơn list (O(1) vs O(n)).</p>
+            </div>
+        </div>
+
+        <h2 id="update">7. cap_nhat_node — sửa phần tử</h2>
+
+        <pre data-file="danh_sach_lien_ket.py — cap_nhat_node"><code>def cap_nhat_node(self, ma_so, du_lieu_moi):
+    """
+    Cập nhật các trường của Node có ma_so.
+    du_lieu_moi là dict {ten_truong: gia_tri_moi}.
+    Trả về đối tượng đã cập nhật, hoặc None nếu không tìm thấy.
+    """
+    node_hien_tai = self.head
+    while node_hien_tai is not None:
+        if hasattr(node_hien_tai.data, 'ma_so') and \
+           node_hien_tai.data.ma_so == ma_so:
+            doi_tuong = node_hien_tai.data
+
+            # Lặp từng cặp (tên_trường, giá_trị) trong dict
+            for thuoc_tinh, gia_tri in du_lieu_moi.items():
+                if hasattr(doi_tuong, thuoc_tinh):
+                    # setattr(obj, "tên", giá_trị) = obj.tên = giá_trị
+                    setattr(doi_tuong, thuoc_tinh, gia_tri)
+            return doi_tuong
+        node_hien_tai = node_hien_tai.next
+    return None</code></pre>
+
+        <p>Ví dụ sử dụng:</p>
+        <pre data-file="vd cap_nhat"><code># Tạo đối tượng + DSLK
+sach = Sach("MH001", "Truyện Kiều", 50000, 20, "Nguyễn Du", "NXB Văn Học")
+dslk = DoublyLinkedList()
+dslk.them_vao_cuoi(sach)
+
+# Sửa giá + tồn kho
+dslk.cap_nhat_node("MH001", {"gia_co_ban": 55000, "ton_kho": 25})
+
+# Tương đương:
+# sach.gia_co_ban = 55000
+# sach.ton_kho = 25</code></pre>
+
+        <h2 id="traverse">8. Duyệt + chuyen_thanh_danh_sach</h2>
+
+        <pre data-file="danh_sach_lien_ket.py — duyệt"><code>def chuyen_thanh_danh_sach(self):
+    """
+    Đổi DSLK thành list Python các dict.
+    Dùng khi trả về JSON cho frontend.
+    """
+    ket_qua = []
+    node_hien_tai = self.head
+    while node_hien_tai is not None:
+        du_lieu = node_hien_tai.data
+        if hasattr(du_lieu, 'chuyen_thanh_dict'):
+            # Nếu là đối tượng OOP → gọi chuyen_thanh_dict()
+            ket_qua.append(du_lieu.chuyen_thanh_dict())
+        else:
+            ket_qua.append(str(du_lieu))
+        node_hien_tai = node_hien_tai.next
+    return ket_qua
+
+def __str__(self):
+    """In DSLK theo dạng: A &lt;-&gt; B &lt;-&gt; C."""
+    danh_sach = []
+    node_hien_tai = self.head
+    while node_hien_tai is not None:
+        danh_sach.append(str(node_hien_tai.data))
+        node_hien_tai = node_hien_tai.next
+    return ' &lt;-&gt; '.join(danh_sach)
+
+def __len__(self):
+    """Cho phép dùng len(ds) — trả về so_luong."""
+    return self.so_luong</code></pre>
+
+        <p>Ví dụ sử dụng:</p>
+        <pre data-file="vd sử dụng"><code>ds = DoublyLinkedList()
+ds.them_vao_cuoi(Sach("MH001", "Truyện Kiều", 50000, 20, ...))
+ds.them_vao_cuoi(TapChi("MH002", "Tạp chí KH", 30000, 15, ...))
+
+print(len(ds))                    # 2 (gọi __len__)
+print(ds)                         # [MH001] Sách - Truyện Kiều ... &lt;-&gt; [MH002] ...
+
+# Chuyển sang list dict (để hiện trong Treeview)
+list_dict = ds.chuyen_thanh_danh_sach()
+# [{'ma_so': 'MH001', 'ten': 'Truyện Kiều', ...}, {'ma_so': 'MH002', ...}]</code></pre>
+
+        <h2>🎯 Tổng kết bài 5</h2>
+
+        <p>Bạn đã học:</p>
+        <ul>
+            <li>✅ <strong>DSLK đôi</strong> = các Node rải rác, liên kết qua con trỏ <code class="inline">truoc</code> + <code class="inline">next</code></li>
+            <li>✅ <strong>Node</strong> = data + truoc + next</li>
+            <li>✅ <strong>DoublyLinkedList</strong> = head + cuoi + so_luong</li>
+            <li>✅ <code class="inline">them_vao_cuoi</code> — O(1), 2 trường hợp (rỗng + đã có)</li>
+            <li>✅ <code class="inline">xoa_node</code> — 3 trường hợp (đầu + cuối + giữa)</li>
+            <li>✅ Tìm kiếm: theo mã / tên / loại / nâng cao (set chống trùng)</li>
+            <li>✅ <code class="inline">cap_nhat_node</code> dùng <code class="inline">setattr</code> động</li>
+            <li>✅ Duyệt DSLK + <code class="inline">chuyen_thanh_danh_sach</code></li>
+            <li>✅ <code class="inline">__str__</code> + <code class="inline">__len__</code> — ghi đè phương thức mặc định</li>
+        </ul>
+
+        <div class="callout callout--success">
+            <div class="callout__title">✅ Bạn đã hiểu phần Huy làm (1/2)</div>
+            <div class="callout__body">
+                <p>File <code class="inline">danh_sach_lien_ket.py</code> giờ rõ ràng (trừ Merge Sort — bài sau).
+                Huy phụ trách file này, và 3 chức năng cn02/cn06/cn07 đều dùng DSLK.</p>
+            </div>
+        </div>
+
+        <div class="page-nav"></div>
+
+    </div>
+    <footer class="footer">
+        <p>Bài 5/20 — Danh sách liên kết đôi</p>
+    </footer>
+</main>
+
+<script src="../js/highlight.js"></script>
+<script src="../js/main.js"></script>
+
+</body>
+</html>

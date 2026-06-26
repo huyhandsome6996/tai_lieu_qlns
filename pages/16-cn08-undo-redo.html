@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CN08: Undo / Redo (Stack LIFO) — Học đồ án QLNS</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header class="header">
+    <a href="../index.html" class="header__brand">
+        <span class="header__brand-icon">📚</span>
+        <span>Học đồ án QLNS</span>
+    </a>
+    <div class="header__search">
+        <span class="header__search-icon">🔍</span>
+        <input type="text" placeholder="Tìm bài học...">
+    </div>
+    <button class="header__menu-toggle" type="button">☰</button>
+</header>
+
+<aside class="sidebar"></aside>
+
+<main class="main">
+    <div class="content">
+
+        <h1>↩️ CN08: Undo / Redo (Stack LIFO)</h1>
+
+        <p>Đây là chức năng <strong>phức tạp nhất</strong> trong đồ án. Mỗi khi user thêm/sửa/xóa,
+        hệ thống ghi 1 entry vào Stack Undo. Khi nhấn nút Undo, hệ thống lấy entry từ đỉnh Undo
+        Stack, đảo ngược tác động, rồi đẩy sang Redo Stack. Nhấn Redo thì ngược lại.</p>
+
+        <div class="callout callout--info">
+            <div class="callout__title">📖 Mô tả yêu cầu barem</div>
+            <div class="callout__body">
+                <p><strong>Nhóm 8 — Undo/Redo:</strong> Mọi thao tác thêm/sửa/xóa đều ghi lịch sử
+                vào 2 Stack (LIFO). Undo = lấy từ đỉnh Undo Stack → đảo ngược → đẩy sang Redo.
+                Redo = lấy từ đỉnh Redo Stack → áp dụng lại → đẩy sang Undo.</p>
+            </div>
+        </div>
+
+        <div class="toc">
+            <div class="toc__title">📑 Mục lục</div>
+            <ol>
+                <li><a href="#cau-truc">Cấu trúc folder cn08</a></li>
+                <li><a href="#tt">File _tt: 3 hàm hoan_tac, lam_lai, trang_thai</a></li>
+                <li><a href="#dao-nguoc">Đảo ngược 3 loại thao tác</a></li>
+                <li><a href="#ui">File _ui: 2 nút Undo + Redo</a></li>
+                <li><a href="#dk">File _dk: DieuKhienHoanTacLamLai</a></li>
+                <li><a href="#callback">Cơ chế callback sau Undo/Redo</a></li>
+            </ol>
+        </div>
+
+        <h2 id="cau-truc">1. Cấu trúc folder cn08</h2>
+
+        <pre data-file="chuc_nang/cn08_hoan_tac_lam_lai/"><code>cn08_hoan_tac_lam_lai/
+├── __init__.py
+├── hoan_tac_lam_lai_tt.py     ← 3 hàm: hoan_tac, lam_lai, trang_thai
+├── hoan_tac_lam_lai_ui.py     ← Lớp ThanhUndoRedoUI (2 nút)
+└── hoan_tac_lam_lai_dk.py     ← Lớp DieuKhienHoanTacLamLai</code></pre>
+
+        <h2 id="tt">2. File _tt: 3 hàm hoan_tac, lam_lai, trang_thai</h2>
+
+        <pre data-file="hoan_tac_lam_lai_tt.py"><code>from loi_thuat_toan.ket_noi_sqlite import luu_mot_san_pham, cap_nhat_san_pham, xoa_mot_san_pham
+from loi_thuat_toan.lop_doi_tuong import Sach, TapChi, BaoGiay, LuanVan, BanThao
+from loi_thuat_toan.danh_sach_lien_ket import DoublyLinkedList
+
+
+# ============================================================
+# HÀM TIỆN ÍCH NỘI BỘ — TÁI TẠO ĐỐI TƯỢNG TỪ DICT
+# ============================================================
+def _tao_doi_tuong_tu_dict(d):
+    """Tái tạo đối tượng MatHang từ dict (dùng cho Undo thao tác xóa)."""
+    loai = d.get('loai_hang')
+    if loai == 'Sách':
+        return Sach(d['ma_so'], d['ten_san_pham'], d['gia_co_ban'],
+                    d['ton_kho'], d.get('tac_gia', ''), d.get('nha_xuat_ban', ''))
+    elif loai == 'Tạp chí':
+        return TapChi(d['ma_so'], d['ten_san_pham'], d['gia_co_ban'],
+                      d['ton_kho'], d.get('so_phat_hanh', ''))
+    elif loai == 'Báo giấy':
+        return BaoGiay(d['ma_so'], d['ten_san_pham'], d['gia_co_ban'],
+                       d['ton_kho'], d.get('ngay_xuat_ban', ''))
+    elif loai == 'Luận văn':
+        return LuanVan(d['ma_so'], d['ten_san_pham'], d['gia_co_ban'],
+                       d['ton_kho'], d.get('tac_gia', ''),
+                       d.get('truong_dai_hoc', ''), '')
+    elif loai == 'Bản thảo':
+        return BanThao(d['ma_so'], d['ten_san_pham'], d['gia_co_ban'],
+                       d['ton_kho'], d.get('tac_gia', ''),
+                       d.get('tinh_trang', ''))
+    return None
+
+
+# ============================================================
+# HÀM UNDO — HOÀN TÁC THAO TÁC GẦN NHẤT
+# ============================================================
+def hoan_tac(danh_sach, bo_undoredo):
+    """Undo — hoàn tác thao tác gần nhất."""
+    try:
+        # Lấy thao tác trên đỉnh Undo Stack (pop)
+        thao_tac = bo_undoredo['undo'].lay_ra()
+        if thao_tac is None:
+            return False, 'Không có thao tác để hoàn tác.'
+
+        # Đẩy sang Redo Stack (để có thể redo sau)
+        bo_undoredo['redo'].day_vao(thao_tac)
+
+        # Phân nhánh theo loại thao tác để đảo ngược tác động
+        loai = thao_tac['loai']
+
+        if loai == 'them':
+            # Undo THÊM → XÓA sản phẩm vừa thêm
+            ma = thao_tac['du_lieu_moi']['ma_so']
+            danh_sach.xoa_node(ma)
+            xoa_mot_san_pham(ma)
+            return True, f'Đã hoàn tác: xóa "{thao_tac["du_lieu_moi"]["ten_san_pham"]}".'
+
+        elif loai == 'xoa':
+            # Undo XÓA → THÊM LẠI sản phẩm đã xóa
+            cu = thao_tac['du_lieu_cu']
+            sp = _tao_doi_tuong_tu_dict(cu)
+            if sp:
+                danh_sach.them_vao_cuoi(sp)
+                luu_mot_san_pham(sp)
+            return True, f'Đã hoàn tác: thêm lại "{cu["ten_san_pham"]}".'
+
+        elif loai == 'sua':
+            # Undo SỬA → đặt lại dữ liệu cũ
+            cu = thao_tac['du_lieu_cu']
+            ma = cu['ma_so']
+            dl = {
+                'ten_san_pham': cu['ten_san_pham'],
+                'gia_co_ban':   cu['gia_co_ban'],
+                'ton_kho':      cu['ton_kho']
+            }
+            # Thêm các trường riêng nếu có
+            for k in ['tac_gia', 'nha_xuat_ban', 'so_phat_hanh',
+                      'ngay_xuat_ban', 'truong_dai_hoc', 'tinh_trang']:
+                if k in cu:
+                    dl[k] = cu[k]
+            sp = danh_sach.tim_theo_ma_so(ma)
+            if sp:
+                danh_sach.cap_nhat_node(ma, dl)
+                cap_nhat_san_pham(sp)
+            return True, f'Đã hoàn tác: khôi phục "{cu["ten_san_pham"]}".'
+
+        return False, 'Thao tác không xác định.'
+    except Exception as loi:
+        return False, f'Lỗi: {loi}'
+
+
+# ============================================================
+# HÀM REDO — LÀM LẠI THAO TÁC VỪA UNDO
+# ============================================================
+def lam_lai(danh_sach, bo_undoredo):
+    """Redo — làm lại thao tác đã undo."""
+    try:
+        # Lấy thao tác trên đỉnh Redo Stack (pop)
+        thao_tac = bo_undoredo['redo'].lay_ra()
+        if thao_tac is None:
+            return False, 'Không có thao tác để làm lại.'
+
+        # Đẩy lại sang Undo Stack
+        bo_undoredo['undo'].day_vao(thao_tac)
+
+        loai = thao_tac['loai']
+
+        if loai == 'them':
+            # Redo THÊM → THÊM LẠI sản phẩm
+            moi = thao_tac['du_lieu_moi']
+            sp = _tao_doi_tuong_tu_dict(moi)
+            if sp:
+                danh_sach.them_vao_cuoi(sp)
+                luu_mot_san_pham(sp)
+            return True, f'Đã làm lại: thêm "{moi["ten_san_pham"]}".'
+
+        elif loai == 'xoa':
+            # Redo XÓA → XÓA LẠI sản phẩm
+            ma = thao_tac['du_lieu_cu']['ma_so']
+            danh_sach.xoa_node(ma)
+            xoa_mot_san_pham(ma)
+            return True, f'Đã làm lại: xóa "{thao_tac["du_lieu_cu"]["ten_san_pham"]}".'
+
+        elif loai == 'sua':
+            # Redo SỬA → áp dụng lại dữ liệu mới
+            moi = thao_tac['du_lieu_moi']
+            ma = moi['ma_so']
+            dl = {
+                'ten_san_pham': moi['ten_san_pham'],
+                'gia_co_ban':   moi['gia_co_ban'],
+                'ton_kho':      moi['ton_kho']
+            }
+            for k in ['tac_gia', 'nha_xuat_ban', 'so_phat_hanh',
+                      'ngay_xuat_ban', 'truong_dai_hoc', 'tinh_trang']:
+                if k in moi:
+                    dl[k] = moi[k]
+            sp = danh_sach.tim_theo_ma_so(ma)
+            if sp:
+                danh_sach.cap_nhat_node(ma, dl)
+                cap_nhat_san_pham(sp)
+            return True, f'Đã làm lại: cập nhật "{moi["ten_san_pham"]}".'
+
+        return False, 'Thao tác không xác định.'
+    except Exception as loi:
+        return False, f'Lỗi: {loi}'
+
+
+# ============================================================
+# HÀM TRẠNG THÁI — CHO UI BẬT/TẮT NÚT
+# ============================================================
+def trang_thai(bo_undoredo):
+    """Trả về dict trạng thái Undo/Redo để UI bật/tắt nút."""
+    return {
+        'co_the_undo': not bo_undoredo['undo'].rong(),
+        'co_the_redo': not bo_undoredo['redo'].rong(),
+        'so_undo':     bo_undoredo['undo'].so_luong,
+        'so_redo':     bo_undoredo['redo'].so_luong,
+    }</code></pre>
+
+        <h2 id="dao-nguoc">3. Đảo ngược 3 loại thao tác</h2>
+
+        <p>Đây là phần phức tạp nhất — mỗi loại thao tác (them/sua/xoa) có cách đảo ngược khác nhau:</p>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Thao tác gốc</th>
+                        <th>Undo (đảo ngược)</th>
+                        <th>Redo (áp dụng lại)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>them</strong> (thêm mới)</td>
+                        <td>Xóa sản phẩm vừa thêm</td>
+                        <td>Thêm lại sản phẩm</td>
+                    </tr>
+                    <tr>
+                        <td><strong>sua</strong> (cập nhật)</td>
+                        <td>Khôi phục dữ liệu cũ</td>
+                        <td>Áp dụng lại dữ liệu mới</td>
+                    </tr>
+                    <tr>
+                        <td><strong>xoa</strong> (xóa)</td>
+                        <td>Thêm lại sản phẩm đã xóa</td>
+                        <td>Xóa lại sản phẩm</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>Ví dụ cụ thể: Undo thao tác Thêm</h3>
+
+        <pre data-file="Ví dụ Undo Thêm"><code># Giả sử user vừa thêm sản phẩm "Sách Python" (mã MH099)
+# Undo entry đã được ghi:
+thao_tac = {
+    'loai': 'them',
+    'du_lieu_cu': None,
+    'du_lieu_moi': {
+        'ma_so': 'MH099',
+        'ten_san_pham': 'Sách Python',
+        'loai_hang': 'Sách',
+        'gia_co_ban': 80000,
+        'ton_kho': 10,
+        ...
+    }
+}
+
+# Khi nhấn Undo:
+# 1. Lấy thao_tac ra khỏi Undo Stack (pop)
+# 2. Đẩy sang Redo Stack
+# 3. Vì loai == 'them' → đảo ngược = XÓA
+#    → ma = thao_tac['du_lieu_moi']['ma_so'] = 'MH099'
+#    → gọi danh_sach.xoa_node('MH099') + xoa_mot_san_pham('MH099')</code></pre>
+
+        <h3>Ví dụ cụ thể: Undo thao tác Xóa</h3>
+
+        <pre data-file="Ví dụ Undo Xóa"><code># Giả sử user vừa xóa "Truyện Kiều" (mã MH001)
+thao_tac = {
+    'loai': 'xoa',
+    'du_lieu_cu': {
+        'ma_so': 'MH001',
+        'ten_san_pham': 'Truyện Kiều',
+        'loai_hang': 'Sách',
+        'gia_co_ban': 50000,
+        'ton_kho': 20,
+        'tac_gia': 'Nguyễn Du',
+        'nha_xuat_ban': 'NXB Văn học'
+    },
+    'du_lieu_moi': None
+}
+
+# Khi nhấn Undo:
+# 1. Pop khỏi Undo Stack → đẩy sang Redo Stack
+# 2. Vì loai == 'xoa' → đảo ngược = THÊM LẠI
+#    → cu = thao_tac['du_lieu_cu']
+#    → sp = _tao_doi_tuong_tu_dict(cu)   # Tái tạo đối tượng Sach
+#    → gọi danh_sach.them_vao_cuoi(sp) + luu_mot_san_pham(sp)</code></pre>
+
+        <h2 id="ui">4. File _ui: 2 nút Undo + Redo</h2>
+
+        <pre data-file="hoan_tac_lam_lai_ui.py"><code>from tkinter import ttk
+
+
+class ThanhUndoRedoUI:
+    """Thanh chứa 2 nút Undo + Redo."""
+
+    def __init__(self, parent):
+        # Nút Undo — command sẽ gắn bởi Điều khiển
+        self.btn_hoan_tac = ttk.Button(parent, text='↶ Hoàn tác', width=12)
+        self.btn_hoan_tac.pack(side='left', padx=2)
+
+        # Nút Redo
+        self.btn_lam_lai = ttk.Button(parent, text='↷ Làm lại', width=12)
+        self.btn_lam_lai.pack(side='left', padx=2)
+
+    def bat_hoan_tac(self, bat=True):
+        """Bật/tắt nút Undo."""
+        self.btn_hoan_tac.config(state='normal' if bat else 'disabled')
+
+    def bat_lam_lai(self, bat=True):
+        """Bật/tắt nút Redo."""
+        self.btn_lam_lai.config(state='normal' if bat else 'disabled')
+
+    def vo_hieu_hoa_tat_ca(self):
+        """Vô hiệu hóa cả 2 nút (dùng khi chưa có thao tác nào)."""
+        self.bat_hoan_tac(False)
+        self.bat_lam_lai(False)</code></pre>
+
+        <h3>State 'normal' vs 'disabled'</h3>
+
+        <p>Button có 3 trạng thái:</p>
+        <ul>
+            <li><code class="inline">'normal'</code>: bình thường — user click được.</li>
+            <li><code class="inline">'disabled'</code>: vô hiệu hóa — xám, không click được.</li>
+            <li><code class="inline">'active'</code>: khi di chuột qua (ít dùng).</li>
+        </ul>
+
+        <p>Trong đồ án: nút Undo bị disabled khi Stack Undo rỗng, nút Redo bị disabled khi Stack
+        Redo rỗng — tránh user click không có tác dụng.</p>
+
+        <h2 id="dk">5. File _dk: DieuKhienHoanTacLamLai</h2>
+
+        <pre data-file="hoan_tac_lam_lai_dk.py"><code>from .hoan_tac_lam_lai_tt import hoan_tac, lam_lai, trang_thai
+
+
+class DieuKhienHoanTacLamLai:
+    def __init__(self, ui_undoredo, danh_sach, bo_undoredo):
+        self.ui = ui_undoredo
+        self.danh_sach = danh_sach
+        self.bo_undoredo = bo_undoredo
+
+    def gan_su_kien(self, cap_nhat_bang, cap_nhat_thong_ke):
+        """
+        Gắn command cho 2 nút + lưu 2 callback để gọi sau undo/redo.
+
+        Tham số:
+            cap_nhat_bang       : hàm callback để nạp lại bảng sau undo/redo.
+            cap_nhat_thong_ke   : hàm callback để cập nhật thống kê.
+        """
+        self._cap_nhat_bang = cap_nhat_bang
+        self._cap_nhat_thong_ke = cap_nhat_thong_ke
+
+        self.ui.btn_hoan_tac.config(command=self.xu_ly_hoan_tac)
+        self.ui.btn_lam_lai.config(command=self.xu_ly_lam_lai)
+
+    def xu_ly_hoan_tac(self):
+        """Gọi thuật toán Undo → cập nhật UI."""
+        ok, msg = hoan_tac(self.danh_sach, self.bo_undoredo)
+        self.cap_nhat_trang_thai()
+        if ok:
+            # Sau undo → nạp lại bảng + thống kê
+            self._cap_nhat_bang()
+            self._cap_nhat_thong_ke()
+        return ok, msg
+
+    def xu_ly_lam_lai(self):
+        """Gọi thuật toán Redo → cập nhật UI."""
+        ok, msg = lam_lai(self.danh_sach, self.bo_undoredo)
+        self.cap_nhat_trang_thai()
+        if ok:
+            self._cap_nhat_bang()
+            self._cap_nhat_thong_ke()
+        return ok, msg
+
+    def cap_nhat_trang_thai(self):
+        """Lấy trạng thái Stack → bật/tắt 2 nút."""
+        tt = trang_thai(self.bo_undoredo)
+        self.ui.bat_hoan_tac(tt['co_the_undo'])
+        self.ui.bat_lam_lai(tt['co_the_redo'])</code></pre>
+
+        <h2 id="callback">6. Cơ chế callback sau Undo/Redo</h2>
+
+        <p>Đây là pattern quan trọng — Điều khiển Undo/Redo cần gọi lại 2 hàm sau khi hoàn tất:</p>
+        <ol>
+            <li><code class="inline">cap_nhat_bang()</code>: nạp lại bảng sản phẩm (vì dữ liệu đã thay đổi).</li>
+            <li><code class="inline">cap_nhat_thong_ke()</code>: cập nhật khung thống kê.</li>
+        </ol>
+
+        <p>Vì <code class="inline">DieuKhienHoanTacLamLai</code> không biết về bảng + thống kê
+        (chỉ biết về Stack), nên nó nhận 2 callback từ caller:</p>
+
+        <pre data-file="Cách cua_so_chinh_dk gọi"><code># Trong DieuKhienCuaSoChinh._gan_su_kien
+self.dk_undoredo.gan_su_kien(
+    cap_nhat_bang=lambda: self.dk_danh_sach.nap_lai(),
+    cap_nhat_thong_ke=self.dk_thong_ke.cap_nhat
+)</code></pre>
+
+        <h3>2 cách truyền callback</h3>
+
+        <pre data-file="2 cách truyền callback"><code># Cách 1: Truyền hàm trực tiếp (nếu tên hàm + chữ ký khớp)
+self.dk_undoredo.gan_su_kien(
+    cap_nhat_bang=self.dk_danh_sach.nap_lai,        # nap_lai() không tham số → OK
+    cap_nhat_thong_ke=self.dk_thong_ke.cap_nhat     # cap_nhat() không tham số → OK
+)
+
+# Cách 2: Dùng lambda để bọc (linh hoạt hơn)
+self.dk_undoredo.gan_su_kien(
+    cap_nhat_bang=lambda: self.dk_danh_sach.nap_lai(),
+    cap_nhat_thong_ke=lambda: self.dk_thong_ke.cap_nhat()
+)</code></pre>
+
+        <p>Cách 1 gọn hơn, cách 2 linh hoạt hơn (có thể thêm logic khác vào lambda).</p>
+
+        <h2>Vòng đời Undo/Redo — ví dụ đầy đủ</h2>
+
+        <p>Giả sử user thực hiện 3 thao tác: Thêm A, Sửa A, Xóa A. Sau đó nhấn Undo 2 lần, Redo 1 lần:</p>
+
+        <div class="diagram">
+            <div class="diagram__title">Vòng đời Undo/Redo</div>
+            <p>1. Thêm A → Undo Stack: [Thêm A] &nbsp; Redo Stack: []</p>
+            <p style="margin-top: 6px;">2. Sửa A → Undo Stack: [Thêm A, Sửa A] &nbsp; Redo Stack: []</p>
+            <p style="margin-top: 6px;">3. Xóa A → Undo Stack: [Thêm A, Sửa A, Xóa A] &nbsp; Redo Stack: []</p>
+            <p style="margin-top: 6px;">↓ Nhấn Undo lần 1 (hoàn tác Xóa A → A xuất hiện lại)</p>
+            <p style="margin-top: 6px;">4. Undo Stack: [Thêm A, Sửa A] &nbsp; Redo Stack: [Xóa A]</p>
+            <p style="margin-top: 6px;">↓ Nhấn Undo lần 2 (hoàn tác Sửa A → A về dữ liệu cũ)</p>
+            <p style="margin-top: 6px;">5. Undo Stack: [Thêm A] &nbsp; Redo Stack: [Xóa A, Sửa A]</p>
+            <p style="margin-top: 6px;">↓ Nhấn Redo (làm lại Sửa A → A về dữ liệu mới)</p>
+            <p style="margin-top: 6px;">6. Undo Stack: [Thêm A, Sửa A] &nbsp; Redo Stack: [Xóa A]</p>
+        </div>
+
+        <div class="callout callout--warning">
+            <div class="callout__title">⚠️ Quy tắc "Xóa Redo khi có thao tác mới"</div>
+            <div class="callout__body">
+                <p>Sau bước 5, nếu user thực hiện <strong>thao tác mới</strong> (VD: Thêm B) thay
+                vì Redo, thì toàn bộ Redo Stack [Xóa A, Sửa A] sẽ bị xóa:</p>
+                <p>Undo Stack: [Thêm A, Sửa A, Thêm B] &nbsp; Redo Stack: []</p>
+                <p>Lý do: lịch sử đã "rẽ nhánh" — Sửa A và Xóa A không còn hợp lệ trong nhánh mới.</p>
+            </div>
+        </div>
+
+        <div class="callout callout--success">
+            <div class="callout__title">✅ Tóm tắt CN08</div>
+            <div class="callout__body">
+                <ul>
+                    <li>2 Stack: <code class="inline">undo</code> (hoàn tác) + <code class="inline">redo</code> (làm lại).</li>
+                    <li>Undo: pop từ Undo Stack → đảo ngược → push sang Redo Stack.</li>
+                    <li>Redo: pop từ Redo Stack → áp dụng lại → push sang Undo Stack.</li>
+                    <li>3 loại thao tác: them/sua/xoa — mỗi loại có cách đảo ngược riêng.</li>
+                    <li>UI: 2 nút, disabled khi Stack tương ứng rỗng.</li>
+                    <li>Sau Undo/Redo, gọi callback để cập nhật bảng + thống kê.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="page-nav"></div>
+
+    </div>
+
+    <footer class="footer">
+        <p>CN08 — Undo/Redo (Stack LIFO) | Học đồ án QLNS</p>
+    </footer>
+</main>
+
+<script src="../js/highlight.js"></script>
+<script src="../js/main.js"></script>
+
+</body>
+</html>

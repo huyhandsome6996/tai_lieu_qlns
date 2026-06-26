@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phân chia công việc — Học đồ án QLNS</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header class="header">
+    <a href="../index.html" class="header__brand">
+        <span class="header__brand-icon">📚</span>
+        <span>Học đồ án QLNS</span>
+    </a>
+    <div class="header__search">
+        <span class="header__search-icon">🔍</span>
+        <input type="text" placeholder="Tìm bài học...">
+    </div>
+    <button class="header__menu-toggle" type="button">☰</button>
+</header>
+
+<aside class="sidebar"></aside>
+
+<main class="main">
+    <div class="content">
+
+        <h1>👥 Phân chia công việc cho 3 thành viên</h1>
+
+        <p>Bài này tổng kết cách phân chia công việc cho nhóm 3 người — Hồ Quang Huy, Bùi Gia Ngọ,
+        Phan Anh Tú. Nguyên tắc: <strong>chia theo kiến thức đã học</strong>, đảm bảo mỗi người
+        làm phần mình hiểu.</p>
+
+        <div class="callout callout--info">
+            <div class="callout__title">📖 Nguyên tắc phân chia</div>
+            <div class="callout__body">
+                <ul>
+                    <li><strong>Huy</strong> (mạnh nhất): phụ trách thuật toán khó — DSLK đôi + Merge Sort, và các chức năng cn02/cn06/cn07.</li>
+                    <li><strong>Ngọ</strong> (đã học SQLite + Stack + Queue): phụ trách SQLite, Stack/Queue, và các chức năng cn01/cn08/cn09.</li>
+                    <li><strong>Tú</strong> (chỉ học OOP): phụ trách OOP + các chức năng cn03/cn04/cn05.</li>
+                </ul>
+                <p>Mỗi người phụ trách <strong>9 phần</strong> — chia đều khối lượng.</p>
+            </div>
+        </div>
+
+        <div class="toc">
+            <div class="toc__title">📑 Mục lục</div>
+            <ol>
+                <li><a href="#tong-quan">Bảng tổng quan phân chia</a></li>
+                <li><a href="#huy">Chi tiết Huy (9 phần)</a></li>
+                <li><a href="#ngo">Chi tiết Ngọ (9 phần)</a></li>
+                <li><a href="#tu">Chi tiết Tú (9 phần)</a></li>
+                <li><a href="#gantt">Trình tự thực hiện (Gantt)</a></li>
+                <li><a href="#lien-ket">Điểm liên kết giữa 3 người</a></li>
+                <li><a href="#thuyet-trinh">Hướng dẫn thuyết trình</a></li>
+            </ol>
+        </div>
+
+        <h2 id="tong-quan">1. Bảng tổng quan phân chia</h2>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>STT</th>
+                        <th>Phần việc</th>
+                        <th>File / Module</th>
+                        <th>Người phụ trách</th>
+                        <th>Độ khó</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>OOP — MatHang + 5 con</td>
+                        <td>loi_thuat_toan/lop_doi_tuong.py</td>
+                        <td><span class="badge badge--tu">Tú</span></td>
+                        <td><span class="badge badge--easy">Dễ</span></td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>DSLK đôi + Merge Sort</td>
+                        <td>loi_thuat_toan/danh_sach_lien_ket.py</td>
+                        <td><span class="badge badge--huy">Huy</span></td>
+                        <td><span class="badge badge--hard">Khó</span></td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td>Stack LIFO + Queue FIFO</td>
+                        <td>loi_thuat_toan/cau_truc_du_lieu.py</td>
+                        <td><span class="badge badge--ngo">Ngọ</span></td>
+                        <td><span class="badge badge--medium">Trung bình</span></td>
+                    </tr>
+                    <tr>
+                        <td>4</td>
+                        <td>SQLite CRUD</td>
+                        <td>loi_thuat_toan/ket_noi_sqlite.py</td>
+                        <td><span class="badge badge--ngo">Ngọ</span></td>
+                        <td><span class="badge badge--medium">Trung bình</span></td>
+                    </tr>
+                    <tr>
+                        <td>5</td>
+                        <td>Người dùng + phân quyền</td>
+                        <td>loi_thuat_toan/nguoi_dung.py</td>
+                        <td><span class="badge badge--ngo">Ngọ</span></td>
+                        <td><span class="badge badge--easy">Dễ</span></td>
+                    </tr>
+                    <tr>
+                        <td>6</td>
+                        <td>CN01 — Đăng nhập + phân quyền</td>
+                        <td>chuc_nang/cn01_*</td>
+                        <td><span class="badge badge--ngo">Ngọ</span></td>
+                        <td><span class="badge badge--medium">Trung bình</span></td>
+                    </tr>
+                    <tr>
+                        <td>7</td>
+                        <td>CN02 — Đọc danh sách</td>
+                        <td>chuc_nang/cn02_*</td>
+                        <td><span class="badge badge--huy">Huy</span></td>
+                        <td><span class="badge badge--easy">Dễ</span></td>
+                    </tr>
+                    <tr>
+                        <td>8</td>
+                        <td>CN03 — Thêm sản phẩm</td>
+                        <td>chuc_nang/cn03_*</td>
+                        <td><span class="badge badge--tu">Tú</span></td>
+                        <td><span class="badge badge--medium">Trung bình</span></td>
+                    </tr>
+                    <tr>
+                        <td>9</td>
+                        <td>CN04 — Sửa sản phẩm</td>
+                        <td>chuc_nang/cn04_*</td>
+                        <td><span class="badge badge--tu">Tú</span></td>
+                        <td><span class="badge badge--medium">Trung bình</span></td>
+                    </tr>
+                    <tr>
+                        <td>10</td>
+                        <td>CN05 — Xóa sản phẩm</td>
+                        <td>chuc_nang/cn05_*</td>
+                        <td><span class="badge badge--tu">Tú</span></td>
+                        <td><span class="badge badge--easy">Dễ</span></td>
+                    </tr>
+                    <tr>
+                        <td>11</td>
+                        <td>CN06 — Tìm kiếm + Sắp xếp</td>
+                        <td>chuc_nang/cn06_*</td>
+                        <td><span class="badge badge--huy">Huy</span></td>
+                        <td><span class="badge badge--medium">Trung bình</span></td>
+                    </tr>
+                    <tr>
+                        <td>12</td>
+                        <td>CN07 — Thống kê</td>
+                        <td>chuc_nang/cn07_*</td>
+                        <td><span class="badge badge--huy">Huy</span></td>
+                        <td><span class="badge badge--easy">Dễ</span></td>
+                    </tr>
+                    <tr>
+                        <td>13</td>
+                        <td>CN08 — Undo/Redo</td>
+                        <td>chuc_nang/cn08_*</td>
+                        <td><span class="badge badge--ngo">Ngọ</span></td>
+                        <td><span class="badge badge--hard">Khó</span></td>
+                    </tr>
+                    <tr>
+                        <td>14</td>
+                        <td>CN09 — Giỏ hàng + thanh toán</td>
+                        <td>chuc_nang/cn09_*</td>
+                        <td><span class="badge badge--ngo">Ngọ</span></td>
+                        <td><span class="badge badge--medium">Trung bình</span></td>
+                    </tr>
+                    <tr>
+                        <td>15</td>
+                        <td>Khung chính + main.py</td>
+                        <td>khung_chinh/* + main.py</td>
+                        <td><span class="badge badge--huy">Huy</span></td>
+                        <td><span class="badge badge--hard">Khó</span></td>
+                    </tr>
+                    <tr>
+                        <td>16</td>
+                        <td>Test tự động (47 test)</td>
+                        <td>test_app.py</td>
+                        <td>Cả 3 cùng</td>
+                        <td><span class="badge badge--medium">Trung bình</span></td>
+                    </tr>
+                    <tr>
+                        <td>17</td>
+                        <td>Tài liệu + README</td>
+                        <td>README.md</td>
+                        <td>Cả 3 cùng</td>
+                        <td><span class="badge badge--easy">Dễ</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h2 id="huy">2. Chi tiết Huy (9 phần)</h2>
+
+        <div class="card card--huy">
+            <div class="card__title">Hồ Quang Huy — mạnh nhất, phụ trách thuật toán khó</div>
+            <div class="card__body">
+                <p><strong>Nguyên tắc:</strong> Phụ trách những phần cần hiểu sâu về cấu trúc dữ liệu
+                và thuật toán — DSLK đôi + Merge Sort O(n log n). Huy là người duy nhất có khả năng
+                cài đặt Merge Sort đệ quy trên DSLK.</p>
+            </div>
+        </div>
+
+        <h3>9 phần cụ thể</h3>
+
+        <ol>
+            <li><strong>DSLK đôi</strong> — Lớp Node + DoublyLinkedList với CRUD: them_vao_cuoi,
+            xoa_node, cap_nhat_node, tim_theo_ma_so, tim_kiem, tim_theo_the_loai,
+            tim_kiem_nang_cao.</li>
+            <li><strong>Merge Sort</strong> — Hàm sap_xep_tron (đệ quy) + các hàm phụ trợ:
+            _chia_doi (Fast/Slow pointer), _tron (trộn 2 DSLK đã sắp), _lay_gia_tri, _dem_node.</li>
+            <li><strong>Thống kê trong DSLK</strong> — Hàm thong_ke() duyệt 1 lần, tích lũy 7 chỉ số.</li>
+            <li><strong>CN02 — Đọc danh sách</strong> — Hàm lay_danh_sach + BangSanPhamUI (Treeview)
+            + DieuKhienDocDanhSach.</li>
+            <li><strong>CN06 — Tìm kiếm + Sắp xếp</strong> — Thanh UI + 2 hàm tim_kiem + sap_xep
+            (gọi Merge Sort của DSLK).</li>
+            <li><strong>CN07 — Thống kê</strong> — KhungThongKeUI (5 label) + DieuKhienThongKe
+            (cập nhật label từ dict thong_ke).</li>
+            <li><strong>Khung chính</strong> — khung_chinh_tt.py (QuanLyTrungTam) + cua_so_chinh_ui.py
+            + cua_so_chinh_dk.py (điều phối 8 điều khiển con).</li>
+            <li><strong>main.py</strong> — Điểm vào ứng dụng: tạo QLTT + Tk root + form đăng nhập →
+            mở cửa sổ chính.</li>
+            <li><strong>Tích hợp + Debug</strong> — Ghép code 3 người, chạy test, sửa bug.</li>
+        </ol>
+
+        <h2 id="ngo">3. Chi tiết Ngọ (9 phần)</h2>
+
+        <div class="card card--ngo">
+            <div class="card__title">Bùi Gia Ngọ — đã học SQLite + Stack + Queue</div>
+            <div class="card__body">
+                <p><strong>Nguyên tắc:</strong> Phụ trách phần dữ liệu bền vững (SQLite) và 2 cấu
+                trúc dữ liệu tự cài (Stack LIFO + Queue FIFO). Đây là phần Ngọ đã học, dễ tiếp thu.</p>
+            </div>
+        </div>
+
+        <h3>9 phần cụ thể</h3>
+
+        <ol>
+            <li><strong>Stack LIFO (NganXep)</strong> — Lớp NodeNganXep + NganXep với: day_vao,
+            lay_ra, xem_dinh, rong, xoa_tat_ca.</li>
+            <li><strong>Queue FIFO (HangDoi)</strong> — Lớp NodeHangDoi + HangDoi với: them_vao,
+            lay_ra, xem_danh_sach, rong, xoa_tat_ca, xoa_theo_ma.</li>
+            <li><strong>SQLite — kết nối + tạo bảng</strong> — lay_duong_dan_db, tao_bang_neu_chua_co
+            (2 bảng: mat_hang + nguoi_dung).</li>
+            <li><strong>SQLite — CRUD sản phẩm</strong> — luu_mot_san_pham, cap_nhat_san_pham,
+            xoa_mot_san_pham, tai_du_lieu, tao_du_lieu_mau_neu_rong, xuat_du_lieu_csv.</li>
+            <li><strong>SQLite — người dùng</strong> — tao_nguoi_dung, xac_thuc_nguoi_dung,
+            co_nguoi_dung_nao_chua.</li>
+            <li><strong>NguoiDung + phân quyền</strong> — Lớp NguoiDung (ho_ten, vai_tro, la_admin),
+            hàm kiem_tra_dang_nhap, khoi_tao_nguoi_dung_mac_dinh.</li>
+            <li><strong>CN01 — Đăng nhập + phân quyền</strong> — BoDangNhap + CuaSoDangNhapUI
+            (modal) + DieuKhienDangNhap.</li>
+            <li><strong>CN08 — Undo/Redo</strong> — 3 hàm hoan_tac, lam_lai, trang_thai; đảo ngược
+            3 loại thao tác them/sua/xoa; _tao_doi_tuong_tu_dict.</li>
+            <li><strong>CN09 — Giỏ hàng + thanh toán</strong> — 4 hàm them_vao_gio, xem_gio_hang,
+            xoa_khoi_gio, thanh_toan; KhungGioHangUI; DieuKhienGioHang.</li>
+        </ol>
+
+        <h2 id="tu">4. Chi tiết Tú (9 phần)</h2>
+
+        <div class="card card--tu">
+            <div class="card__title">Phan Anh Tú — chỉ học OOP, làm phần OOP + CRUD đơn giản</div>
+            <div class="card__body">
+                <p><strong>Nguyên tắc:</strong> Tú chỉ mới học OOP, nên phụ trách phần OOP (lớp cha
+                + 5 lớp con kế thừa) và 3 chức năng CRUD (Thêm/Sửa/Xóa) — đây là phần dễ nhất về
+                thuật toán, chỉ cần hiểu OOP cơ bản.</p>
+            </div>
+        </div>
+
+        <h3>9 phần cụ thể</h3>
+
+        <ol>
+            <li><strong>MatHang (lớp cha trừu tượng)</strong> — ABC + abstractmethod, các thuộc tính
+            chung (ma_so, ten, gia_co_ban, ton_kho), hàm trừu tượng tinh_gia_ban.</li>
+            <li><strong>Sach</strong> — Lớp con kế thừa, thêm tac_gia + nha_xuat_ban, override
+            tinh_gia_ban (×1.1), override chuyen_thanh_dict.</li>
+            <li><strong>TapChi</strong> — Lớp con, thêm so_phat_hanh, tinh_gia_ban ×1.05.</li>
+            <li><strong>BaoGiay</strong> — Lớp con, thêm ngay_xuat_ban, tinh_gia_ban ×1.0.</li>
+            <li><strong>LuanVan</strong> — Lớp con, thêm tac_gia + truong_dai_hoc + nam_bao_ve,
+            tinh_gia_ban ×1.2.</li>
+            <li><strong>BanThao</strong> — Lớp con, thêm tac_gia + tinh_trang, tinh_gia_ban ×1.15.</li>
+            <li><strong>CN03 — Thêm sản phẩm</strong> — Hàm them_san_pham (đa hình) + điều khiển +
+            re-export FormThemSuaUI.</li>
+            <li><strong>CN04 — Sửa sản phẩm</strong> — Hàm sua_san_pham + DieuKhienSuaSanPham
+            (tìm sp → mở form Sửa với dữ liệu cũ).</li>
+            <li><strong>CN05 — Xóa sản phẩm</strong> — Hàm xoa_san_pham (kiểm tra admin) + 3 hàm
+            UI (hoi_xac_nhan_xoa, bao_loi, bao_thanh_cong) + DieuKhienXoaSanPham.</li>
+        </ol>
+
+        <div class="callout callout--tip">
+            <div class="callout__title">💡 Form Thêm/Sửa dùng chung</div>
+            <div class="callout__body">
+                <p>Vì form Thêm và form Sửa gần như giống nhau, Tú phụ trách file
+                <code class="inline">chuc_nang/_shared/form_them_sua_ui.py</code> — dùng chung cho
+                cả CN03 và CN04.</p>
+                <p>Đây là pattern <strong>tái sử dụng code</strong> — tránh lặp, dễ bảo trì.</p>
+            </div>
+        </div>
+
+        <h2 id="gantt">5. Trình tự thực hiện (Gantt)</h2>
+
+        <p>Trình tự đề xuất — 4 tuần làm việc:</p>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tuần</th>
+                        <th>Huy</th>
+                        <th>Ngọ</th>
+                        <th>Tú</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Tuần 1</strong></td>
+                        <td>DSLK đôi (Node + CRUD)</td>
+                        <td>SQLite — kết nối + tạo bảng + CRUD</td>
+                        <td>OOP — MatHang + 5 con</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Tuần 2</strong></td>
+                        <td>Merge Sort + thong_ke trong DSLK</td>
+                        <td>Stack LIFO + Queue FIFO + NguoiDung</td>
+                        <td>CN03 Thêm + CN04 Sửa</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Tuần 3</strong></td>
+                        <td>CN02 + CN06 + CN07</td>
+                        <td>CN01 + CN08 + CN09</td>
+                        <td>CN05 Xóa + form Thêm/Sửa dùng chung</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Tuần 4</strong></td>
+                        <td>Khung chính + main.py + Tích hợp</td>
+                        <td>Test SQLite + Stack/Queue</td>
+                        <td>Test OOP + 3 chức năng CRUD</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h2 id="lien-ket">6. Điểm liên kết giữa 3 người</h2>
+
+        <p>Các phần phụ thuộc lẫn nhau — cần thống nhất <strong>giao diện hàm</strong> trước khi bắt đầu:</p>
+
+        <h3>6.1. Tú → Huy + Ngọ</h3>
+        <p>Tú làm OOP trước, vì Huy (DSLK) và Ngọ (CN01-09) đều cần <code class="inline">MatHang</code>
+        và 5 lớp con. Phải thống nhất:</p>
+        <ul>
+            <li>Tên lớp + tên thuộc tính (<code class="inline">ma_so</code>, <code class="inline">ten_san_pham</code>, ...).</li>
+            <li>Chữ ký hàm <code class="inline">__init__</code> + <code class="inline">tinh_gia_ban</code> + <code class="inline">chuyen_thanh_dict</code>.</li>
+        </ul>
+
+        <h3>6.2. Huy → Ngọ</h3>
+        <p>Huy làm DSLK + Merge Sort trước. Ngọ cần dùng DSLK trong các chức năng cn01/cn08/cn09.
+        Thống nhất:</p>
+        <ul>
+            <li>API DSLK: <code class="inline">them_vao_cuoi</code>, <code class="inline">xoa_node</code>,
+            <code class="inline">tim_theo_ma_so</code>, <code class="inline">cap_nhat_node</code>,
+            <code class="inline">chuyen_thanh_danh_sach</code>, <code class="inline">thong_ke</code>.</li>
+        </ul>
+
+        <h3>6.3. Ngọ ↔ Huy</h3>
+        <p>Ngọ làm Stack/Queue + SQLite, Huy cần dùng trong cn02/cn06/cn07. Thống nhất:</p>
+        <ul>
+            <li>API Stack: <code class="inline">day_vao</code>, <code class="inline">lay_ra</code>,
+            <code class="inline">rong</code>, <code class="inline">xoa_tat_ca</code>.</li>
+            <li>API Queue: <code class="inline">them_vao</code>, <code class="inline">lay_ra</code>,
+            <code class="inline">xem_danh_sach</code>, <code class="inline">xoa_theo_ma</code>.</li>
+            <li>API SQLite: <code class="inline">luu_mot_san_pham</code>, <code class="inline">cap_nhat_san_pham</code>,
+            <code class="inline">xoa_mot_san_pham</code>, <code class="inline">tai_du_lieu</code>.</li>
+        </ul>
+
+        <h2 id="thuyet-trinh">7. Hướng dẫn thuyết trình</h2>
+
+        <p>Khi bảo vệ đồ án, mỗi người thuyết trình phần mình làm. Thứ tự đề xuất:</p>
+
+        <ol>
+            <li><strong>Huy mở đầu</strong>: Giới thiệu đồ án + cấu trúc tổng thể + main.py + QuanLyTrungTam.</li>
+            <li><strong>Tú tiếp</strong>: Giải thích OOP (lớp cha + 5 con + đa hình) + demo CN03/CN04/CN05.</li>
+            <li><strong>Ngọ tiếp</strong>: Giải thích SQLite + Stack/Queue + demo CN01/CN08/CN09.</li>
+            <li><strong>Huy kết</strong>: Giải thích DSLK + Merge Sort + demo CN02/CN06/CN07.</li>
+            <li><strong>Cả 3</strong>: Trả lời câu hỏi + chạy test_app.py cho thấy 47 test PASS.</li>
+        </ol>
+
+        <h3>Mẹo thuyết trình</h3>
+
+        <div class="callout callout--tip">
+            <div class="callout__title">💡 5 mẹo để thuyết trình tốt</div>
+            <div class="callout__body">
+                <ol>
+                    <li><strong>Chuẩn bị slide ngắn gọn</strong>: 1 slide mỗi chức năng, screenshot UI.</li>
+                    <li><strong>Demo trực tiếp</strong>: Chạy app, thêm/sửa/xóa, undo/redo, giỏ hàng.</li>
+                    <li><strong>Giải thích cú pháp mới</strong>: Tkinter Treeview, Combobox, StringVar, lambda.</li>
+                    <li><strong>Nhấn mạnh thuật toán</strong>: Merge Sort O(n log n), Stack/Queue tự cài.</li>
+                    <li><strong>Chạy test_app.py</strong>: 47 test PASS = bằng chứng code chạy đúng.</li>
+                </ol>
+            </div>
+        </div>
+
+        <h3>Câu hỏi thường gặp khi bảo vệ</h3>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Câu hỏi</th>
+                        <th>Trả lời ngắn</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Tại sao tự cài DSLK mà không dùng list Python?</td>
+                        <td>Theo yêu cầu môn Lập trình Nâng cao — hiểu sâu về con trỏ/tham chiếu.</td>
+                    </tr>
+                    <tr>
+                        <td>Merge Sort có ưu điểm gì so với Bubble Sort?</td>
+                        <td>O(n log n) thay vì O(n²) — nhanh hơn nhiều với danh sách lớn.</td>
+                    </tr>
+                    <tr>
+                        <td>Đa hình thể hiện ở đâu?</td>
+                        <td>Mỗi lớp con override <code>tinh_gia_ban()</code> với công thức riêng — cùng lời gọi ra kết quả khác nhau.</td>
+                    </tr>
+                    <tr>
+                        <td>Tại sao dùng Stack cho Undo/Redo?</td>
+                        <td>Vì thao tác gần nhất cần hoàn tác đầu tiên — đúng nguyên lý LIFO.</td>
+                    </tr>
+                    <tr>
+                        <td>Tại sao dùng Queue cho Giỏ hàng?</td>
+                        <td>Vì món nào vào trước thanh toán trước — đúng nguyên lý FIFO.</td>
+                    </tr>
+                    <tr>
+                        <td>Phân quyền admin/nhân viên ở đâu?</td>
+                        <td>2 lớp: UI vô hiệu nút Xóa + thuật toán kiểm tra <code>la_admin</code>.</td>
+                    </tr>
+                    <tr>
+                        <td>Làm sao chống SQL Injection?</td>
+                        <td>Dùng parameterized query (dấu ? thay vì nối chuỗi).</td>
+                    </tr>
+                    <tr>
+                        <td>Tại sao chia 3 file _tt/_ui/_dk?</td>
+                        <td>Tách biệt logic / giao diện / điều khiển — dễ bảo trì + test độc lập.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="callout callout--success">
+            <div class="callout__title">✅ Tóm tắt phân chia</div>
+            <div class="callout__body">
+                <ul>
+                    <li><strong>Huy</strong> (9 phần): DSLK + Merge Sort + CN02/CN06/CN07 + khung chính + main.py + tích hợp.</li>
+                    <li><strong>Ngọ</strong> (9 phần): SQLite + Stack/Queue + NguoiDung + CN01/CN08/CN09.</li>
+                    <li><strong>Tú</strong> (9 phần): OOP (MatHang + 5 con) + CN03/CN04/CN05 + form Thêm/Sửa dùng chung.</li>
+                    <li>Trình tự: Tuần 1-2 làm thuật toán cốt lõi, Tuần 3 làm chức năng, Tuần 4 tích hợp + test.</li>
+                    <li>Thuyết trình: Huy mở → Tú → Ngọ → Huy kết → chạy test PASS.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="page-nav"></div>
+
+    </div>
+
+    <footer class="footer">
+        <p>Phân chia công việc cho 3 thành viên | Học đồ án QLNS</p>
+    </footer>
+</main>
+
+<script src="../js/highlight.js"></script>
+<script src="../js/main.js"></script>
+
+</body>
+</html>

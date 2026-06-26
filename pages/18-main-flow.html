@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tổng thể: main.py + QuanLyTrungTam — Học đồ án QLNS</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header class="header">
+    <a href="../index.html" class="header__brand">
+        <span class="header__brand-icon">📚</span>
+        <span>Học đồ án QLNS</span>
+    </a>
+    <div class="header__search">
+        <span class="header__search-icon">🔍</span>
+        <input type="text" placeholder="Tìm bài học...">
+    </div>
+    <button class="header__menu-toggle" type="button">☰</button>
+</header>
+
+<aside class="sidebar"></aside>
+
+<main class="main">
+    <div class="content">
+
+        <h1>🎯 Tổng thể: main.py + QuanLyTrungTam</h1>
+
+        <p>Sau khi học từng phần riêng lẻ (Python, OOP, Tkinter, DSLK, Stack/Queue, SQLite, 9 chức
+        năng), bài này ghép tất cả lại — xem <strong>main.py</strong> khởi động app thế nào, và
+        <strong>QuanLyTrungTam</strong> điều phối các cấu trúc dữ liệu toàn cục ra sao.</p>
+
+        <div class="toc">
+            <div class="toc__title">📑 Mục lục</div>
+            <ol>
+                <li><a href="#main-py">main.py — điểm vào ứng dụng</a></li>
+                <li><a href="#qltt">QuanLyTrungTam — state container</a></li>
+                <li><a href="#facade">Pattern Facade (ủy quyền)</a></li>
+                <li><a href="#khoi-tao">Hàm khoi_tao() — khởi tạo hệ thống</a></li>
+                <li><a href="#luong-chinh">Luồng chạy toàn bộ app</a></li>
+                <li><a href="#test">test_app.py — 47 test tự động</a></li>
+            </ol>
+        </div>
+
+        <h2 id="main-py">1. main.py — điểm vào ứng dụng</h2>
+
+        <pre data-file="main.py"><code>import tkinter as tk
+
+# Import state container
+from quan_ly_trung_tam import QuanLyTrungTam
+# Import UI + Điều khiển đăng nhập
+from chuc_nang.cn01_dang_nhap_phan_quyen.dang_nhap_ui import CuaSoDangNhapUI
+from chuc_nang.cn01_dang_nhap_phan_quyen.dang_nhap_tt import BoDangNhap
+# Import Điều khiển cửa sổ chính
+from khung_chinh.cua_so_chinh_dk import DieuKhienCuaSoChinh
+
+
+def main():
+    """Hàm chính — khởi tạo ứng dụng."""
+    # Khởi tạo state container — bộ não của ứng dụng
+    qly = QuanLyTrungTam()
+    if not qly.khoi_tao():
+        print('LỖI: Không khởi tạo được hệ thống.')
+        return
+
+    # Tạo root Tk (cửa sổ chính của Tkinter)
+    root = tk.Tk()
+    root.title("Quản lý nhà sách")
+    root.geometry("100x100")
+
+    # Tạo bộ thuật toán đăng nhập
+    bo_dn = BoDangNhap()
+
+    # Hiện form đăng nhập modal
+    form = CuaSoDangNhapUI(root)
+
+    def _xu_ly_dang_nhap():
+        """Hàm xử lý: đọc form → gọi bo_dn.dang_nhap → đóng form nếu OK."""
+        ten = form.lay_ten_dang_nhap()
+        mk = form.lay_mat_khau()
+        if not ten or not mk:
+            form.bao_loi('Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.')
+            return
+        ok, ket_qua = bo_dn.dang_nhap(ten, mk)
+        if ok:
+            form.nguoi_dung = ket_qua
+            form.dong()
+        else:
+            form.bao_loi(ket_qua)
+            form.xoa_mat_khau()
+
+    # Gắn sự kiện
+    form.entry_mk.bind('<Return>', lambda e: _xu_ly_dang_nhap())
+    form.btn_dn.config(command=_xu_ly_dang_nhap)
+    # Chờ đến khi form bị đóng
+    root.wait_window(form.top)
+
+    # Nếu đăng nhập thành công → mở cửa sổ chính
+    if form.nguoi_dung:
+        qly.nguoi_dung_hien_tai = form.nguoi_dung
+        root.deiconify()
+        app = DieuKhienCuaSoChinh(root, qly, form.nguoi_dung)
+        root.mainloop()
+    else:
+        root.destroy()
+
+
+if __name__ == '__main__':
+    main()</code></pre>
+
+        <h3>Giải thích các dòng quan trọng</h3>
+
+        <h4>1.1. <code>if __name__ == '__main__':</code></h4>
+
+        <p>Đây là idiom Python — chỉ chạy <code class="inline">main()</code> khi file được chạy
+        trực tiếp (<code class="inline">python main.py</code>), không chạy khi bị import từ file khác.</p>
+
+        <pre data-file="__name__"><code># Nếu chạy: python main.py
+#   → __name__ của file main.py = '__main__'
+#   → gọi main()
+
+# Nếu trong file khác: import main
+#   → __name__ của file main.py = 'main' (tên module)
+#   → KHÔNG gọi main() — chỉ nạp các hàm/class để dùng</code></pre>
+
+        <h4>1.2. <code>root.deiconify()</code></h4>
+
+        <p>Hiện lại cửa sổ root sau khi đã <code class="inline">withdraw()</code> (ẩn). Trong
+        đồ án, root được giữ nguyên (không ẩn) để Windows hiện icon dưới Taskbar. Nhưng trong
+        <code class="inline">cua_so_chinh_dk._dang_xuat()</code> có dùng
+        <code class="inline">withdraw()</code> + <code class="inline">deiconify()</code>.</p>
+
+        <h4>1.3. <code>root.mainloop()</code></h4>
+
+        <p>Vòng lặp chính của Tkinter — <strong>chặn luồng</strong> và lắng nghe sự kiện (click,
+        gõ phím, v.v.) cho đến khi user đóng cửa sổ. Nếu không gọi <code class="inline">mainloop()</code>,
+        cửa sổ hiện lên rồi tắt ngay.</p>
+
+        <h2 id="qltt">2. QuanLyTrungTam — state container</h2>
+
+        <p>Đây là "bộ não" của app — giữ các cấu trúc dữ liệu toàn cục:</p>
+
+        <pre data-file="khung_chinh/khung_chinh_tt.py"><code>import os
+
+from loi_thuat_toan.danh_sach_lien_ket import DoublyLinkedList
+from loi_thuat_toan.cau_truc_du_lieu import NganXep, HangDoi
+from loi_thuat_toan.ket_noi_sqlite import (
+    tao_bang_neu_chua_co,
+    tai_du_lieu,
+    tao_du_lieu_mau_neu_rong,
+)
+from loi_thuat_toan.nguoi_dung import (
+    khoi_tao_nguoi_dung_mac_dinh,
+    kiem_tra_dang_nhap,
+)
+
+
+class QuanLyTrungTam:
+    """Lớp quản lý trung tâm — giữ cấu trúc dữ liệu toàn cục."""
+
+    def __init__(self):
+        # DSLK đôi chứa toàn bộ mặt hàng
+        self.danh_sach = None
+        # Dict chứa 2 Stack: 'undo' và 'redo'
+        self.bo_undoredo = None
+        # Queue giỏ hàng
+        self.gio_hang = None
+        # Người dùng đang đăng nhập (None = chưa login)
+        self.nguoi_dung_hien_tai = None</code></pre>
+
+        <h3>4 thuộc tính toàn cục</h3>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Thuộc tính</th>
+                        <th>Kiểu</th>
+                        <th>Vai trò</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>danh_sach</code></td>
+                        <td>DoublyLinkedList</td>
+                        <td>Chứa toàn bộ sản phẩm (RAM)</td>
+                    </tr>
+                    <tr>
+                        <td><code>bo_undoredo</code></td>
+                        <td>dict {'undo': NganXep, 'redo': NganXep}</td>
+                        <td>2 Stack cho Undo/Redo</td>
+                    </tr>
+                    <tr>
+                        <td><code>gio_hang</code></td>
+                        <td>HangDoi</td>
+                        <td>Queue FIFO cho giỏ hàng</td>
+                    </tr>
+                    <tr>
+                        <td><code>nguoi_dung_hien_tai</code></td>
+                        <td>NguoiDung (hoặc None)</td>
+                        <td>Người dùng đang đăng nhập</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h2 id="khoi-tao">3. Hàm khoi_tao() — khởi tạo hệ thống</h2>
+
+        <pre data-file="khoi_tao()"><code>def khoi_tao(self):
+    """Tạo DB + bảng + dữ liệu mẫu + nạp vào DSLK + tạo Stack/Queue."""
+    try:
+        # Tạo bảng SQLite nếu chưa có
+        tao_bang_neu_chua_co()
+        # Nếu DB rỗng → chèn 5 sản phẩm mẫu
+        tao_du_lieu_mau_neu_rong()
+        # Tạo 2 tài khoản mặc định: admin/123 + nhanvien/123
+        khoi_tao_nguoi_dung_mac_dinh()
+
+        # Tạo DSLK đôi rỗng rồi tải dữ liệu từ SQLite vào
+        self.danh_sach = DoublyLinkedList()
+        tai_du_lieu(self.danh_sach)
+
+        # 2 Stack cho Undo/Redo
+        self.bo_undoredo = {
+            'undo': NganXep(),
+            'redo': NganXep()
+        }
+        # 1 Queue cho giỏ hàng
+        self.gio_hang = HangDoi()
+
+        print(f'[KHOI TAO] Da nap {self.danh_sach.so_luong} mat hang.')
+        return True
+    except Exception as loi:
+        print(f'[LOI KHOI TAO] {loi}')
+        return False</code></pre>
+
+        <h3>5 bước khởi tạo</h3>
+
+        <ol>
+            <li><code class="inline">tao_bang_neu_chua_co()</code> — tạo 2 bảng SQLite (mat_hang + nguoi_dung) nếu chưa có.</li>
+            <li><code class="inline">tao_du_lieu_mau_neu_rong()</code> — nếu bảng mat_hang rỗng → chèn 5 sản phẩm mẫu.</li>
+            <li><code class="inline">khoi_tao_nguoi_dung_mac_dinh()</code> — nếu bảng nguoi_dung rỗng → chèn admin + nhanvien.</li>
+            <li><code class="inline">tai_du_lieu(self.danh_sach)</code> — đọc tất cả sản phẩm từ SQLite → thêm vào DSLK.</li>
+            <li>Khởi tạo 2 Stack + 1 Queue rỗng.</li>
+        </ol>
+
+        <div class="callout callout--tip">
+            <div class="callout__title">💡 Pattern "khởi tạo lười"</div>
+            <div class="callout__body">
+                <p>Các hàm <code class="inline">tao_bang_neu_chua_co</code>,
+                <code class="inline">tao_du_lieu_mau_neu_rong</code>,
+                <code class="inline">khoi_tao_nguoi_dung_mac_dinh</code> đều có chữ "nếu chưa có"
+                — nghĩa là <strong>chỉ tạo khi cần</strong>.</p>
+                <p>Lần đầu chạy app: tạo mới. Lần sau: bỏ qua (vì đã có sẵn). Đảm bảo dữ liệu cũ
+                không bị mất.</p>
+            </div>
+        </div>
+
+        <h2 id="facade">4. Pattern Facade (ủy quyền)</h2>
+
+        <p>QuanLyTrungTam đóng vai trò <strong>Facade</strong> — mặt tiền. Mọi hàm của nó chỉ
+        <strong>ủy quyền</strong> cho module chức năng con:</p>
+
+        <pre data-file="Pattern Facade"><code># QuanLyTrungTam.lay_danh_sach() — chỉ ủy quyền
+def lay_danh_sach(self):
+    from chuc_nang.cn02_doc_danh_sach.doc_danh_sach_tt import lay_danh_sach as _lay
+    return _lay(self.danh_sach)
+
+# QuanLyTrungTam.them_san_pham() — chỉ ủy quyền
+def them_san_pham(self, du_lieu):
+    from chuc_nang.cn03_them_san_pham.them_san_pham_tt import them_san_pham as _them
+    return _them(self.danh_sach, self.bo_undoredo, du_lieu)
+
+# QuanLyTrungTam.xoa_san_pham() — chỉ ủy quyền + kiểm tra quyền
+def xoa_san_pham(self, ma_so):
+    from chuc_nang.cn05_xoa_san_pham.xoa_san_pham_tt import xoa_san_pham as _xoa
+    return _xoa(self.danh_sach, self.bo_undoredo, ma_so, self.la_admin())</code></pre>
+
+        <h3>Tại sao dùng Facade?</h3>
+
+        <p>Vì <code class="inline">test_app.py</code> (47 test tự động) gọi API cũ của
+        QuanLyTrungTam — nếu bỏ class này, tất cả test sẽ hỏng. Pattern Facade giúp:</p>
+        <ul>
+            <li>Giữ API cũ: <code class="inline">qly.them_san_pham(du_lieu)</code> vẫn hoạt động.</li>
+            <li>Chuyển logic sang module con: dễ bảo trì, dễ test độc lập.</li>
+            <li>QuanLyTrungTam chỉ còn là "trung chuyển" — code ngắn, dễ đọc.</li>
+        </ul>
+
+        <h3>Lazy import</h3>
+
+        <p>Lưu ý <code class="inline">from ... import ...</code> nằm <strong>bên trong hàm</strong>,
+        không phải đầu file. Đây là <strong>lazy import</strong> — chỉ import khi hàm được gọi.</p>
+
+        <pre data-file="Lazy import"><code>def lay_danh_sach(self):
+    # Lazy import — chỉ chạy khi gọi hàm này
+    from chuc_nang.cn02_doc_danh_sach.doc_danh_sach_tt import lay_danh_sach as _lay
+    return _lay(self.danh_sach)</code></pre>
+
+        <p><strong>Lợi ích:</strong></p>
+        <ul>
+            <li>Tránh <strong>phụ thuộc vòng</strong> (circular import) — VD: cn02 import QuanLyTrungTam
+            + QuanLyTrungTam import cn02.</li>
+            <li>Tăng tốc độ khởi động — không cần load tất cả module ngay từ đầu.</li>
+        </ul>
+
+        <h2 id="luong-chinh">5. Luồng chạy toàn bộ app</h2>
+
+        <div class="diagram">
+            <div class="diagram__title">Luồng chạy đầy đủ từ main.py</div>
+            <p>1. <code class="inline">main()</code> chạy</p>
+            <p style="margin-top: 6px;">↓</p>
+            <p>2. Tạo <code class="inline">QuanLyTrungTam</code> + gọi <code class="inline">khoi_tao()</code></p>
+            <p style="margin-top: 6px;">↓ (tạo SQLite, nạp DSLK, tạo Stack/Queue)</p>
+            <p>3. Tạo <code class="inline">tk.Tk()</code> root</p>
+            <p style="margin-top: 6px;">↓</p>
+            <p>4. Tạo <code class="inline">BoDangNhap</code> + <code class="inline">CuaSoDangNhapUI</code></p>
+            <p style="margin-top: 6px;">↓</p>
+            <p>5. Gắn sự kiện Enter + nút Đăng nhập → <code class="inline">_xu_ly_dang_nhap</code></p>
+            <p style="margin-top: 6px;">↓</p>
+            <p>6. <code class="inline">root.wait_window(form.top)</code> — dừng chờ form đóng</p>
+            <p style="margin-top: 6px;">↓</p>
+            <p>7. User nhập admin/123 → nhấn Enter</p>
+            <p style="margin-top: 6px;">↓</p>
+            <p>8. <code class="inline">bo_dn.dang_nhap</code> query SQLite → trả về NguoiDung</p>
+            <p style="margin-top: 6px;">↓</p>
+            <p>9. <code class="inline">form.dong()</code> → <code class="inline">wait_window</code> hết chờ</p>
+            <p style="margin-top: 6px;">↓</p>
+            <p>10. <code class="inline">root.deiconify()</code> hiện root</p>
+            <p style="margin-top: 6px;">↓</p>
+            <p>11. Tạo <code class="inline">DieuKhienCuaSoChinh(root, qly, user)</code></p>
+            <p style="margin-top: 6px;">↓ (vẽ UI + tạo 8 điều khiển con + gắn sự kiện + refresh_all)</p>
+            <p>12. <code class="inline">root.mainloop()</code> — vòng lặp chính</p>
+            <p style="margin-top: 6px;">↓ (user thao tác: Thêm/Sửa/Xóa/Undo/Redo/Giỏ hàng...)</p>
+            <p>13. User đóng cửa sổ hoặc đăng xuất → mainloop kết thúc → app thoát</p>
+        </div>
+
+        <h2 id="test">6. test_app.py — 47 test tự động</h2>
+
+        <p>Đồ án có file <code class="inline">test_app.py</code> với 47 test tự động — kiểm tra mọi
+        chức năng hoạt động đúng. Để chạy:</p>
+
+        <pre data-file="Chạy test"><code>cd do_an_tkinter
+python -m pytest test_app.py -v
+# Hoặc:
+python test_app.py</code></pre>
+
+        <h3>Các nhóm test chính</h3>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nhóm test</th>
+                        <th>Số test</th>
+                        <th>Kiểm tra</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>OOP — MatHang + 5 con</td>
+                        <td>~8</td>
+                        <td>Tạo đối tượng, đa hình tinh_gia_ban, chuyen_thanh_dict</td>
+                    </tr>
+                    <tr>
+                        <td>DSLK đôi + Merge Sort</td>
+                        <td>~10</td>
+                        <td>them_vao_cuoi, xoa_node, tim_kiem, sap_xep_tron</td>
+                    </tr>
+                    <tr>
+                        <td>Stack + Queue</td>
+                        <td>~6</td>
+                        <td>day_vao, lay_ra, them_vao, lay_ra, xoa_theo_ma</td>
+                    </tr>
+                    <tr>
+                        <td>SQLite CRUD</td>
+                        <td>~6</td>
+                        <td>luu_mot_san_pham, cap_nhat_san_pham, xoa_mot_san_pham</td>
+                    </tr>
+                    <tr>
+                        <td>9 chức năng</td>
+                        <td>~15</td>
+                        <td>Đăng nhập, đọc DS, thêm, sửa, xóa, tìm, sắp xếp, thống kê, undo/redo, giỏ hàng</td>
+                    </tr>
+                    <tr>
+                        <td>Phân quyền</td>
+                        <td>~2</td>
+                        <td>Nhân viên không xóa được, Admin xóa OK</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>Ví dụ test mẫu</h3>
+
+        <pre data-file="test mẫu"><code>import pytest
+from loi_thuat_toan.lop_doi_tuong import Sach, TapChi
+
+def test_sach_tinh_gia_ban():
+    """Test đa hình: Sach tính giá bán = gia × 1.1"""
+    s = Sach('MH001', 'Truyện Kiều', 50000, 20, 'Nguyễn Du', 'NXB Văn học')
+    assert s.tinh_gia_ban() == 55000   # 50000 × 1.1 = 55000
+    assert s.loai_hang == 'Sách'
+
+def test_tap_chi_tinh_gia_ban():
+    """Test đa hình: TapChi tính giá bán = gia × 1.05"""
+    tc = TapChi('MH002', 'Tạp chí KHCN', 30000, 15, 'Số 120')
+    assert tc.tinh_gia_ban() == 31500   # 30000 × 1.05 = 31500</code></pre>
+
+        <p>Cú pháp <code class="inline">assert</code> — nếu biểu thức sau <code class="inline">assert</code>
+        là <code class="inline">False</code>, test fail. Nếu tất cả assert pass → test pass.</p>
+
+        <div class="callout callout--success">
+            <div class="callout__title">✅ Tóm tắt Tổng thể</div>
+            <div class="callout__body">
+                <ul>
+                    <li><code class="inline">main.py</code> = điểm vào: tạo QLTT + Tk root + form đăng nhập → mở cửa sổ chính.</li>
+                    <li><code class="inline">QuanLyTrungTam</code> = state container: giữ 4 cấu trúc dữ liệu toàn cục.</li>
+                    <li><code class="inline">khoi_tao()</code>: 5 bước — tạo SQLite + dữ liệu mẫu + tài khoản + DSLK + Stack/Queue.</li>
+                    <li>Pattern Facade: QLTT ủy quyền cho module con + lazy import tránh phụ thuộc vòng.</li>
+                    <li>47 test tự động trong <code class="inline">test_app.py</code> đảm bảo mọi chức năng đúng.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="page-nav"></div>
+
+    </div>
+
+    <footer class="footer">
+        <p>Tổng thể — main.py + QuanLyTrungTam | Học đồ án QLNS</p>
+    </footer>
+</main>
+
+<script src="../js/highlight.js"></script>
+<script src="../js/main.js"></script>
+
+</body>
+</html>

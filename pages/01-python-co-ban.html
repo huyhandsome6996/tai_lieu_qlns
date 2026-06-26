@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 1: Python cơ bản — Học đồ án QLNS</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header class="header">
+    <a href="../index.html" class="header__brand">
+        <span class="header__brand-icon">📚</span>
+        <span>Học đồ án QLNS</span>
+    </a>
+    <div class="header__search">
+        <span class="header__search-icon">🔍</span>
+        <input type="text" placeholder="Tìm bài học...">
+    </div>
+    <button class="header__menu-toggle" type="button">☰</button>
+</header>
+
+<aside class="sidebar"></aside>
+
+<main class="main">
+    <div class="content">
+
+        <h1>🐍 Bài 1: Python cơ bản</h1>
+
+        <p>Trước khi học đồ án, bạn cần nắm vững <strong>Python cơ bản</strong>. Bài này tổng hợp
+        tất cả cú pháp Python xuất hiện trong đồ án — đọc xong là hiểu được mọi dòng code.</p>
+
+        <div class="callout callout--tip">
+            <div class="callout__title">💡 Mẹo học</div>
+            <div class="callout__body">
+                <p>Mỗi cú pháp đều có <strong>ví dụ code</strong>. Hãy copy từng ví dụ sang editor
+                Python, chạy thử, sửa rồi chạy lại — chỉ đọc không chạy thì khó hiểu lắm.</p>
+            </div>
+        </div>
+
+        <div class="toc">
+            <div class="toc__title">📑 Mục lục bài học</div>
+            <ol>
+                <li><a href="#bien">Biến và kiểu dữ liệu</a></li>
+                <li><a href="#xuat-nhap">Xuất / Nhập dữ liệu</a></li>
+                <li><a href="#if-else">Câu điều kiện if / elif / else</a></li>
+                <li><a href="#vong-lap">Vòng lặp for / while</a></li>
+                <li><a href="#list-dict">List / Dict / Tuple / Set</a></li>
+                <li><a href="#ham">Hàm (function)</a></li>
+                <li><a href="#xu-ly-ngoai-le">Xử lý ngoại lệ try / except</a></li>
+                <li><a href="#f-string">f-string (chuỗi định dạng)</a></li>
+                <li><a href="#import">Import module</a></li>
+                <li><a href="#hasattr-getattr">hasattr / getattr / setattr</a></li>
+            </ol>
+        </div>
+
+        <h2 id="bien">1. Biến và kiểu dữ liệu</h2>
+
+        <p><strong>Biến</strong> giống như cái "hộp" chứa dữ liệu. Bạn đặt tên hộp, rồi bỏ giá trị vào.</p>
+
+        <pre data-file="vidu_bien.py"><code># Khai báo biến — KHÔNG cần khai báo kiểu, Python tự đoán
+ten = "Nguyễn Văn A"          # str  (chuỗi)
+tuoi = 20                     # int  (số nguyên)
+chieu_cao = 1.75              # float (số thực)
+la_hoc_sinh = True            # bool  (Đúng/Sai)
+diem = [8.5, 9.0, 7.5]        # list  (danh sách)
+
+# In kiểu của biến
+print(type(ten))              # &lt;class 'str'&gt;
+print(type(tuoi))             # &lt;class 'int'&gt;
+
+# Gán lại giá trị (có thể đổi kiểu)
+tuoi = "hai mươi"             # giờ thành str
+print(type(tuoi))             # &lt;class 'str'&gt;</code></pre>
+
+        <p>Trong đồ án, bạn sẽ thấy biến như:</p>
+        <pre data-file="ví dụ trong đồ án"><code>ma_so = "MH001"               # mã mặt hàng (str)
+gia_co_ban = 50000            # giá nhập (int)
+ton_kho = 20                  # số lượng tồn (int)
+loai_hang = "Sách"            # loại hàng (str)</code></pre>
+
+        <h2 id="xuat-nhap">2. Xuất / Nhập dữ liệu</h2>
+
+        <p><code class="inline">print()</code> để in ra màn hình, <code class="inline">input()</code> để đọc từ bàn phím.</p>
+
+        <pre data-file="vidu_xuat_nhap.py"><code># In chuỗi đơn giản
+print("Xin chào!")
+
+# In nhiều giá trị — cách nhau bởi dấu phẩy
+ten = "Huy"
+tuoi = 21
+print("Tên:", ten, "Tuổi:", tuoi)
+# Kết quả: Tên: Huy Tuổi: 21
+
+# In có định dạng bằng f-string (xem mục 8)
+print(f"Tên tôi là {ten}, năm nay {tuoi} tuổi")
+
+# input() luôn trả về chuỗi — cần ép kiểu nếu muốn số
+tuoi_nhap = input("Nhập tuổi: ")    # kiểu str
+tuoi_so = int(tuoi_nhap)            # ép sang int
+print("Tuổi của bạn:", tuoi_so)</code></pre>
+
+        <h2 id="if-else">3. Câu điều kiện if / elif / else</h2>
+
+        <p><code class="inline">if</code> = "nếu", <code class="inline">elif</code> = "nếu không thì nếu",
+        <code class="inline">else</code> = "còn lại".</p>
+
+        <pre data-file="vidu_if.py"><code>diem = 7.5
+
+if diem >= 9:
+    print("Xuất sắc")
+elif diem >= 7:
+    print("Khá")
+elif diem >= 5:
+    print("Trung bình")
+else:
+    print("Yếu")
+
+# Toán tử so sánh:
+# == bằng       != khác
+# >  lớn hơn    <  nhỏ hơn
+# >= lớn hơn hoặc bằng    <= nhỏ hơn hoặc bằng
+
+# Toán tử logic:
+# and (và)   or (hoặc)   not (phủ định)
+if diem >= 5 and diem < 7:
+    print("Trung bình")</code></pre>
+
+        <p><strong>Lưu ý cực kỳ quan trọng:</strong> Python dùng <strong>khoảng trắng (indent)</strong> để
+        phân biệt code nằm trong <code class="inline">if</code> hay ngoài <code class="inline">if</code>.
+        Thường dùng 4 khoảng trắng.</p>
+
+        <pre data-file="lưu ý indent"><code># ĐÚNG — print nằm trong if (thụt 4 khoảng)
+if True:
+    print("Trong if")
+print("Ngoài if")
+
+# SAI — sẽ báo lỗi IndentationError
+# if True:
+# print("Thiếu indent")</code></pre>
+
+        <h2 id="vong-lap">4. Vòng lặp for / while</h2>
+
+        <h3>Vòng lặp for</h3>
+        <p>Dùng để duyệt qua từng phần tử của 1 danh sách, hoặc lặp N lần.</p>
+
+        <pre data-file="vidu_for.py"><code># Lặp qua list
+ds_mon_hoc = ["Toán", "Lý", "Hóa"]
+for mon in ds_mon_hoc:
+    print(mon)
+# Kết quả:
+# Toán
+# Lý
+# Hóa
+
+# Lặp N lần bằng range()
+for i in range(5):        # i = 0, 1, 2, 3, 4
+    print(f"Lần thứ {i}")
+
+# range(2, 8) → 2, 3, 4, 5, 6, 7
+for i in range(2, 8):
+    print(i)
+
+# break — thoát vòng lặp
+for i in range(10):
+    if i == 5:
+        break             # dừng khi i = 5
+    print(i)              # in 0, 1, 2, 3, 4
+
+# continue — bỏ qua lần lặp hiện tại
+for i in range(5):
+    if i == 2:
+        continue          # bỏ qua i = 2
+    print(i)              # in 0, 1, 3, 4</code></pre>
+
+        <h3>Vòng lặp while</h3>
+        <p>Lặp chừng nào điều kiện còn đúng.</p>
+
+        <pre data-file="vidu_while.py"><code>dem = 0
+while dem &lt; 5:
+    print(f"Đếm: {dem}")
+    dem += 1              # tăng dem lên 1 (giống dem = dem + 1)
+# In: Đếm: 0, 1, 2, 3, 4</code></pre>
+
+        <div class="callout callout--warning">
+            <div class="callout__title">⚠️ Cẩn thận vòng lặp vô hạn</div>
+            <div class="callout__body">
+                <p>Nếu quên tăng biến đếm trong <code class="inline">while</code>, vòng lặp chạy mãi mãi:</p>
+                <pre data-file="SAI"><code># SAI — chạy mãi mãi
+dem = 0
+while dem &lt; 5:
+    print(dem)
+    # Quên dem += 1 → dem luôn = 0 → điều kiện luôn đúng</code></pre>
+            </div>
+        </div>
+
+        <h2 id="list-dict">5. List / Dict / Tuple / Set</h2>
+
+        <h3>List — danh sách có thứ tự</h3>
+        <pre data-file="vidu_list.py"><code># Tạo list
+ds = [10, 20, 30, 40, 50]
+
+# Truy cập phần tử (index từ 0)
+print(ds[0])              # 10 (phần tử đầu)
+print(ds[-1])             # 50 (phần tử cuối, dùng index âm)
+
+# Cắt list (slicing)
+print(ds[1:3])            # [20, 30]  (từ index 1 đến 2)
+print(ds[:3])             # [10, 20, 30]  (từ đầu đến index 2)
+print(ds[2:])             # [30, 40, 50]  (từ index 2 đến cuối)
+
+# Thêm phần tử
+ds.append(60)             # thêm vào cuối
+ds.insert(0, 5)           # chèn vào vị trí 0
+
+# Xóa phần tử
+ds.remove(30)             # xóa phần tử có giá trị 30
+ds.pop(0)                 # xóa phần tử ở index 0
+del ds[1]                 # xóa phần tử ở index 1
+
+# Độ dài list
+print(len(ds))            # số phần tử
+
+# Duyệt list
+for x in ds:
+    print(x)</code></pre>
+
+        <h3>Dict — từ điển (key → value)</h3>
+        <p>Dict giống sách từ điển: tra theo "từ" (key) để lấy "nghĩa" (value).</p>
+
+        <pre data-file="vidu_dict.py"><code># Tạo dict
+san_pham = {
+    "ma_so": "MH001",
+    "ten": "Truyện Kiều",
+    "gia": 50000,
+    "ton_kho": 20
+}
+
+# Truy cập giá trị theo key
+print(san_pham["ten"])              # Truyện Kiều
+print(san_pham.get("gia"))          # 50000 (an toàn hơn, không lỗi nếu key không có)
+print(san_pham.get("tac_gia", "N/A"))  # N/A (nếu key không có → trả "N/A")
+
+# Thêm / sửa
+san_pham["tac_gia"] = "Nguyễn Du"   # thêm key mới
+san_pham["gia"] = 55000             # sửa giá trị
+
+# Xóa
+del san_pham["ton_kho"]             # xóa key "ton_kho"
+
+# Duyệt dict
+for key in san_pham:                # duyệt key
+    print(key, "→", san_pham[key])
+
+for key, value in san_pham.items(): # duyệt cả key + value
+    print(f"{key}: {value}")
+
+# Kiểm tra key có trong dict không
+if "ten" in san_pham:
+    print("Có key 'ten'")</code></pre>
+
+        <h3>Tuple — danh sách KHÔNG thay đổi được</h3>
+        <pre data-file="vidu_tuple.py"><code># Tuple giống list nhưng KHÔNG thể sửa
+toa_do = (10, 20)
+print(toa_do[0])          # 10
+
+# toa_do[0] = 15          # LỖI — tuple không thể gán lại
+
+# Dùng tuple khi có nhiều giá trị cố định
+def lay_toa_do():
+    return (100, 200)     # trả về tuple
+
+x, y = lay_toa_do()       # unpack tuple
+print(x, y)               # 100 200</code></pre>
+
+        <h3>Set — tập hợp (không trùng lặp)</h3>
+        <pre data-file="vidu_set.py"><code># Set tự bỏ phần tử trùng
+so = {1, 2, 3, 2, 1, 4}
+print(so)                 # {1, 2, 3, 4}
+
+# Thêm
+so.add(5)
+
+# Kiểm tra tồn tại (nhanh hơn list)
+if 3 in so:
+    print("Có số 3")</code></pre>
+
+        <h2 id="ham">6. Hàm (function)</h2>
+
+        <p>Hàm là đoạn code đặt tên, có thể gọi lại nhiều lần. Dùng từ khóa <code class="inline">def</code>.</p>
+
+        <pre data-file="vidu_ham.py"><code># Hàm đơn giản — không tham số, không trả về
+def chao():
+    print("Xin chào!")
+
+chao()                    # gọi hàm → in "Xin chào!"
+
+# Hàm có tham số
+def chao_ten(ten):
+    print(f"Chào {ten}!")
+
+chao_ten("Huy")           # Chào Huy!
+chao_ten("Tú")            # Chào Tú!
+
+# Hàm có giá trị mặc định cho tham số
+def chao_loi(ten, loi="Xin chào"):
+    print(f"{loi}, {ten}!")
+
+chao_loi("Huy")                    # Xin chào, Huy!
+chao_loi("Tú", "Hi")               # Hi, Tú!
+
+# Hàm trả về giá trị (return)
+def tinh_tong(a, b):
+    return a + b
+
+ket_qua = tinh_tong(3, 5)  # ket_qua = 8
+
+# Hàm trả về nhiều giá trị (thực ra là trả tuple)
+def tinh(a, b):
+    return a + b, a - b, a * b
+
+tong, hieu, tich = tinh(10, 3)
+print(tong, hieu, tich)    # 13 7 30
+
+# Hàm có docstring (tài liệu)
+def tinh_binh_phuong(x):
+    """
+    Tính bình phương của x.
+    Tham số: x (int hoặc float)
+    Trả về: x * x
+    """
+    return x * x
+
+# Truy cập docstring
+print(tinh_binh_phuong.__doc__)</code></pre>
+
+        <h2 id="xu-ly-ngoai-le">7. Xử lý ngoại lệ try / except</h2>
+
+        <p>Khi code có thể gây lỗi (chia cho 0, file không tồn tại...), dùng
+        <code class="inline">try/except</code> để bắt lỗi mà không sập chương trình.</p>
+
+        <pre data-file="vidu_try.py"><code># Cơ bản
+try:
+    so = int(input("Nhập số: "))
+    print(10 / so)
+except:
+    print("Có lỗi xảy ra!")
+
+# Bắt lỗi cụ thể
+try:
+    so = int("abc")              # lỗi ValueError
+    f = open("khong_co.txt")     # lỗi FileNotFoundError
+except ValueError:
+    print("Không phải số nguyên!")
+except FileNotFoundError:
+    print("File không tồn tại!")
+except Exception as loi:         # bắt mọi lỗi còn lại
+    print(f"Lỗi khác: {loi}")
+
+# Có thể có finally — chạy dù có lỗi hay không
+try:
+    f = open("data.txt")
+    data = f.read()
+except FileNotFoundError:
+    print("File không có")
+finally:
+    # Dù thành công hay lỗi, đều đóng file
+    if 'f' in dir():
+        f.close()
+
+# Raise — tự ném lỗi
+def kiem_tra_tuoi(tuoi):
+    if tuoi &lt; 0:
+        raise ValueError("Tuổi không được âm!")
+    return tuoi
+
+try:
+    kiem_tra_tuoi(-5)
+except ValueError as e:
+    print(e)                     # Tuổi không được âm!</code></pre>
+
+        <div class="callout callout--info">
+            <div class="callout__title">ℹ️ Trong đồ án</div>
+            <div class="callout__body">
+                <p>Đồ án dùng <code class="inline">try/except</code> để bọc 7 thao tác chính:
+                Thêm, Sửa, Xóa, Undo, Redo, Giỏ hàng, Thanh toán. Nếu lỗi → in ra + không sập app.</p>
+                <p>File SQLite cũng bọc <code class="inline">try/except sqlite3.Error</code> để bắt lỗi DB.</p>
+            </div>
+        </div>
+
+        <h2 id="f-string">8. f-string (chuỗi định dạng)</h2>
+
+        <p>f-string là cách dễ nhất để ghép biến vào chuỗi. Đặt chữ <code class="inline">f</code> trước chuỗi,
+        rồi dùng <code class="inline">{biến}</code> để chèn giá trị.</p>
+
+        <pre data-file="vidu_fstring.py"><code>ten = "Huy"
+tuoi = 21
+diem = 8.567
+
+# Cơ bản
+print(f"Tên: {ten}, Tuổi: {tuoi}")
+# Tên: Huy, Tuổi: 21
+
+# Format số thập phân
+print(f"Điểm: {diem:.2f}")        # 8.57 (2 chữ số thập phân)
+print(f"Điểm: {diem:.0f}")        # 9 (làm tròn thành 9)
+
+# Tính toán trong f-string
+print(f"Tổng: {2 + 3}")           # Tổng: 5
+
+# Gọi hàm trong f-string
+def lay_ho(ten):
+    return ten.split()[0]
+
+print(f"Họ: {lay_ho('Nguyễn Văn A')}")  # Họ: Nguyễn
+
+# Căn lề
+print(f"{'Tên':<15} {'Tuổi':>5}")   # Tên             Tuổi
+print(f"{ten:<15} {tuoi:>5}")       # Huy                21</code></pre>
+
+        <h2 id="import">9. Import module</h2>
+
+        <p>Module là file <code class="inline">.py</code> chứa code. Khi muốn dùng code từ file khác,
+        ta <strong>import</strong> nó.</p>
+
+        <pre data-file="vidu_import.py"><code># Cách 1: import cả module
+import math
+print(math.pi)              # 3.141592653589793
+print(math.sqrt(16))        # 4.0
+
+# Cách 2: import 1 hàm/lớp cụ thể (khuyên dùng)
+from math import sqrt, pi
+print(sqrt(25))             # 5.0
+print(pi)                   # 3.141592653589793
+
+# Cách 3: đổi tên khi import (tránh trùng tên)
+import math as m
+print(m.pi)
+
+from math import sqrt as can_bac_2
+print(can_bac_2(9))         # 3.0
+
+# Import từ file khác trong cùng project
+# Giả sử có file: lop_doi_tuong.py chứa lớp Sach
+from lop_doi_tuong import Sach
+
+sach = Sach("MH001", "Truyện Kiều", 50000, 20, "Nguyễn Du", "NXB Văn học")
+
+# Import từ folder con
+# Cấu trúc: loi_thuat_toan/lop_doi_tuong.py
+from loi_thuat_toan.lop_doi_tuong import Sach, TapChi, BaoGiay
+
+# Import nhiều thứ cùng lúc
+from loi_thuat_toan.lop_doi_tuong import (
+    Sach,
+    TapChi,
+    BaoGiay,
+    LuanVan,
+    BanThao
+)</code></pre>
+
+        <h2 id="hasattr-getattr">10. hasattr / getattr / setattr</h2>
+
+        <p>3 hàm này dùng để <strong>kiểm tra / lấy / gán</strong> thuộc tính của đối tượng bằng tên (chuỗi).</p>
+
+        <pre data-file="vidu_hasattr.py"><code># Tạo lớp đơn giản
+class Nguoi:
+    def __init__(self, ten, tuoi):
+        self.ten = ten
+        self.tuoi = tuoi
+
+nguoi = Nguoi("Huy", 21)
+
+# hasattr(obj, "ten_thuoc_tinh") — kiểm tra có thuộc tính không
+print(hasattr(nguoi, "ten"))       # True
+print(hasattr(nguoi, "dia_chi"))   # False
+
+# getattr(obj, "ten", gia_tri_mac_dinh)
+print(getattr(nguoi, "ten"))                # Huy
+print(getattr(nguoi, "dia_chi", "N/A"))     # N/A (không lỗi)
+
+# setattr(obj, "ten", gia_tri) — gán thuộc tính
+setattr(nguoi, "dia_chi", "Hà Nội")
+print(nguoi.dia_chi)                # Hà Nội
+
+# Tương đương:
+# nguoi.dia_chi = "Hà Nội"</code></pre>
+
+        <div class="callout callout--info">
+            <div class="callout__title">ℹ️ Trong đồ án</div>
+            <div class="callout__body">
+                <p>Đồ án dùng <code class="inline">hasattr</code> rất nhiều trong DSLK để kiểm tra đối tượng có
+                thuộc tính cần thiết không trước khi gọi:</p>
+                <pre data-file="ví dụ thực tế"><code># Trong danh_sach_lien_ket.py
+if hasattr(node_hien_tai.data, 'ma_so') and node_hien_tai.data.ma_so == ma_so:
+    # ...
+
+# Trong ket_noi_sqlite.py — dùng getattr với default None
+con_tro.execute('INSERT ...', (
+    san_pham.ma_so,
+    getattr(san_pham, 'tac_gia', None),       # nếu không có → None
+    getattr(san_pham, 'so_phat_hanh', None),  # nếu không có → None
+))</code></pre>
+                <p>Lý do: <code class="inline">Sach</code> có <code class="inline">tac_gia</code> nhưng
+                <code class="inline">TapChi</code> không có, nên phải check trước.</p>
+            </div>
+        </div>
+
+        <h2>🎯 Tổng kết bài 1</h2>
+
+        <p>Bạn đã học các cú pháp Python cơ bản:</p>
+        <ul>
+            <li>✅ Biến, kiểu dữ liệu (str, int, float, bool, list, dict)</li>
+            <li>✅ <code class="inline">print</code>, <code class="inline">input</code>, <code class="inline">f-string</code></li>
+            <li>✅ <code class="inline">if/elif/else</code> với indent 4 khoảng</li>
+            <li>✅ Vòng lặp <code class="inline">for</code> (duyệt list, range) và <code class="inline">while</code></li>
+            <li>✅ List (thêm/xóa/sửa), Dict (key-value), Tuple, Set</li>
+            <li>✅ Hàm <code class="inline">def</code>, tham số mặc định, return nhiều giá trị</li>
+            <li>✅ <code class="inline">try/except/finally</code> bắt lỗi</li>
+            <li>✅ Import module (3 cách)</li>
+            <li>✅ <code class="inline">hasattr/getattr/setattr</code> cho thuộc tính động</li>
+        </ul>
+
+        <div class="callout callout--success">
+            <div class="callout__title">✅ Bạn đã sẵn sàng</div>
+            <div class="callout__body">
+                <p>Đã nắm đủ Python cơ bản. Sang bài 2 học OOP (lớp, đối tượng, kế thừa, đa hình) —
+                phần quan trọng nhất để hiểu code đồ án.</p>
+            </div>
+        </div>
+
+        <div class="page-nav"></div>
+
+    </div>
+
+    <footer class="footer">
+        <p>Bài 1/20 — Python cơ bản</p>
+    </footer>
+</main>
+
+<script src="../js/highlight.js"></script>
+<script src="../js/main.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 7: Stack LIFO — Học đồ án QLNS</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header class="header">
+    <a href="../index.html" class="header__brand">
+        <span class="header__brand-icon">📚</span>
+        <span>Học đồ án QLNS</span>
+    </a>
+    <div class="header__search">
+        <span class="header__search-icon">🔍</span>
+        <input type="text" placeholder="Tìm bài học...">
+    </div>
+    <button class="header__menu-toggle" type="button">☰</button>
+</header>
+
+<aside class="sidebar"></aside>
+
+<main class="main">
+    <div class="content">
+
+        <h1>📚 Bài 7: Stack LIFO (Ngăn xếp)</h1>
+
+        <p><strong>Stack</strong> (ngăn xếp) là cấu trúc dữ liệu theo nguyên lý <strong>LIFO</strong>
+        (Last In First Out — Vào sau, ra trước). Đây là phần <strong>Ngọ</strong> phụ trách,
+        dùng cho chức năng <strong>Undo/Redo</strong>.</p>
+
+        <div class="toc">
+            <div class="toc__title">📑 Mục lục</div>
+            <ol>
+                <li><a href="#lifo">Nguyên lý LIFO</a></li>
+                <li><a href="#node">NodeNganXep</a></li>
+                <li><a href="#class">Lớp NganXep</a></li>
+                <li><a href="#push">day_vao — Push</a></li>
+                <li><a href="#pop">lay_ra — Pop</a></li>
+                <li><a href="#peek">xem_dinh — Peek</a></li>
+                <li><a href="#other">rong + xoa_tat_ca</a></li>
+                <li><a href="#example">Ví dụ đầy đủ</a></li>
+            </ol>
+        </div>
+
+        <h2 id="lifo">1. Nguyên lý LIFO</h2>
+
+        <p><strong>LIFO = Last In First Out</strong>: phần tử <strong>đẩy vào sau cùng</strong>
+        sẽ được <strong>lấy ra đầu tiên</strong>.</p>
+
+        <p>Ví dụ thực tế: <strong>xếp đĩa</strong>. Đĩa xếp sau cùng nằm trên cùng → lấy ra trước.</p>
+
+        <div class="diagram">
+            <div class="diagram__title">Stack — LIFO</div>
+            <div class="stack-container">
+                <div class="stack-item top">C ← Đỉnh (top) — lấy ra đầu tiên</div>
+                <div class="stack-item">B</div>
+                <div class="stack-item">A ← Đáy — lấy ra cuối cùng</div>
+            </div>
+            <p class="stack-label">day_vao(C) → ... → lay_ra() trả về C</p>
+        </div>
+
+        <h2 id="node">2. NodeNganXep</h2>
+
+        <p>Giống DSLK, Stack cũng tự cài bằng linked list. Mỗi Node chứa <strong>data</strong> +
+        con trỏ <strong>duoi</strong> (trỏ tới Node ngay phía dưới).</p>
+
+        <pre data-file="cau_truc_du_lieu.py — NodeNganXep"><code>class NodeNganXep:
+    """
+    Một mắt xích trong Ngăn xếp.
+
+    Mỗi Node chứa:
+        data : Dữ liệu (ở đây là thông tin thao tác để undo/redo).
+        duoi : Con trỏ trỏ đến Node ngay phía dưới.
+    """
+
+    def __init__(self, data):
+        self.data = data        # lưu dữ liệu (thường là dict thao tác)
+        self.duoi = None        # chưa trỏ đến Node nào</code></pre>
+
+        <h2 id="class">3. Lớp NganXep</h2>
+
+        <pre data-file="cau_truc_du_lieu.py — NganXep"><code>class NganXep:
+    """
+    Stack (Ngăn xếp) — tự cài đặt theo nguyên lý LIFO.
+
+    Thuộc tính:
+        dinh     : Trỏ đến Node trên cùng (None nếu rỗng).
+        so_luong : Số Node hiện có.
+    """
+
+    def __init__(self):
+        self.dinh = None        # chưa có Node → đỉnh = None
+        self.so_luong = 0</code></pre>
+
+        <h2 id="push">4. day_vao — Push</h2>
+
+        <p>Push = đẩy phần tử mới lên <strong>đỉnh</strong>.</p>
+
+        <pre data-file="cau_truc_du_lieu.py — day_vao"><code>def day_vao(self, data):
+    """Push — đẩy phần tử mới lên ĐỈNH ngăn xếp."""
+    # Bọc dữ liệu vào Node mới
+    node_moi = NodeNganXep(data)
+
+    # Node mới trỏ xuống Node đỉnh cũ
+    node_moi.duoi = self.dinh
+
+    # Cập nhật đỉnh = Node mới
+    self.dinh = node_moi
+
+    # Tăng bộ đếm
+    self.so_luong += 1</code></pre>
+
+        <h3>Mô phỏng</h3>
+
+        <div class="diagram">
+            <div class="diagram__title">Stack rỗng: dinh=None</div>
+            <p style="color:#666;">(không có gì)</p>
+        </div>
+
+        <div class="diagram">
+            <div class="diagram__title">day_vao("A"): tạo node mới, dinh=A</div>
+            <div class="stack-container">
+                <div class="stack-item top">A</div>
+            </div>
+            <p class="stack-label">A.duoi = None</p>
+        </div>
+
+        <div class="diagram">
+            <div class="diagram__title">day_vao("B"): B trỏ xuống A, dinh=B</div>
+            <div class="stack-container">
+                <div class="stack-item top">B</div>
+                <div class="stack-item">A</div>
+            </div>
+            <p class="stack-label">B.duoi = A</p>
+        </div>
+
+        <div class="diagram">
+            <div class="diagram__title">day_vao("C"): C trỏ xuống B, dinh=C</div>
+            <div class="stack-container">
+                <div class="stack-item top">C</div>
+                <div class="stack-item">B</div>
+                <div class="stack-item">A</div>
+            </div>
+            <p class="stack-label">C.duoi = B, B.duoi = A, A.duoi = None</p>
+        </div>
+
+        <h2 id="pop">5. lay_ra — Pop</h2>
+
+        <p>Pop = lấy phần tử ở <strong>đỉnh</strong> ra (và xóa nó).</p>
+
+        <pre data-file="cau_truc_du_lieu.py — lay_ra"><code>def lay_ra(self):
+    """Pop — lấy phần tử trên ĐỈNH ra (và xóa nó)."""
+    # Nếu stack rỗng → trả None
+    if self.dinh is None:
+        return None
+
+    # Lưu dữ liệu đỉnh trước khi gỡ
+    data = self.dinh.data
+
+    # Hạ đỉnh xuống Node phía dưới
+    self.dinh = self.dinh.duoi
+
+    # Giảm bộ đếm
+    self.so_luong -= 1
+
+    # Trả về dữ liệu đã gỡ
+    return data</code></pre>
+
+        <h3>Mô phỏng</h3>
+
+        <div class="diagram">
+            <div class="diagram__title">Stack: C → B → A. lay_ra()</div>
+            <div class="stack-container">
+                <div class="stack-item top">C ← bị lấy ra</div>
+                <div class="stack-item">B</div>
+                <div class="stack-item">A</div>
+            </div>
+            <p class="stack-label">data = "C", dinh = B</p>
+        </div>
+
+        <div class="diagram">
+            <div class="diagram__title">Sau khi lay_ra(): B → A</div>
+            <div class="stack-container">
+                <div class="stack-item top">B ← đỉnh mới</div>
+                <div class="stack-item">A</div>
+            </div>
+            <p class="stack-label">Trả về "C"</p>
+        </div>
+
+        <h2 id="peek">6. xem_dinh — Peek</h2>
+
+        <p>Peek = xem đỉnh mà <strong>không lấy ra</strong>.</p>
+
+        <pre data-file="cau_truc_du_lieu.py — xem_dinh"><code>def xem_dinh(self):
+    """Peek — xem dữ liệu đỉnh mà không lấy ra."""
+    if self.dinh is None:
+        return None
+    return self.dinh.data</code></pre>
+
+        <h2 id="other">7. rong + xoa_tat_ca</h2>
+
+        <pre data-file="cau_truc_du_lieu.py — rong + xoa_tat_ca"><code>def rong(self):
+    """Kiểm tra stack có rỗng không."""
+    return self.dinh is None
+
+def xoa_tat_ca(self):
+    """Clear — xóa toàn bộ Node (chỉ cần cắt đỉnh)."""
+    self.dinh = None                # cắt liên kết → Python GC dọn Node
+    self.so_luong = 0</code></pre>
+
+        <h2 id="example">8. Ví dụ đầy đủ</h2>
+
+        <pre data-file="vidu_stack.py"><code>from loi_thuat_toan.cau_truc_du_lieu import NganXep
+
+stack = NganXep()
+
+# Push 3 phần tử
+stack.day_vao("Thao tac 1: them Sách A")
+stack.day_vao("Thao tac 2: sua Tạp chí B")
+stack.day_vao("Thao tac 3: xoa Báo giấy C")
+
+print(f"Số phần tử: {stack.so_luong}")           # 3
+print(f"Đỉnh (peek): {stack.xem_dinh()}")         # Thao tac 3: xoa Báo giấy C
+print(f"Rỗng? {stack.rong()}")                    # False
+
+# Pop — lấy ra theo LIFO
+print(stack.lay_ra())                              # Thao tac 3: xoa Báo giấy C
+print(stack.lay_ra())                              # Thao tac 2: sua Tạp chí B
+print(stack.lay_ra())                              # Thao tac 1: them Sách A
+print(stack.lay_ra())                              # None (stack rỗng)
+print(f"Rỗng? {stack.rong()}")                    # True</code></pre>
+
+        <h2>Ứng dụng trong đồ án</h2>
+
+        <p>Stack dùng cho <strong>Undo/Redo</strong> ở chức năng <code class="inline">cn08_hoan_tac_lam_lai</code>:</p>
+
+        <ul>
+            <li>Mỗi lần user <strong>Thêm/Sửa/Xóa</strong> → <code class="inline">day_vao()</code> snapshot vào <code class="inline">stack_undo</code>.</li>
+            <li>User bấm <strong>Undo</strong> → <code class="inline">lay_ra()</code> khỏi <code class="inline">stack_undo</code> → đảo ngược thao tác → <code class="inline">day_vao()</code> vào <code class="inline">stack_redo</code>.</li>
+            <li>User bấm <strong>Redo</strong> → <code class="inline">lay_ra()</code> khỏi <code class="inline">stack_redo</code> → làm lại → <code class="inline">day_vao()</code> vào <code class="inline">stack_undo</code>.</li>
+        </ul>
+
+        <div class="callout callout--info">
+            <div class="callout__title">ℹ️ Vì sao 2 Stack?</div>
+            <div class="callout__body">
+                <p><code class="inline">stack_undo</code> lưu các thao tác ĐÃ LÀM (để hoàn tác).</p>
+                <p><code class="inline">stack_redo</code> lưu các thao tác ĐÃ UNDO (để làm lại).</p>
+                <p>Khi user làm thao tác mới → <code class="inline">stack_redo</code> phải <code class="inline">xoa_tat_ca()</code> (vì không còn hợp lệ).</p>
+            </div>
+        </div>
+
+        <h2>🎯 Tổng kết bài 7</h2>
+
+        <p>Bạn đã học:</p>
+        <ul>
+            <li>✅ <strong>Stack LIFO</strong>: Vào sau, ra trước</li>
+            <li>✅ <code class="inline">NodeNganXep</code>: data + duoi</li>
+            <li>✅ <code class="inline">NganXep</code>: dinh + so_luong</li>
+            <li>✅ <code class="inline">day_vao()</code> (Push) — thêm vào đỉnh</li>
+            <li>✅ <code class="inline">lay_ra()</code> (Pop) — lấy đỉnh ra</li>
+            <li>✅ <code class="inline">xem_dinh()</code> (Peek) — xem không lấy</li>
+            <li>✅ <code class="inline">rong()</code> + <code class="inline">xoa_tat_ca()</code></li>
+            <li>✅ Ứng dụng: Undo/Redo dùng 2 Stack</li>
+        </ul>
+
+        <div class="page-nav"></div>
+
+    </div>
+    <footer class="footer">
+        <p>Bài 7/20 — Stack LIFO</p>
+    </footer>
+</main>
+
+<script src="../js/highlight.js"></script>
+<script src="../js/main.js"></script>
+
+</body>
+</html>
