@@ -229,7 +229,7 @@ class ThanhTimKiemSapXepUI:
 
     def bind_enter_tim(self, ham_xu_ly):
         """Gắn phím Enter trong ô từ khóa → hàm xử lý tìm."""
-        self.entry_tu_khoa.bind('<Return>', lambda e: ham_xu_ly())</code></pre>
+        self.entry_tu_khoa.bind('&lt;Return&gt;', lambda e: ham_xu_ly())</code></pre>
 
         <h2 id="dk">4. File _dk: DieuKhienTimKiemSapXep</h2>
 
@@ -319,7 +319,7 @@ combo.set('ma')</code></pre>
 
         <h3>Sự kiện Combobox</h3>
 
-        <pre data-file="Bind Combobox"><code>combo.bind('<<ComboboxSelected>>', callback)</code></pre>
+        <pre data-file="Bind Combobox"><code>combo.bind('&lt;&lt;ComboboxSelected&gt;&gt;', callback)</code></pre>
 
         <p><code class="inline">&lt;&lt;ComboboxSelected&gt;&gt;</code> là event ảo — kích hoạt
         khi user chọn 1 item trong dropdown.</p>

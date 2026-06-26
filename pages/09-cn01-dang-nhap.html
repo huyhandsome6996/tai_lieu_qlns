@@ -202,7 +202,7 @@ class CuaSoDangNhapUI:
         self.entry_mk.grid(row=2, column=1, padx=5, pady=5)
 
         # Bind phím Enter → chuyển focus sang ô mật khẩu (nếu đang ở ô tên).
-        self.entry_ten.bind('<Return>', lambda e: self.entry_mk.focus())
+        self.entry_ten.bind('&lt;Return&gt;', lambda e: self.entry_mk.focus())
 
         # Nút đăng nhập (columnspan=2 để rộng qua 2 cột).
         self.btn_dn = ttk.Button(frame, text='Đăng nhập')
@@ -314,7 +314,7 @@ class DieuKhienDangNhap:
         form = CuaSoDangNhapUI(parent)
 
         # Gắn sự kiện: phím Enter ở ô mật khẩu + nút "Đăng nhập" → xử lý đăng nhập.
-        form.entry_mk.bind('<Return>', lambda e: self._xu_ly_dang_nhap(form))
+        form.entry_mk.bind('&lt;Return&gt;', lambda e: self._xu_ly_dang_nhap(form))
         form.btn_dn.config(command=lambda: self._xu_ly_dang_nhap(form))
 
         # Chờ đến khi form bị đóng (bởi nút đăng nhập thành công hoặc user tắt).
@@ -373,10 +373,10 @@ class DieuKhienDangNhap:
         <pre data-file="Lambda"><code># Cách 1: Định nghĩa hàm bình thường
 def xu_ly(event):
     self._xu_ly_dang_nhap(form)
-form.btn_dn.bind('<Return>', xu_ly)
+form.btn_dn.bind('&lt;Return&gt;', xu_ly)
 
 # Cách 2: Dùng lambda — gọn hơn
-form.btn_dn.bind('<Return>', lambda e: self._xu_ly_dang_nhap(form))</code></pre>
+form.btn_dn.bind('&lt;Return&gt;', lambda e: self._xu_ly_dang_nhap(form))</code></pre>
 
         <h4>4.3. <code class="inline">@property</code></h4>
         <p>Decorator biến một method thành <strong>thuộc tính</strong> — gọi như biến, không

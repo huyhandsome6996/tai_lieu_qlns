@@ -154,7 +154,7 @@ con_tro.execute("SELECT * FROM hoc_sinh LIMIT 2")
 hai_hang = con_tro.fetchmany(2)
 
 # Lấy theo điều kiện
-con_tro.execute("SELECT * FROM hoc_sinh WHERE tuoi >= ?", (20,))
+con_tro.execute("SELECT * FROM hoc_sinh WHERE tuoi &gt;= ?", (20,))
 ket_qua = con_tro.fetchall()
 
 # Lấy 1 số cột
@@ -255,7 +255,7 @@ con_tro.execute("SELECT * FROM hoc_sinh WHERE ten = ?", (ten,))
 
 # Nhiều tham số
 con_tro.execute(
-    "SELECT * FROM hoc_sinh WHERE tuoi >= ? AND diem >= ?",
+    "SELECT * FROM hoc_sinh WHERE tuoi &gt;= ? AND diem &gt;= ?",
     (18, 8.0)
 )
 
@@ -523,7 +523,7 @@ def lay_duong_dan_db():
         ))
         ket_noi.commit()
         # rowcount = số hàng bị ảnh hưởng (1 = OK, 0 = không tìm thấy)
-        return con_tro.rowcount > 0
+        return con_tro.rowcount &gt; 0
     except sqlite3.Error as loi:
         print(f'[LOI DATABASE] Loi khi cap nhat: {str(loi)}')
         raise
@@ -541,7 +541,7 @@ def lay_duong_dan_db():
         # (ma_so,) — dấu phẩy để tạo tuple 1 phần tử!
         con_tro.execute('DELETE FROM bang_mat_hang WHERE ma_so = ?', (ma_so,))
         ket_noi.commit()
-        return con_tro.rowcount > 0
+        return con_tro.rowcount &gt; 0
     except sqlite3.Error as loi:
         print(f'[LOI DATABASE] Loi khi xoa: {str(loi)}')
         raise
@@ -561,7 +561,7 @@ def lay_duong_dan_db():
         # Kiểm tra bảng có dữ liệu chưa
         con_tro.execute('SELECT COUNT(*) FROM bang_mat_hang')
         so_luong = con_tro.fetchone()[0]
-        if so_luong > 0:
+        if so_luong &gt; 0:
             return                                    # đã có → không thêm
 
         # 5 sản phẩm mẫu

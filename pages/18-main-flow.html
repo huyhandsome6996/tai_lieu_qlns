@@ -91,7 +91,7 @@ def main():
             form.xoa_mat_khau()
 
     # Gắn sự kiện
-    form.entry_mk.bind('<Return>', lambda e: _xu_ly_dang_nhap())
+    form.entry_mk.bind('&lt;Return&gt;', lambda e: _xu_ly_dang_nhap())
     form.btn_dn.config(command=_xu_ly_dang_nhap)
     # Chờ đến khi form bị đóng
     root.wait_window(form.top)

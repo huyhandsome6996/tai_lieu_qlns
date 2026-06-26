@@ -116,7 +116,7 @@ class FormThemSuaUI:
                                         values=CAC_LOAI_HANG, state='readonly', width=22)
         self.combo_loai.grid(row=0, column=1, padx=5, pady=5)
         # Khi user đổi loại → cập nhật lại các trường riêng
-        self.combo_loai.bind('<<ComboboxSelected>>', lambda e: self._cap_nhat_truong_rieng())
+        self.combo_loai.bind('&lt;&lt;ComboboxSelected&gt;&gt;', lambda e: self._cap_nhat_truong_rieng())
 
         ttk.Label(frame, text='Mã số:').grid(row=1, column=0, sticky='e', padx=5, pady=5)
         self.entry_ma = ttk.Entry(frame, width=25)
@@ -247,7 +247,7 @@ class FormThemSuaUI:
 
         <h3>3.2. Bind sự kiện combobox</h3>
 
-        <pre data-file="Bind ComboboxSelected"><code>self.combo_loai.bind('<<ComboboxSelected>>', lambda e: self._cap_nhat_truong_rieng())</code></pre>
+        <pre data-file="Bind ComboboxSelected"><code>self.combo_loai.bind('&lt;&lt;ComboboxSelected&gt;&gt;', lambda e: self._cap_nhat_truong_rieng())</code></pre>
 
         <p>Sự kiện <code class="inline">&lt;&lt;ComboboxSelected&gt;&gt;</code> (có 2 dấu
         <code class="inline">&lt;</code> và <code class="inline">&gt;</code> ở mỗi bên) là event
@@ -295,7 +295,7 @@ def them_san_pham(danh_sach, bo_undoredo, du_lieu):
         # Validate cơ bản
         if not ma_so or not ten or not loai_hang:
             return False, 'Vui lòng điền đầy đủ mã, tên, loại.'
-        if gia < 0 or ton < 0:
+        if gia &lt; 0 or ton &lt; 0:
             return False, 'Giá / tồn kho không được âm.'
         # Validate mã không được trùng
         if danh_sach.tim_theo_ma_so(ma_so) is not None:

@@ -107,23 +107,23 @@ print("Tuổi của bạn:", tuoi_so)</code></pre>
 
         <pre data-file="vidu_if.py"><code>diem = 7.5
 
-if diem >= 9:
+if diem &gt;= 9:
     print("Xuất sắc")
-elif diem >= 7:
+elif diem &gt;= 7:
     print("Khá")
-elif diem >= 5:
+elif diem &gt;= 5:
     print("Trung bình")
 else:
     print("Yếu")
 
 # Toán tử so sánh:
 # == bằng       != khác
-# >  lớn hơn    <  nhỏ hơn
-# >= lớn hơn hoặc bằng    <= nhỏ hơn hoặc bằng
+# &gt;  lớn hơn    &lt;  nhỏ hơn
+# &gt;= lớn hơn hoặc bằng    &lt;= nhỏ hơn hoặc bằng
 
 # Toán tử logic:
 # and (và)   or (hoặc)   not (phủ định)
-if diem >= 5 and diem < 7:
+if diem &gt;= 5 and diem &lt; 7:
     print("Trung bình")</code></pre>
 
         <p><strong>Lưu ý cực kỳ quan trọng:</strong> Python dùng <strong>khoảng trắng (indent)</strong> để
@@ -415,8 +415,8 @@ def lay_ho(ten):
 print(f"Họ: {lay_ho('Nguyễn Văn A')}")  # Họ: Nguyễn
 
 # Căn lề
-print(f"{'Tên':<15} {'Tuổi':>5}")   # Tên             Tuổi
-print(f"{ten:<15} {tuoi:>5}")       # Huy                21</code></pre>
+print(f"{'Tên':&lt;15} {'Tuổi':&gt;5}")   # Tên             Tuổi
+print(f"{ten:&lt;15} {tuoi:&gt;5}")       # Huy                21</code></pre>
 
         <h2 id="import">9. Import module</h2>
 

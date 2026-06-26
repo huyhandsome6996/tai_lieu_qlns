@@ -117,11 +117,11 @@ def lay_thong_ke(danh_sach):
         if hasattr(data, 'tinh_gia_ban'):
             gia_ban = data.tinh_gia_ban()    # ← ĐA HÌNH
             # Cập nhật đắt nhất
-            if gia_ban > gia_cao_nhat:
+            if gia_ban &gt; gia_cao_nhat:
                 gia_cao_nhat = gia_ban
                 dat_nhat = data
             # Cập nhật rẻ nhất
-            if gia_ban < gia_thap_nhat:
+            if gia_ban &lt; gia_thap_nhat:
                 gia_thap_nhat = gia_ban
                 re_nhat = data
 
@@ -129,7 +129,7 @@ def lay_thong_ke(danh_sach):
             tong_ton_kho += data.ton_kho
             tong_gia_tri_kho += data.gia_co_ban * data.ton_kho
             # Cảnh báo hàng sắp hết khi tồn kho ≤ 5
-            if data.ton_kho <= 5:
+            if data.ton_kho &lt;= 5:
                 sap_het_hang.append(data)
 
         if hasattr(data, 'loai_hang'):
@@ -179,7 +179,7 @@ class KhungThongKeUI:
         self.lbl_tri_kho.pack(anchor='w')
 
         # Foreground='red' để cảnh báo nổi bật
-        self.lbl_sap_het = ttk.Label(frame, text='Sắp hết (<5): 0', foreground='red')
+        self.lbl_sap_het = ttk.Label(frame, text='Sắp hết (&lt;5): 0', foreground='red')
         self.lbl_sap_het.pack(anchor='w')
 
     def cap_nhat_tong_so(self, so):
@@ -195,7 +195,7 @@ class KhungThongKeUI:
         self.lbl_tri_kho.config(text=f'Tổng giá trị kho: {tong:,.0f}đ')
 
     def cap_nhat_sap_het(self, so):
-        self.lbl_sap_het.config(text=f'Sắp hết (<5): {so}')
+        self.lbl_sap_het.config(text=f'Sắp hết (&lt;5): {so}')
 
     def dat_mac_dinh(self):
         """Reset tất cả label về giá trị mặc định."""
@@ -203,7 +203,7 @@ class KhungThongKeUI:
         self.lbl_dat.config(text='Đắt nhất: -')
         self.lbl_re.config(text='Rẻ nhất: -')
         self.lbl_tri_kho.config(text='Tổng giá trị kho: 0đ')
-        self.lbl_sap_het.config(text='Sắp hết (<5): 0')</code></pre>
+        self.lbl_sap_het.config(text='Sắp hết (&lt;5): 0')</code></pre>
 
         <h3>Cú pháp mới</h3>
 
@@ -329,7 +329,7 @@ label2.pack()</code></pre>
 
         <pre data-file="float inf"><code>gia_thap_nhat = float('inf')   # Vô cực
 # ...
-if gia_ban < gia_thap_nhat:
+if gia_ban &lt; gia_thap_nhat:
     gia_thap_nhat = gia_ban
     re_nhat = data</code></pre>
 
