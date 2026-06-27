@@ -125,7 +125,24 @@
         </div>
     </div>
 </div>
-<p class="tk-mockup__caption">Hình: Form Thêm sản phẩm — 6 ô nhập liệu + 1 Combobox + 2 nút. Khi bấm <strong>Lưu</strong>, <code class="inline">DieuKhienThemSanPham._xu_ly_luu()</code> sẽ đọc dữ liệu → gọi <code class="inline">them_san_pham()</code>.</p>
+<p class="tk-mockup__caption">Hình: Form Thêm sản phẩm — 6 ô nhập liệu + 1 Combobox + 2 nút.
+<!-- LEGEND-INJECTED: 11-cn03-them-san-pham.html -->
+
+<div class="tk-annotate__legend">
+    <h4>📋 Các thành phần trong form Thêm</h4>
+    <ul>
+        <li><span class="lbl">Combobox Loại</span> chọn 1 trong 5 loại: Sách / Tạp chí / Báo giấy / Luận văn / Bản thảo — <code>state='readonly'</code> không cho gõ tự do.</li>
+        <li><span class="lbl">Entry Mã số</span> nhập mã duy nhất (vd: <code>S004</code>) — Điều khiển kiểm tra trùng mã trước khi lưu.</li>
+        <li><span class="lbl">Entry Tên</span> tên sản phẩm hiển thị trong bảng.</li>
+        <li><span class="lbl">Entry Giá</span> giá cơ bản (đ) — số nguyên, sẽ nhân hệ số theo loại để ra <code>gia_ban</code>.</li>
+        <li><span class="lbl">Entry Tồn</span> số lượng tồn kho — số nguyên, dùng cho Thống kê + cảnh báo sắp hết.</li>
+        <li><span class="lbl">Trường riêng</span> sinh động theo loại (Sách ⇒ Tác giả + NXB; Tạp chí ⇒ Số phát hành; Báo ⇒ Ngày XB; Luận văn ⇒ Tác giả + Trường ĐH; Bản thảo ⇒ Tác giả + Tình trạng).</li>
+        <li><span class="lbl">Separator</span> đường gạch ngang phân tách trường chung và trường riêng.</li>
+        <li><span class="lbl">2 nút</span> Lưu (gọi <code>_xu_ly_luu</code>) + Hủy (gọi <code>top.destroy</code> đóng form).</li>
+    </ul>
+</div>
+
+ Khi bấm <strong>Lưu</strong>, <code class="inline">DieuKhienThemSanPham._xu_ly_luu()</code> sẽ đọc dữ liệu → gọi <code class="inline">them_san_pham()</code>.</p>
 
 
 

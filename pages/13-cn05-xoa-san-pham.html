@@ -122,6 +122,90 @@ def xoa_san_pham(danh_sach, bo_undoredo, ma_so, la_admin):
         </div>
 
         <h2 id="ui">3. File _ui: hoi_xac_nhan_xoa</h2>
+<!-- MOCKUP-INJECTED: 13-cn05-xoa-san-pham.html -->
+
+<div class="tk-mockup-title">🎨 <strong>Hình minh hoạ giao diện:</strong> Chức năng xóa <strong>không có form nhập liệu</strong> — chỉ hiện 1 hộp thoại <em>YES/NO</em> hỏi user có chắc muốn xóa không. Nếu user nhấn <strong>Yes</strong> mới thực sự xóa. Đây là 3 hình minh hoạ các loại messagebox mà <code class="inline">xoa_san_pham_ui.py</code> dùng.</div>
+
+
+<!-- Hộp 1: askyesno -->
+<div class="tk-mockup-title">1️⃣ Hộp hỏi YES/NO — <code>hoi_xac_nhan_xoa(parent, ma_so)</code></div>
+
+<div class="tk-messagebox tk-messagebox--yesno" style="max-width:380px;">
+    <div class="tk-messagebox__title">
+        <span>⚠️</span>
+        <span>Xác nhận xóa</span>
+    </div>
+    <div class="tk-messagebox__body">
+        <div class="tk-messagebox__icon">❓</div>
+        <div class="tk-messagebox__text">
+            Bạn có chắc muốn xóa sản phẩm mã <strong>"S001"</strong>?<br>
+            <small style="color:#666;">(Lưu ý: thao tác này có thể Hoàn tác.)</small>
+        </div>
+    </div>
+    <div class="tk-messagebox__footer">
+        <div class="tk-button">Không</div>
+        <div class="tk-button tk-button--primary">Có</div>
+    </div>
+</div>
+
+<p class="tk-mockup__caption">Hình: <code class="inline">messagebox.askyesno(...)</code> trả về <code>True</code> nếu user nhấn <strong>Có</strong>, <code>False</code> nếu nhấn <strong>Không</strong>. Tiêu đề đỏ cảnh báo.</p>
+
+<!-- Hộp 2: showerror -->
+<div class="tk-mockup-title">2️⃣ Hộp báo lỗi — <code>bao_loi(parent, thong_bao)</code></div>
+
+<div class="tk-messagebox" style="max-width:380px;">
+    <div class="tk-messagebox__title">
+        <span>❌</span>
+        <span>Lỗi</span>
+    </div>
+    <div class="tk-messagebox__body">
+        <div class="tk-messagebox__icon">⛔</div>
+        <div class="tk-messagebox__text">
+            Không tìm thấy sản phẩm mã <strong>"S001"</strong> trong danh sách.
+            Có thể nó đã bị xóa trước đó.
+        </div>
+    </div>
+    <div class="tk-messagebox__footer">
+        <div class="tk-button tk-button--primary">OK</div>
+    </div>
+</div>
+
+<p class="tk-mockup__caption">Hình: <code class="inline">messagebox.showerror(...)</code> — tiêu đề đỏ, icon dấu X. Dùng khi xóa thất bại (không tìm thấy mã).</p>
+
+<!-- Hộp 3: showinfo -->
+<div class="tk-mockup-title">3️⃣ Hộp báo thành công — <code>bao_thanh_cong(parent, thong_bao)</code></div>
+
+<div class="tk-messagebox tk-messagebox--info" style="max-width:380px;">
+    <div class="tk-messagebox__title">
+        <span>ℹ️</span>
+        <span>Thành công</span>
+    </div>
+    <div class="tk-messagebox__body">
+        <div class="tk-messagebox__icon">✅</div>
+        <div class="tk-messagebox__text">
+            Đã xóa sản phẩm mã <strong>"S001"</strong>.<br>
+            <small style="color:#666;">(Đã lưu lịch sử để Hoàn tác nếu cần.)</small>
+        </div>
+    </div>
+    <div class="tk-messagebox__footer">
+        <div class="tk-button tk-button--primary">OK</div>
+    </div>
+</div>
+
+<p class="tk-mockup__caption">Hình: <code class="inline">messagebox.showinfo(...)</code> — tiêu đề xanh, icon i. Dùng khi xóa thành công + lưu vào stack Undo.</p>
+
+<div class="tk-annotate__legend">
+    <h4>📋 Vì sao cn05 không cần lớp UI?</h4>
+    <ul>
+        <li><span class="lbl">Không form</span> thao tác xóa không cần user nhập liệu gì thêm — chỉ cần câu hỏi YES/NO.</li>
+        <li><span class="lbl">3 hàm tiện ích</span> thay vì 1 lớp: <code>hoi_xac_nhan_xoa()</code>, <code>bao_loi()</code>, <code>bao_thanh_cong()</code> — gọi thẳng, không cần lưu trạng thái.</li>
+        <li><span class="lbl">askyesno</span> trả về <code>True/False</code> — Điều khiển kiểm tra giá trị trả về để quyết định có gọi thuật toán <code>xoa_san_pham</code> hay không.</li>
+        <li><span class="lbl">Lưu ý Undo</span> dòng chữ "thao tác này có thể Hoàn tác" nhắc user biết: nếu lỡ xóa, vẫn có thể <strong>Undo</strong> để khôi phục.</li>
+    </ul>
+</div>
+
+<!-- /MOCKUP-INJECTED: 13-cn05-xoa-san-pham.html -->
+
 
         <p>File UI của cn05 không phải lớp mà là các <strong>hàm tiện ích</strong> — vì xóa không
         cần form phức tạp, chỉ cần hộp thoại xác nhận YES/NO.</p>

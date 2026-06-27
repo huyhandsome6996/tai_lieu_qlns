@@ -192,7 +192,102 @@ def sua_san_pham(danh_sach, bo_undoredo, du_lieu):
         <code class="inline">obj.name = value</code> nhưng tên thuộc tính là chuỗi động. Dùng khi
         không biết trước tên thuộc tính (lấy từ dict).</p>
 
-        <h2 id="dk">3. File _dk: DieuKhienSuaSanPham</h2>
+        
+<!-- MOCKUP-INJECTED: 12-cn04-sua-san-pham.html -->
+
+<div class="tk-mockup-title">🎨 <strong>Hình minh hoạ giao diện:</strong> Đây là hình form <em>Sửa sản phẩm</em> — giống form Thêm nhưng combobox Loại + ô Mã số bị <strong>khóa</strong> (vì không cho đổi loại/mã khi sửa), các ô còn lại có sẵn dữ liệu cũ để user chỉnh.</div>
+
+
+<div class="tk-mockup" style="max-width:480px;">
+    <div class="tk-mockup__titlebar">
+        <div class="tk-mockup__controls">
+            <div class="tk-mockup__btn-circle tk-mockup__btn-circle--min"></div>
+            <div class="tk-mockup__btn-circle tk-mockup__btn-circle--max"></div>
+            <div class="tk-mockup__btn-circle tk-mockup__btn-circle--close"></div>
+        </div>
+        <div class="tk-mockup__title">Sửa sản phẩm</div>
+        <div style="width:48px"></div>
+    </div>
+    <div class="tk-mockup__body" style="padding:18px;">
+        <!-- Loại hàng (khóa) -->
+        <div class="tk-row">
+            <div class="tk-row__label">Loại hàng:</div>
+            <div class="tk-row__input">
+                <div class="tk-combobox tk-combobox--disabled" style="min-width:200px;">Sách</div>
+            </div>
+        </div>
+        <!-- Mã số (khóa) -->
+        <div class="tk-row">
+            <div class="tk-row__label">Mã số:</div>
+            <div class="tk-row__input">
+                <div class="tk-entry tk-entry--disabled" style="min-width:200px;">S001</div>
+            </div>
+        </div>
+        <!-- Tên sản phẩm (sửa được) -->
+        <div class="tk-row">
+            <div class="tk-row__label">Tên sản phẩm:</div>
+            <div class="tk-row__input">
+                <div class="tk-entry" style="min-width:200px;">Lập trình Python — Tập 2</div>
+            </div>
+        </div>
+        <!-- Giá (sửa được) -->
+        <div class="tk-row">
+            <div class="tk-row__label">Giá cơ bản (đ):</div>
+            <div class="tk-row__input">
+                <div class="tk-entry" style="min-width:200px;">135000</div>
+            </div>
+        </div>
+        <!-- Tồn kho (sửa được) -->
+        <div class="tk-row">
+            <div class="tk-row__label">Tồn kho:</div>
+            <div class="tk-row__input">
+                <div class="tk-entry" style="min-width:200px;">20</div>
+            </div>
+        </div>
+
+        <!-- Separator -->
+        <div style="border-top:1px solid #aaa; margin:10px 0;"></div>
+        <div style="font-size:0.85rem; font-style:italic; color:#555; margin-bottom:6px;">
+            Thông tin riêng theo loại:
+        </div>
+
+        <!-- Trường riêng cho Sách: Tác giả + NXB -->
+        <div class="tk-row">
+            <div class="tk-row__label">Tác giả:</div>
+            <div class="tk-row__input">
+                <div class="tk-entry" style="min-width:200px;">Nguyễn Văn A</div>
+            </div>
+        </div>
+        <div class="tk-row">
+            <div class="tk-row__label">Nhà xuất bản:</div>
+            <div class="tk-row__input">
+                <div class="tk-entry" style="min-width:200px;">Thống kê</div>
+            </div>
+        </div>
+
+        <!-- Nút -->
+        <div style="display:flex; gap:10px; justify-content:center; padding-top:14px;">
+            <div class="tk-button tk-button--primary">Lưu</div>
+            <div class="tk-button">Hủy</div>
+        </div>
+    </div>
+</div>
+
+<div class="tk-annotate__legend">
+    <h4>📋 Điểm khác của form Sửa so với form Thêm</h4>
+    <ul>
+        <li><span class="lbl">Combobox Loại</span> <code>state='disabled'</code> — không cho đổi loại (vì trường riêng thay đổi theo loại, đổi loại sẽ làm mất dữ liệu cũ).</li>
+        <li><span class="lbl">Entry Mã số</span> <code>state='disabled'</code> — mã số là khoá chính trong SQLite, không được đổi.</li>
+        <li><span class="lbl">Các ô khác</span> đổ sẵn dữ liệu cũ (<code>entry.insert(0, ...)</code>) để user thấy giá trị hiện tại và chỉnh.</li>
+        <li><span class="lbl">Trường riêng</span> sinh tự động theo loại đang có (Sách ⇒ Tác giả + NXB), giá trị cũ đã được đổ vào.</li>
+        <li><span class="lbl">Tiêu đề</span> "Sửa sản phẩm" thay vì "Thêm sản phẩm" —取决于 <code>du_lieu_cu</code> có <code>None</code> hay không.</li>
+    </ul>
+</div>
+
+<p class="tk-mockup__caption">Hình: <code class="inline">FormThemSuaUI(parent, du_lieu_cu=sp_cu.chuyen_thanh_dict())</code> — chế độ Sửa. Combobox Loại + Entry Mã số bị mờ (disabled) vì không cho đổi khi sửa.</p>
+
+<!-- /MOCKUP-INJECTED: 12-cn04-sua-san-pham.html -->
+<h2 id="dk">3. File _dk: DieuKhienSuaSanPham</h2>
 
         <pre data-file="sua_san_pham_dk.py"><code>from .sua_san_pham_tt import sua_san_pham
 from .sua_san_pham_ui import FormThemSuaUI

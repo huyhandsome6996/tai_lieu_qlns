@@ -301,6 +301,90 @@ thao_tac = {
 #    → gọi danh_sach.them_vao_cuoi(sp) + luu_mot_san_pham(sp)</code></pre>
 
         <h2 id="ui">4. File _ui: 2 nút Undo + Redo</h2>
+<!-- MOCKUP-INJECTED: 16-cn08-undo-redo.html -->
+
+<div class="tk-mockup-title">🎨 <strong>Hình minh hoạ giao diện:</strong> Đây là hình <em>thanh Undo/Redo</em> — chỉ có 2 nút bấm nằm cạnh nhau trong thanh công cụ. Trạng thái Enabled/Disabled thay đổi theo lịch sử thao tác (chưa làm gì ⇒ cả 2 tắt; đã thao tác ⇒ Undo bật; đã Undo ⇒ Redo bật).</div>
+
+
+<!-- Trạng thái 1: chưa làm gì ⇒ cả 2 disabled -->
+<div class="tk-mockup-title">🔴 Trạng thái 1: mới mở app — chưa có thao tác nào ⇒ cả 2 nút <strong>tắt</strong></div>
+
+<div class="tk-mockup tk-mockup--medium">
+    <div class="tk-mockup__titlebar">
+        <div class="tk-mockup__controls">
+            <div class="tk-mockup__btn-circle tk-mockup__btn-circle--min"></div>
+            <div class="tk-mockup__btn-circle tk-mockup__btn-circle--max"></div>
+            <div class="tk-mockup__btn-circle tk-mockup__btn-circle--close"></div>
+        </div>
+        <div class="tk-mockup__title">Thanh Undo/Redo</div>
+        <div style="width:48px"></div>
+    </div>
+    <div class="tk-mockup__body" style="padding:14px;">
+        <div class="tk-toolbar" style="border:0; margin:0; padding:0;">
+            <div class="tk-button" style="padding:6px 18px;" disabled>↶ Hoàn tác</div>
+            <div class="tk-button" style="padding:6px 18px;" disabled>↷ Làm lại</div>
+        </div>
+    </div>
+</div>
+
+<!-- Trạng thái 2: đã Thêm 1 sản phẩm ⇒ Undo bật, Redo tắt -->
+<div class="tk-mockup-title">🟢 Trạng thái 2: đã Thêm/Sửa/Xóa 1 lần ⇒ nút <strong>Hoàn tác bật</strong>, nút Làm lại tắt</div>
+
+<div class="tk-mockup tk-mockup--medium">
+    <div class="tk-mockup__titlebar">
+        <div class="tk-mockup__controls">
+            <div class="tk-mockup__btn-circle tk-mockup__btn-circle--min"></div>
+            <div class="tk-mockup__btn-circle tk-mockup__btn-circle--max"></div>
+            <div class="tk-mockup__btn-circle tk-mockup__btn-circle--close"></div>
+        </div>
+        <div class="tk-mockup__title">Thanh Undo/Redo</div>
+        <div style="width:48px"></div>
+    </div>
+    <div class="tk-mockup__body" style="padding:14px;">
+        <div class="tk-toolbar" style="border:0; margin:0; padding:0;">
+            <div class="tk-button tk-button--primary" style="padding:6px 18px;">↶ Hoàn tác</div>
+            <div class="tk-button" style="padding:6px 18px;" disabled>↷ Làm lại</div>
+        </div>
+    </div>
+</div>
+
+<!-- Trạng thái 3: đã nhấn Undo ⇒ Redo bật -->
+<div class="tk-mockup-title">🔵 Trạng thái 3: đã nhấn <strong>Hoàn tác</strong> 1 lần ⇒ cả 2 nút đều bật</div>
+
+<div class="tk-mockup tk-mockup--medium">
+    <div class="tk-mockup__titlebar">
+        <div class="tk-mockup__controls">
+            <div class="tk-mockup__btn-circle tk-mockup__btn-circle--min"></div>
+            <div class="tk-mockup__btn-circle tk-mockup__btn-circle--max"></div>
+            <div class="tk-mockup__btn-circle tk-mockup__btn-circle--close"></div>
+        </div>
+        <div class="tk-mockup__title">Thanh Undo/Redo</div>
+        <div style="width:48px"></div>
+    </div>
+    <div class="tk-mockup__body" style="padding:14px;">
+        <div class="tk-toolbar" style="border:0; margin:0; padding:0;">
+            <div class="tk-button tk-button--primary" style="padding:6px 18px;">↶ Hoàn tác</div>
+            <div class="tk-button tk-button--primary" style="padding:6px 18px;">↷ Làm lại</div>
+        </div>
+    </div>
+</div>
+
+<div class="tk-annotate__legend">
+    <h4>📋 Ý nghĩa 2 nút + 3 trạng thái</h4>
+    <ul>
+        <li><span class="lbl">↶ Hoàn tác</span> (Undo) — đảo ngược thao tác cuối cùng (Thêm → Xóa, Xóa → Thêm lại, Sửa → trả về giá cũ).</li>
+        <li><span class="lbl">↷ Làm lại</span> (Redo) — áp dụng lại thao tác vừa bị Undo (Xóa lại cái vừa được khôi phục).</li>
+        <li><span class="lbl">Stack Undo</span> lưu lịch sử thao tác theo LIFO — <code>pop()</code> phần tử cuối khi bấm Undo.</li>
+        <li><span class="lbl">Stack Redo</span> lưu thao tác bị Undo — khi bấm Undo thì đẩy thao tác đó sang Redo; khi bấm Redo thì pop Redo → chạy lại → đẩy về Undo.</li>
+        <li><span class="lbl">3 trạng thái</span> tùy theo 2 stack rỗng hay có phần tử mà 2 nút được bật/tắt tương ứng qua <code>bat_hoan_tac(True/False)</code> + <code>bat_lam_lai(True/False)</code>.</li>
+        <li><span class="lbl">Lưu ý</span> nếu user thực hiện thao tác mới sau khi Undo ⇒ stack Redo bị clear (theo quy ước chung).</li>
+    </ul>
+</div>
+
+<p class="tk-mockup__caption">Hình: <code class="inline">ThanhUndoRedoUI(parent)</code> — chỉ 2 nút nhưng trạng thái enabled/disabled thay đổi liên tục theo 2 stack LIFO.</p>
+
+<!-- /MOCKUP-INJECTED: 16-cn08-undo-redo.html -->
+
 
         <pre data-file="hoan_tac_lam_lai_ui.py"><code>from tkinter import ttk
 

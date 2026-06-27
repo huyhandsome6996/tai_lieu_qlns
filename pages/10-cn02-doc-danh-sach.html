@@ -117,6 +117,108 @@ def lay_danh_sach(danh_sach: DoublyLinkedList):
         </div>
 
         <h2 id="ui">3. File _ui: BangSanPhamUI (Treeview)</h2>
+<!-- MOCKUP-INJECTED: 10-cn02-doc-danh-sach.html -->
+
+<div class="tk-mockup-title">🎨 <strong>Hình minh hoạ giao diện:</strong> Đây là hình trông <em>bang sản phẩm</em> sẽ hiển thị trong cửa sổ chính — gồm 1 bảng Treeview 7 cột + thanh cuộn dọc ở bên phải. Mỗi dòng là 1 sản phẩm lấy từ SQLite.</div>
+
+
+<div class="tk-mockup tk-mockup--wide">
+    <div class="tk-mockup__titlebar">
+        <div class="tk-mockup__controls">
+            <div class="tk-mockup__btn-circle tk-mockup__btn-circle--min"></div>
+            <div class="tk-mockup__btn-circle tk-mockup__btn-circle--max"></div>
+            <div class="tk-mockup__btn-circle tk-mockup__btn-circle--close"></div>
+        </div>
+        <div class="tk-mockup__title">Danh sách sản phẩm (LabelFrame)</div>
+        <div style="width:48px"></div>
+    </div>
+    <div class="tk-mockup__body" style="padding:8px;">
+        <div class="tk-labelframe">
+            <div class="tk-labelframe__title">Danh sách sản phẩm</div>
+            <div style="display:flex; gap:4px; align-items:flex-start;">
+                <div class="tk-treeview" style="flex:1;">
+                    <div class="tk-treeview__header">
+                        <div class="tk-treeview__header-cell" style="flex:0 0 70px; text-align:center;">Mã số</div>
+                        <div class="tk-treeview__header-cell" style="flex:2;">Tên sản phẩm</div>
+                        <div class="tk-treeview__header-cell" style="flex:0 0 70px; text-align:center;">Loại</div>
+                        <div class="tk-treeview__header-cell" style="flex:0 0 90px; text-align:right;">Giá cơ bản</div>
+                        <div class="tk-treeview__header-cell" style="flex:0 0 60px; text-align:center;">Tồn</div>
+                        <div class="tk-treeview__header-cell" style="flex:0 0 100px; text-align:right;">Giá bán</div>
+                        <div class="tk-treeview__header-cell" style="flex:3;">Thông tin riêng</div>
+                    </div>
+                    <div class="tk-treeview__row">
+                        <div class="tk-treeview__cell" style="flex:0 0 70px; text-align:center;">S001</div>
+                        <div class="tk-treeview__cell" style="flex:2;">Lập trình Python</div>
+                        <div class="tk-treeview__cell" style="flex:0 0 70px; text-align:center;">Sách</div>
+                        <div class="tk-treeview__cell" style="flex:0 0 90px; text-align:right;">120,000</div>
+                        <div class="tk-treeview__cell" style="flex:0 0 60px; text-align:center;">15</div>
+                        <div class="tk-treeview__cell" style="flex:0 0 100px; text-align:right;">132,000</div>
+                        <div class="tk-treeview__cell" style="flex:3;">Tác giả: Nguyễn Văn A | NXB: Thống kê</div>
+                    </div>
+                    <div class="tk-treeview__row">
+                        <div class="tk-treeview__cell" style="flex:0 0 70px; text-align:center;">S002</div>
+                        <div class="tk-treeview__cell" style="flex:2;">Tạp chí Khoa học 06/2025</div>
+                        <div class="tk-treeview__cell" style="flex:0 0 70px; text-align:center;">Tạp chí</div>
+                        <div class="tk-treeview__cell" style="flex:0 0 90px; text-align:right;">35,000</div>
+                        <div class="tk-treeview__cell" style="flex:0 0 60px; text-align:center;">8</div>
+                        <div class="tk-treeview__cell" style="flex:0 0 100px; text-align:right;">38,500</div>
+                        <div class="tk-treeview__cell" style="flex:3;">Số phát hành: 06/2025</div>
+                    </div>
+                    <div class="tk-treeview__row tk-treeview__row--selected">
+                        <div class="tk-treeview__cell" style="flex:0 0 70px; text-align:center;">B003</div>
+                        <div class="tk-treeview__cell" style="flex:2;">Báo Tuổi Trẻ 27/06</div>
+                        <div class="tk-treeview__cell" style="flex:0 0 70px; text-align:center;">Báo giấy</div>
+                        <div class="tk-treeview__cell" style="flex:0 0 90px; text-align:right;">5,000</div>
+                        <div class="tk-treeview__cell" style="flex:0 0 60px; text-align:center;">3</div>
+                        <div class="tk-treeview__cell" style="flex:0 0 100px; text-align:right;">5,500</div>
+                        <div class="tk-treeview__cell" style="flex:3;">Ngày XB: 27/06/2025</div>
+                    </div>
+                    <div class="tk-treeview__row">
+                        <div class="tk-treeview__cell" style="flex:0 0 70px; text-align:center;">LV04</div>
+                        <div class="tk-treeview__cell" style="flex:2;">Luận văn CNTT 2024</div>
+                        <div class="tk-treeview__cell" style="flex:0 0 70px; text-align:center;">Luận văn</div>
+                        <div class="tk-treeview__cell" style="flex:0 0 90px; text-align:right;">250,000</div>
+                        <div class="tk-treeview__cell" style="flex:0 0 60px; text-align:center;">2</div>
+                        <div class="tk-treeview__cell" style="flex:0 0 100px; text-align:right;">275,000</div>
+                        <div class="tk-treeview__cell" style="flex:3;">Tác giả: Trần B | Trường: ĐH Bách Khoa</div>
+                    </div>
+                    <div class="tk-treeview__row">
+                        <div class="tk-treeview__cell" style="flex:0 0 70px; text-align:center;">BT05</div>
+                        <div class="tk-treeview__cell" style="flex:2;">Bản thảo truyện ngắn</div>
+                        <div class="tk-treeview__cell" style="flex:0 0 70px; text-align:center;">Bản thảo</div>
+                        <div class="tk-treeview__cell" style="flex:0 0 90px; text-align:right;">80,000</div>
+                        <div class="tk-treeview__cell" style="flex:0 0 60px; text-align:center;">4</div>
+                        <div class="tk-treeview__cell" style="flex:0 0 100px; text-align:right;">88,000</div>
+                        <div class="tk-treeview__cell" style="flex:3;">Tác giả: Lê C | TT: Chưa duyệt</div>
+                    </div>
+                </div>
+                <!-- Scrollbar dọc -->
+                <div style="width:14px; height:180px; background:linear-gradient(180deg,#fafafa,#d8d8d8); border:1px solid #888; border-radius:2px; position:relative;">
+                    <div style="position:absolute; top:6px; left:1px; right:1px; height:50px; background:linear-gradient(180deg,#c7c7c7,#a8a8a8); border-radius:2px; border:1px solid #888;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="tk-annotate__legend">
+    <h4>📋 Các thành phần trong mockup trên</h4>
+    <ul>
+        <li><span class="lbl">LabelFrame</span> khung viền có chữ "Danh sách sản phẩm" ở mép trên — tạo nhóm trực quan.</li>
+        <li><span class="lbl">Treeview</span> bảng 7 cột, <code>show='headings'</code> để ẩn cột #0 (cây). <code>height=15</code> ⇒ tối đa 15 dòng nhìn thấy.</li>
+        <li><span class="lbl">heading()</span> đặt tiêu đề cột (Mã số, Tên sản phẩm, Loại, Giá cơ bản, Tồn kho, Giá bán, Thông tin riêng).</li>
+        <li><span class="lbl">column()</span> đặt độ rộng + căn lề: <code>anchor='center'</code> (giữa), <code>anchor='e'</code> (phải cho số tiền).</li>
+        <li><span class="lbl">Dòng chọn</span> tô nền xanh nhạt (<code>tk-treeview__row--selected</code>) — user click chọn để sửa/xóa.</li>
+        <li><span class="lbl">Scrollbar</span> thanh cuộn dọc bên phải — gắn với Treeview qua <code>yscrollcommand</code>.</li>
+        <li><span class="lbl">Format tiền</span> giá tiền hiển thị có dấu phẩy: <code>f"{gia:,.0f}"</code> ⇒ <code>120,000</code> thay vì <code>120000</code>.</li>
+        <li><span class="lbl">Thông tin riêng</span> cột cuối hiển thị thuộc tính riêng theo loại (Tác giả+NXB / Số phát hành / Ngày XB / Trường / Tình trạng).</li>
+    </ul>
+</div>
+
+<p class="tk-mockup__caption">Hình: <code class="inline">BangSanPhamUI</code> sau khi <code class="inline">them_dong()</code> 5 sản phẩm mẫu. Đây là kết quả chạy <code class="inline">BangSanPhamUI.__init__(parent)</code> + 5 lần gọi <code class="inline">them_dong(sp_dict)</code>.</p>
+
+<!-- /MOCKUP-INJECTED: 10-cn02-doc-danh-sach.html -->
+
 
         <p>Đây là phần quan trọng nhất — tạo <strong>bảng Treeview</strong> để hiển thị danh sách
         sản phẩm. Treeview là widget tiêu chuẩn của Tkinter cho bảng dữ liệu.</p>

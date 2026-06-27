@@ -152,6 +152,62 @@ def lay_thong_ke(danh_sach):
     }</code></pre>
 
         <h2 id="ui">3. File _ui: KhungThongKeUI (LabelFrame)</h2>
+<!-- MOCKUP-INJECTED: 15-cn07-thong-ke.html -->
+
+<div class="tk-mockup-title">🎨 <strong>Hình minh hoạ giao diện:</strong> Đây là hình <em>khung Thống kê</em> — 1 LabelFrame có tiêu đề "Thống kê" ở mép trên, chứa 5 Label xếp dọc: Tổng số, Đắt nhất, Rẻ nhất, Tổng giá trị kho, Sắp hết (chữ đỏ cảnh báo).</div>
+
+
+<div class="tk-mockup tk-mockup--medium">
+    <div class="tk-mockup__titlebar">
+        <div class="tk-mockup__controls">
+            <div class="tk-mockup__btn-circle tk-mockup__btn-circle--min"></div>
+            <div class="tk-mockup__btn-circle tk-mockup__btn-circle--max"></div>
+            <div class="tk-mockup__btn-circle tk-mockup__btn-circle--close"></div>
+        </div>
+        <div class="tk-mockup__title">Khung Thống kê (trong khung phải cửa sổ chính)</div>
+        <div style="width:48px"></div>
+    </div>
+    <div class="tk-mockup__body" style="padding:14px;">
+        <div class="tk-labelframe">
+            <div class="tk-labelframe__title">Thống kê</div>
+            <div style="padding:6px 4px;">
+                <div class="tk-label" style="display:block; padding:4px 0; border-bottom:1px dotted #ddd;">
+                    Tổng số: <strong>5 mặt hàng</strong>
+                </div>
+                <div class="tk-label" style="display:block; padding:4px 0; border-bottom:1px dotted #ddd;">
+                    Đắt nhất: <strong>Luận văn CNTT 2024</strong> (275,000đ)
+                </div>
+                <div class="tk-label" style="display:block; padding:4px 0; border-bottom:1px dotted #ddd;">
+                    Rẻ nhất: <strong>Báo Tuổi Trẻ 27/06</strong> (5,500đ)
+                </div>
+                <div class="tk-label" style="display:block; padding:4px 0; border-bottom:1px dotted #ddd;">
+                    Tổng giá trị kho: <strong>538,500đ</strong>
+                </div>
+                <div class="tk-label" style="display:block; padding:4px 0; color:red; font-weight:600;">
+                    Sắp hết (&lt;5): 2
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="tk-annotate__legend">
+    <h4>📋 Các thành phần trong khung Thống kê</h4>
+    <ul>
+        <li><span class="lbl">LabelFrame</span> khung có chữ "Thống kê" ở mép trên — tạo nhóm riêng để user nhìn ra ngay.</li>
+        <li><span class="lbl">Label Tổng số</span> hiển thị số lượng mặt hàng: <code>cap_nhat_tong_so(so)</code>.</li>
+        <li><span class="lbl">Label Đắt nhất</span> tên + giá mặt hàng có <code>gia_ban</code> cao nhất — tìm bằng <code>float('-inf')</code> + vòng lặp.</li>
+        <li><span class="lbl">Label Rẻ nhất</span> tên + giá mặt hàng có <code>gia_ban</code> thấp nhất — tìm bằng <code>float('inf')</code>.</li>
+        <li><span class="lbl">Label Tổng giá trị</span> tổng = ∑ (gia_ban × ton_kho) của toàn bộ sản phẩm.</li>
+        <li><span class="lbl">Label Sắp hết</span> đếm sản phẩm có <code>ton_kho &lt; 5</code> — chữ <code style="color:red;">đỏ</code> (<code>foreground='red'</code>) để cảnh báo nổi bật.</li>
+        <li><span class="lbl">5 hàm cap_nhat_*</span> mỗi hàm cập nhật 1 label — Điều khiển gọi sau mỗi lần thêm/sửa/xóa để làm mới khung.</li>
+    </ul>
+</div>
+
+<p class="tk-mockup__caption">Hình: <code class="inline">KhungThongKeUI(parent)</code> tạo LabelFrame + 5 Label. Ban đầu text mặc định ("Tổng số: 0", "Đắt nhất: -"...), sau khi Điều khiển gọi <code>cap_nhat_*</code> mới có số liệu như trên.</p>
+
+<!-- /MOCKUP-INJECTED: 15-cn07-thong-ke.html -->
+
 
         <pre data-file="thong_ke_ui.py"><code>from tkinter import ttk
 

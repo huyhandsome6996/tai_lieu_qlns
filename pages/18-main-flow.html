@@ -26,6 +26,174 @@
     <div class="content">
 
         <h1>🎯 Tổng thể: main.py + QuanLyTrungTam</h1>
+<!-- MOCKUP-INJECTED: 18-main-flow.html -->
+
+<div class="tk-mockup-title">🎨 <strong>Hình minh hoạ giao diện:</strong> Đây là hình <em>cửa sổ chính</em> sau khi đăng nhập — tổng hợp mọi UI của các cn (cn02, cn06, cn07, cn08, cn09) vào 1 bố cục thống nhất. Đây là kết quả chạy <code class="inline">CuaSoChinhUI._tao_giao_dien()</code>.</div>
+
+
+<div class="tk-mockup tk-mockup--wide">
+    <div class="tk-mockup__titlebar">
+        <div class="tk-mockup__controls">
+            <div class="tk-mockup__btn-circle tk-mockup__btn-circle--min"></div>
+            <div class="tk-mockup__btn-circle tk-mockup__btn-circle--max"></div>
+            <div class="tk-mockup__btn-circle tk-mockup__btn-circle--close"></div>
+        </div>
+        <div class="tk-mockup__title">Quản lý nhà sách — admin (admin)</div>
+        <div style="width:48px"></div>
+    </div>
+    <div class="tk-mockup__body" style="padding:10px;">
+
+        <!-- ====== THANH ĐẦU TRANG ====== -->
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 8px; border-bottom:1px solid #ccc;">
+            <div style="font-size:1.1rem; font-weight:bold; color:#1e3a5f;">QUẢN LÝ NHÀ SÁCH</div>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <span style="font-size:0.85rem;">Xin chào: <strong>admin</strong></span>
+                <span style="color:blue; font-size:0.85rem;">(admin)</span>
+                <div class="tk-button" style="padding:4px 12px; font-size:0.8rem;">Đăng xuất</div>
+            </div>
+        </div>
+
+        <!-- ====== THANH CÔNG CỤ ====== -->
+        <div class="tk-toolbar" style="border-bottom:1px solid #c0c0c0; padding:6px 4px; flex-wrap:wrap;">
+            <!-- Nhóm Thêm/Sửa/Xóa -->
+            <div class="tk-button" style="padding:5px 12px; font-size:0.82rem;">➕ Thêm</div>
+            <div class="tk-button" style="padding:5px 12px; font-size:0.82rem;">✏ Sửa</div>
+            <div class="tk-button" style="padding:5px 12px; font-size:0.82rem;">🗑 Xóa</div>
+            <div class="tk-separator"></div>
+            <!-- Undo/Redo -->
+            <div class="tk-button" style="padding:5px 12px; font-size:0.82rem;">↶ Hoàn tác</div>
+            <div class="tk-button" style="padding:5px 12px; font-size:0.82rem;" disabled>↷ Làm lại</div>
+            <div class="tk-separator"></div>
+            <!-- Tìm + Sắp xếp -->
+            <span style="font-size:0.82rem;">Tìm:</span>
+            <div class="tk-entry" style="min-width:90px; padding:3px 6px; font-size:0.82rem;"></div>
+            <div class="tk-combobox" style="min-width:55px; padding:3px 18px 3px 6px; font-size:0.82rem;">ten</div>
+            <div class="tk-button" style="padding:5px 10px; font-size:0.82rem;">Tìm</div>
+            <div class="tk-button" style="padding:5px 10px; font-size:0.82rem;">↻ Làm mới</div>
+            <div class="tk-separator"></div>
+            <span style="font-size:0.82rem;">Sắp xếp:</span>
+            <div class="tk-combobox" style="min-width:90px; padding:3px 18px 3px 6px; font-size:0.82rem;">gia_ban</div>
+            <div class="tk-button" style="padding:5px 10px; font-size:0.82rem;">Sắp xếp</div>
+        </div>
+
+        <!-- ====== KHUNG CHÍNH: BẢNG TRÁI + KHUNG PHẢI ====== -->
+        <div class="tk-paned" style="margin-top:6px;">
+            <!-- BẢNG TRÁI: BangSanPhamUI -->
+            <div class="tk-paned__left">
+                <div class="tk-labelframe">
+                    <div class="tk-labelframe__title">Danh sách sản phẩm</div>
+                    <div style="display:flex; gap:4px; align-items:flex-start;">
+                        <div class="tk-treeview" style="flex:1; font-size:0.78rem;">
+                            <div class="tk-treeview__header">
+                                <div class="tk-treeview__header-cell" style="flex:0 0 55px; text-align:center;">Mã</div>
+                                <div class="tk-treeview__header-cell" style="flex:2;">Tên</div>
+                                <div class="tk-treeview__header-cell" style="flex:0 0 55px; text-align:center;">Loại</div>
+                                <div class="tk-treeview__header-cell" style="flex:0 0 70px; text-align:right;">Giá bán</div>
+                            </div>
+                            <div class="tk-treeview__row">
+                                <div class="tk-treeview__cell" style="flex:0 0 55px; text-align:center;">S001</div>
+                                <div class="tk-treeview__cell" style="flex:2;">Lập trình Python</div>
+                                <div class="tk-treeview__cell" style="flex:0 0 55px; text-align:center;">Sách</div>
+                                <div class="tk-treeview__cell" style="flex:0 0 70px; text-align:right;">132,000</div>
+                            </div>
+                            <div class="tk-treeview__row tk-treeview__row--selected">
+                                <div class="tk-treeview__cell" style="flex:0 0 55px; text-align:center;">S002</div>
+                                <div class="tk-treeview__cell" style="flex:2;">Tạp chí Khoa học</div>
+                                <div class="tk-treeview__cell" style="flex:0 0 55px; text-align:center;">Tạp chí</div>
+                                <div class="tk-treeview__cell" style="flex:0 0 70px; text-align:right;">38,500</div>
+                            </div>
+                            <div class="tk-treeview__row">
+                                <div class="tk-treeview__cell" style="flex:0 0 55px; text-align:center;">B003</div>
+                                <div class="tk-treeview__cell" style="flex:2;">Báo Tuổi Trẻ</div>
+                                <div class="tk-treeview__cell" style="flex:0 0 55px; text-align:center;">Báo</div>
+                                <div class="tk-treeview__cell" style="flex:0 0 70px; text-align:right;">5,500</div>
+                            </div>
+                            <div class="tk-treeview__row">
+                                <div class="tk-treeview__cell" style="flex:0 0 55px; text-align:center;">LV04</div>
+                                <div class="tk-treeview__cell" style="flex:2;">Luận văn CNTT</div>
+                                <div class="tk-treeview__cell" style="flex:0 0 55px; text-align:center;">Luận văn</div>
+                                <div class="tk-treeview__cell" style="flex:0 0 70px; text-align:right;">275,000</div>
+                            </div>
+                            <div class="tk-treeview__row">
+                                <div class="tk-treeview__cell" style="flex:0 0 55px; text-align:center;">BT05</div>
+                                <div class="tk-treeview__cell" style="flex:2;">Bản thảo truyện</div>
+                                <div class="tk-treeview__cell" style="flex:0 0 55px; text-align:center;">Bản thảo</div>
+                                <div class="tk-treeview__cell" style="flex:0 0 70px; text-align:right;">88,000</div>
+                            </div>
+                        </div>
+                        <div style="width:12px; height:140px; background:linear-gradient(180deg,#fafafa,#d8d8d8); border:1px solid #888; border-radius:2px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KHUNG PHẢI: Thống kê + Giỏ hàng -->
+            <div class="tk-paned__right">
+                <!-- Thống kê -->
+                <div class="tk-labelframe">
+                    <div class="tk-labelframe__title">Thống kê</div>
+                    <div style="padding:6px 4px; font-size:0.78rem; line-height:1.6;">
+                        <div style="border-bottom:1px dotted #ddd; padding:2px 0;">Tổng số: <strong>5 mặt hàng</strong></div>
+                        <div style="border-bottom:1px dotted #ddd; padding:2px 0;">Đắt nhất: <strong>LV04</strong> (275k)</div>
+                        <div style="border-bottom:1px dotted #ddd; padding:2px 0;">Rẻ nhất: <strong>B003</strong> (5.5k)</div>
+                        <div style="border-bottom:1px dotted #ddd; padding:2px 0;">Tổng giá trị: <strong>538,500đ</strong></div>
+                        <div style="padding:2px 0; color:red; font-weight:600;">Sắp hết (&lt;5): 2</div>
+                    </div>
+                </div>
+                <!-- Giỏ hàng -->
+                <div class="tk-labelframe" style="flex:1;">
+                    <div class="tk-labelframe__title">🛒 Giỏ hàng (Queue FIFO)</div>
+                    <div style="padding:6px 4px;">
+                        <div class="tk-treeview" style="font-size:0.76rem;">
+                            <div class="tk-treeview__header">
+                                <div class="tk-treeview__header-cell" style="flex:0 0 45px; text-align:center;">Mã</div>
+                                <div class="tk-treeview__header-cell" style="flex:2;">Tên</div>
+                                <div class="tk-treeview__header-cell" style="flex:0 0 65px; text-align:right;">Giá</div>
+                            </div>
+                            <div class="tk-treeview__row">
+                                <div class="tk-treeview__cell" style="flex:0 0 45px; text-align:center;">S001</div>
+                                <div class="tk-treeview__cell" style="flex:2;">Lập trình Python</div>
+                                <div class="tk-treeview__cell" style="flex:0 0 65px; text-align:right;">132,000</div>
+                            </div>
+                            <div class="tk-treeview__row">
+                                <div class="tk-treeview__cell" style="flex:0 0 45px; text-align:center;">B003</div>
+                                <div class="tk-treeview__cell" style="flex:2;">Báo Tuổi Trẻ</div>
+                                <div class="tk-treeview__cell" style="flex:0 0 65px; text-align:right;">5,500</div>
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:4px; margin-top:6px; flex-wrap:wrap;">
+                            <div class="tk-button" style="padding:4px 10px; font-size:0.76rem;">+ Thêm vào giỏ</div>
+                            <div class="tk-button" style="padding:4px 10px; font-size:0.76rem;">- Bỏ khỏi giỏ</div>
+                            <div class="tk-button tk-button--primary" style="padding:4px 10px; font-size:0.76rem;">💰 Thanh toán</div>
+                        </div>
+                        <div style="text-align:right; color:green; font-weight:bold; font-size:0.85rem; padding:6px 4px 0;">
+                            Tổng: 137,500đ (2 món)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====== THANH CHÂN ====== -->
+        <div class="tk-statusbar" style="margin-top:6px;">Sẵn sàng.</div>
+    </div>
+</div>
+
+<div class="tk-annotate__legend">
+    <h4>📋 Bố cục cửa sổ chính — 4 vùng</h4>
+    <ul>
+        <li><span class="lbl">Thanh đầu</span> tiêu đề "QUẢN LÝ NHÀ SÁCH" bên trái + thông tin user ("Xin chào: admin (admin)") + nút Đăng xuất bên phải.</li>
+        <li><span class="lbl">Thanh công cụ</span> 1 hàng ngang gộp 3 nhóm: Thêm/Sửa/Xóa (cn03-05) + Undo/Redo (cn08) + Tìm/Sắp xếp (cn06), ngăn nhau bằng Separator dọc.</li>
+        <li><span class="lbl">PanedWindow</span> khung chính chia 2: trái (3 phần) là bảng sản phẩm (cn02), phải (2 phần) là Thống kê (cn07) + Giỏ hàng (cn09).</li>
+        <li><span class="lbl">Thanh chân</span> label trạng thái ("Sẵn sàng.") — sẽ đổi text khi user tương tác ("Đã xóa S001", "Đã thêm 1 món vào giỏ"...).</li>
+        <li><span class="lbl">Nhân viên</span> nếu user đăng nhập với vai trò <code>nhan_vien</code> thì nút <strong>Xóa</strong> bị ẩn (phân quyền cn01).</li>
+        <li><span class="lbl">Mẹo</span> user có thể <strong>double-click</strong> vào dòng trong bảng để mở form Sửa nhanh — không cần chọn rồi bấm nút Sửa.</li>
+    </ul>
+</div>
+
+<p class="tk-mockup__caption">Hình: <code class="inline">CuaSoChinhUI(root, ho_ten, vai_tro)</code> — tổng hợp 5 UI con (BangSanPhamUI + ThanhTimKiemSapXepUI + KhungThongKeUI + ThanhUndoRedoUI + KhungGioHangUI) vào 1 cửa sổ 1100×700.</p>
+
+<!-- /MOCKUP-INJECTED: 18-main-flow.html -->
+
 
         <p>Sau khi học từng phần riêng lẻ (Python, OOP, Tkinter, DSLK, Stack/Queue, SQLite, 9 chức
         năng), bài này ghép tất cả lại — xem <strong>main.py</strong> khởi động app thế nào, và

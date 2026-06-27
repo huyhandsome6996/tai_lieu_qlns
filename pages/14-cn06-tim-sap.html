@@ -182,6 +182,59 @@ def sap_xep(danh_sach, tieu_chi='gia_ban'):
         </div>
 
         <h2 id="ui">3. File _ui: ThanhTimKiemSapXepUI</h2>
+<!-- MOCKUP-INJECTED: 14-cn06-tim-sap.html -->
+
+<div class="tk-mockup-title">🎨 <strong>Hình minh hoạ giao diện:</strong> Đây là hình <em>thanh công cụ Tìm + Sắp xếp</em> — 1 hàng ngang chứa 2 nhóm tách biệt bằng thanh separator dọc. Nhóm trái: ô nhập từ khóa + combobox tiêu chí + nút Tìm + nút Làm mới. Nhóm phải: combobox tiêu chí sắp xếp + nút Sắp xếp.</div>
+
+
+<div class="tk-mockup tk-mockup--wide">
+    <div class="tk-mockup__titlebar">
+        <div class="tk-mockup__controls">
+            <div class="tk-mockup__btn-circle tk-mockup__btn-circle--min"></div>
+            <div class="tk-mockup__btn-circle tk-mockup__btn-circle--max"></div>
+            <div class="tk-mockup__btn-circle tk-mockup__btn-circle--close"></div>
+        </div>
+        <div class="tk-mockup__title">Thanh công cụ Tìm + Sắp xếp (trong cửa sổ chính)</div>
+        <div style="width:48px"></div>
+    </div>
+    <div class="tk-mockup__body" style="padding:10px;">
+        <div class="tk-toolbar" style="border-bottom:0; margin:0; padding:6px 4px; flex-wrap:wrap;">
+            <!-- Nhóm TÌM KIẾM -->
+            <span class="tk-label" style="margin:0 4px 0 0;">Tìm:</span>
+            <div class="tk-entry" style="min-width:130px;">python</div>
+            <div class="tk-combobox" style="min-width:70px;">ten</div>
+            <div class="tk-button tk-button--primary" style="padding:6px 14px;">Tìm</div>
+            <div class="tk-button" style="padding:6px 14px;">↻ Làm mới</div>
+
+            <!-- Separator dọc -->
+            <div class="tk-separator" style="height:24px;"></div>
+
+            <!-- Nhóm SẮP XẾP -->
+            <span class="tk-label" style="margin:0 4px 0 0;">Sắp xếp:</span>
+            <div class="tk-combobox" style="min-width:140px;">gia_ban</div>
+            <div class="tk-button" style="padding:6px 14px;">Sắp xếp</div>
+        </div>
+    </div>
+</div>
+
+<div class="tk-annotate__legend">
+    <h4>📋 Các widget trong thanh công cụ</h4>
+    <ul>
+        <li><span class="lbl">Entry</span> ô nhập từ khóa — <code>width=15</code>. User gõ chữ rồi nhấn Enter hoặc nút Tìm.</li>
+        <li><span class="lbl">Combobox 1</span> chọn tiêu chí tìm: <code>ten</code> / <code>ma</code> / <code>loai</code> — <code>state='readonly'</code> (không gõ tự do).</li>
+        <li><span class="lbl">Button Tìm</span> gọi <code>DieuKhienTimKiemSapXep.xu_ly_tim()</code> — lọc danh sách theo từ khóa + tiêu chí.</li>
+        <li><span class="lbl">Button Làm mới</span> gọi <code>xu_ly_lam_moi()</code> — tải lại toàn bộ danh sách từ SQLite, bỏ filter.</li>
+        <li><span class="lbl">Separator dọc</span> đường gạch dọc phân tách 2 nhóm Tìm + Sắp xếp.</li>
+        <li><span class="lbl">Combobox 2</span> chọn tiêu chí sắp xếp: <code>gia_ban</code> / <code>ten_san_pham</code> / <code>ton_kho</code>.</li>
+        <li><span class="lbl">Button Sắp xếp</span> gọi <code>xu_ly_sap_xep()</code> — chạy Merge Sort trên DSLK theo tiêu chí đã chọn.</li>
+        <li><span class="lbl">Bind Enter</span> ô từ khóa gắn <code>&lt;Return&gt;</code> → tự động gọi Tìm (không cần bấm nút).</li>
+    </ul>
+</div>
+
+<p class="tk-mockup__caption">Hình: <code class="inline">ThanhTimKiemSapXepUI(parent)</code> — vẽ 1 hàng widget trong 1 Frame. Mọi <code>command</code> sẽ được <code class="inline">DieuKhienTimKiemSapXep</code> gắn sau.</p>
+
+<!-- /MOCKUP-INJECTED: 14-cn06-tim-sap.html -->
+
 
         <pre data-file="tim_kiem_sap_xep_ui.py"><code>import tkinter as tk
 from tkinter import ttk

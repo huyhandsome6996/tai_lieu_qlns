@@ -262,7 +262,23 @@ def thanh_toan(gio_hang):
     </div>
     <div class="tk-statusbar">2 mặt hàng trong giỏ · Tổng 155.000₫</div>
 </div>
-<p class="tk-mockup__caption">Hình: Cửa sổ chính với khung giỏ hàng bên phải. Khi bấm <strong>Thêm vào giỏ</strong> → gọi <code class="inline">HangDoi.them_vao()</code>. Khi bấm <strong>Thanh toán</strong> → gọi <code class="inline">HangDoi.lay_ra()</code> cho từng món (FIFO).</p>
+<p class="tk-mockup__caption">Hình: Cửa sổ chính với khung giỏ hàng bên phải.
+<!-- LEGEND-INJECTED: 17-cn09-gio-hang.html -->
+
+<div class="tk-annotate__legend">
+    <h4>📋 Các thành phần trong khung Giỏ hàng</h4>
+    <ul>
+        <li><span class="lbl">LabelFrame</span> khung có tiêu đề "🛒 Giỏ hàng (Queue FIFO)" — chữ "Queue FIFO" nhắc người dùng cấu trúc dữ liệu dùng.</li>
+        <li><span class="lbl">Treeview giỏ</span> bảng 4 cột (Mã, Tên, Giá bán, Loại) — <code>height=8</code> tối đa 8 dòng nhìn thấy.</li>
+        <li><span class="lbl">Nút Thêm</span> <code>+ Thêm vào giỏ</code> — gọi <code>HangDoi.them_vao(mon)</code> (enqueue — thêm vào cuối).</li>
+        <li><span class="lbl">Nút Bỏ</span> <code>- Bỏ khỏi giỏ</code> — xóa 1 món đang chọn (không theo FIFO, chỉ bỏ 1 phần tử giữa queue).</li>
+        <li><span class="lbl">Nút Thanh toán</span> <code>💰 Thanh toán</code> — gọi <code>HangDoi.lay_ra()</code> (dequeue) lần lượt từng món theo FIFO, cộng tiền, hiện hóa đơn.</li>
+        <li><span class="lbl">Label tổng</span> chữ xanh bold, format <code>f"Tổng: {tong:,.0f}đ ({sl} món)"</code> — cập nhật mỗi khi giỏ thay đổi.</li>
+        <li><span class="lbl">Queue FIFO</span> món nào vào trước được thanh toán trước — giống xếp hàng ở siêu thị.</li>
+    </ul>
+</div>
+
+ Khi bấm <strong>Thêm vào giỏ</strong> → gọi <code class="inline">HangDoi.them_vao()</code>. Khi bấm <strong>Thanh toán</strong> → gọi <code class="inline">HangDoi.lay_ra()</code> cho từng món (FIFO).</p>
 
 
 
