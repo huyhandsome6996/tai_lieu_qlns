@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 21: Chi tiết _tt / _ui / _dk liên kết thế nào — Học đồ án QLNS</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header class="header">
+    <a href="../index.html" class="header__brand">
+        <span class="header__brand-icon">📚</span>
+        <span>Học đồ án QLNS</span>
+    </a>
+    <div class="header__search">
+        <span class="header__search-icon">🔍</span>
+        <input type="text" placeholder="Tìm bài học...">
+    </div>
+    <button class="header__menu-toggle" type="button">☰</button>
+</header>
+
+<aside class="sidebar"></aside>
+
+<main class="main">
+    <div class="content">
+
+        <h1>🧠 Bài 21: Chi tiết _tt / _ui / _dk liên kết thế nào</h1>
+
+        <p>Bạn đã biết mỗi folder <code class="inline">cnXX_*</code> chứa 3 file: <code class="inline">_tt.py</code> (thuật toán),
+        <code class="inline">_ui.py</code> (giao diện), <code class="inline">_dk.py</code> (điều khiển). Nhưng <strong>qua câu lệnh nào, file nào chứa câu lệnh đó</strong> để 3 file liên kết được với nhau? Bài này sẽ đi từng dòng.</p>
+
+        <div class="callout callout--info">
+            <div class="callout__title">📖 Mục tiêu bài học</div>
+            <div class="callout__body">
+                <p>Sau bài này bạn sẽ:</p>
+                <ul>
+                    <li>Hiểu chính xác <strong>dòng nào</strong> trong <code class="inline">_dk.py</code> kéo <code class="inline">_ui.py</code> vào.</li>
+                    <li>Hiểu chính xác <strong>dòng nào</strong> trong <code class="inline">_dk.py</code> kéo <code class="inline">_tt.py</code> vào.</li>
+                    <li>Hiểu <strong>_ui.py không bao giờ gọi _tt.py</strong> — vì sao?</li>
+                    <li>Biết luồng dữ liệu 1 chiều: UI → Điều khiển → Thuật toán → (trả kết quả ngược lại).</li>
+                    <li>Phân tích 2 ví dụ thực tế: cn01 (Đăng nhập) + cn03 (Thêm sản phẩm).</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="toc">
+            <div class="toc__title">📑 Mục lục</div>
+            <ol>
+                <li><a href="#why-3-files">Vì sao chia 3 file? — Nguyên lý tách bạch</a></li>
+                <li><a href="#diagram">Sơ đồ liên kết 3 file</a></li>
+                <li><a href="#who-imports-who">Ai import ai? — Bảng tổng kết</a></li>
+                <li><a href="#example-cn01">Ví dụ 1: cn01 Đăng nhập</a></li>
+                <li><a href="#example-cn03">Ví dụ 2: cn03 Thêm sản phẩm</a></li>
+                <li><a href="#data-flow">Luồng dữ liệu 1 chiều</a></li>
+                <li><a href="#binding">Cú pháp bind sự kiện Tkinter — chi tiết</a></li>
+                <li><a href="#pattern-rules">5 quy tắc pattern để nhớ</a></li>
+            </ol>
+        </div>
+
+        <h2 id="why-3-files">1. Vì sao chia 3 file? — Nguyên lý tách bạch</h2>
+
+        <p>Thông thường người mới viết code tất cả trong 1 file: vừa vẽ widget, vừa xử lý logic, vừa gọi DB. Code chạy được nhưng <strong>khó bảo trì</strong>:</p>
+        <ul>
+            <li>Sửa giao diện → sợ vô tình hỏng logic.</li>
+            <li>Test logic → phải khởi tạo GUI (chậm).</li>
+            <li>2 người làm chung 1 file → conflict liên tục.</li>
+        </ul>
+
+        <p>Pattern <strong>MVC (Model-View-Controller)</strong> chia code thành 3 phần độc lập. Đồ án này dùng phiên bản đơn giản hóa của MVC — gọi là pattern <strong>_tt/_ui/_dk</strong>:</p>
+
+        <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+            <tr style="background: #edf2f7;">
+                <th style="padding: 8px 12px; border: 1px solid #cbd5e0;">File</th>
+                <th style="padding: 8px 12px; border: 1px solid #cbd5e0;">Vai trò</th>
+                <th style="padding: 8px 12px; border: 1px solid #cbd5e0;">Tương đương MVC</th>
+                <th style="padding: 8px 12px; border: 1px solid #cbd5e0;">Được phép</th>
+                <th style="padding: 8px 12px; border: 1px solid #cbd5e0;">KHÔNG được phép</th>
+            </tr>
+            <tr>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;"><code class="inline">_tt.py</code></td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;">Thuật toán + thao tác dữ liệu</td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;">Model</td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;">Import cấu trúc dữ liệu (DSLK, Stack, Queue, SQLite)</td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0; color: #c53030;">Import <code class="inline">tkinter</code></td>
+            </tr>
+            <tr>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;"><code class="inline">_ui.py</code></td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;">Vẽ widget Tkinter</td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;">View</td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;">Import <code class="inline">tkinter</code>, vẽ widget, lưu reference</td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0; color: #c53030;">Gọi hàm thuật toán, truy cập DB</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;"><code class="inline">_dk.py</code></td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;">Điều phối luồng</td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;">Controller</td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;">Import cả <code class="inline">_ui</code> và <code class="inline">_tt</code>, gắn sự kiện</td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0; color: #c53030;">Vẽ widget trực tiếp (phải gọi qua <code class="inline">_ui</code>)</td>
+            </tr>
+        </table>
+
+        <div class="callout callout--warning">
+            <div class="callout__title">⚠️ Quy tắc vàng</div>
+            <div class="callout__body">
+                <p><strong>_ui.py KHÔNG BAO GIỜ import _tt.py</strong> — vì UI chỉ vẽ giao diện, không biết logic.</p>
+                <p><strong>_tt.py KHÔNG BAO GIỜ import _ui.py</strong> — vì thuật toán không cần biết widget.</p>
+                <p><strong>_dk.py IMPORT CẢ HAI</strong> — vì điều khiển phải "biết" cả UI (để đọc/ghi) và Thuật toán (để gọi).</p>
+                <p>Đây là chiều phụ thuộc 1 chiều: <code class="inline">_dk</code> → <code class="inline">_ui</code> + <code class="inline">_tt</code>. Không bao giờ ngược lại.</p>
+            </div>
+        </div>
+
+        <h2 id="diagram">2. Sơ đồ liên kết 3 file</h2>
+
+        <pre data-file="Sơ đồ liên kết trong 1 cn"><code>                        ┌──────────────────────────────┐
+                        │       _dk.py (Điều khiển)     │
+                        │  • import _ui                 │
+                        │  • import _tt                 │
+                        │  • tạo UI + Thuật toán        │
+                        │  • gắn sự kiện cho nút UI     │
+                        └──────────┬──────────┬─────────┘
+                                   │          │
+                       import      │          │  import
+                                   ▼          ▼
+        ┌──────────────────────────┐  ┌────────────────────────────┐
+        │      _ui.py (Giao diện)   │  │    _tt.py (Thuật toán)     │
+        │  • class CuaSoXXXUI       │  │  • class BoXXX hoặc hàm    │
+        │  • vẽ widget              │  │  • xử lý DSLK/Stack/Queue  │
+        │  • lưu reference widget   │  │  • truy cập SQLite         │
+        │  • có hàm getter/setter   │  │  • trả về (bool, msg)      │
+        └──────────────────────────┘  └────────────────────────────┘
+                       ▲                          ▲
+                       │                          │
+                       └────────  không import lẫn nhau  ──────────┘
+
+    Chiều dữ liệu khi user bấm nút:
+
+        User click nút
+              ↓
+        Tkinter gọi hàm trong _dk.py
+              ↓
+        _dk.py gọi _ui.lay_du_lieu()    ← ĐỌC từ UI
+              ↓
+        _dk.py gọi _tt.thuc_hien()      ← GỌI thuật toán
+              ↓
+        _tt trả về (True, msg)
+              ↓
+        _dk.py gọi _ui.bao_thanh_cong() ← GHI vào UI
+</code></pre>
+
+        <h2 id="who-imports-who">3. Ai import ai? — Bảng tổng kết</h2>
+
+        <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+            <tr style="background: #edf2f7;">
+                <th style="padding: 8px 12px; border: 1px solid #cbd5e0;">File nguồn</th>
+                <th style="padding: 8px 12px; border: 1px solid #cbd5e0;">File đích</th>
+                <th style="padding: 8px 12px; border: 1px solid #cbd5e0;">Cho phép?</th>
+                <th style="padding: 8px 12px; border: 1px solid #cbd5e0;">Lý do</th>
+            </tr>
+            <tr>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;"><code class="inline">_dk.py</code></td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;"><code class="inline">_ui.py</code></td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0; color: green; font-weight: bold;">✓ CÓ</td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;">Điều khiển cần tạo UI + đọc dữ liệu từ UI</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;"><code class="inline">_dk.py</code></td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;"><code class="inline">_tt.py</code></td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0; color: green; font-weight: bold;">✓ CÓ</td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;">Điều khiển cần gọi thuật toán để xử lý</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;"><code class="inline">_ui.py</code></td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;"><code class="inline">_tt.py</code></td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0; color: #c53030; font-weight: bold;">✗ KHÔNG</td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;">UI không biết logic, chỉ vẽ widget</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;"><code class="inline">_ui.py</code></td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;"><code class="inline">_dk.py</code></td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0; color: #c53030; font-weight: bold;">✗ KHÔNG</td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;">Sẽ tạo phụ thuộc vòng</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;"><code class="inline">_tt.py</code></td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;"><code class="inline">_ui.py</code></td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0; color: #c53030; font-weight: bold;">✗ KHÔNG</td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;">Thuật toán không cần widget</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;"><code class="inline">_tt.py</code></td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;"><code class="inline">_dk.py</code></td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0; color: #c53030; font-weight: bold;">✗ KHÔNG</td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;">Sẽ tạo phụ thuộc vòng</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;"><code class="inline">_ui.py</code></td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;"><code class="inline">tkinter</code></td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0; color: green; font-weight: bold;">✓ CÓ</td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;">UI cần tkinter để vẽ</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;"><code class="inline">_tt.py</code></td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;"><code class="inline">loi_thuat_toan.*</code></td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0; color: green; font-weight: bold;">✓ CÓ</td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;">Thuật toán cần DSLK/Stack/Queue/SQLite</td>
+            </tr>
+        </table>
+
+        <h2 id="example-cn01">4. Ví dụ 1: cn01 Đăng nhập</h2>
+
+        <p>Xem chi tiết từng dòng import trong 3 file của <code class="inline">cn01</code>:</p>
+
+        <h3>4.1. File <code class="inline">dang_nhap_ui.py</code> — KHÔNG import _tt, KHÔNG import _dk</h3>
+
+        <pre data-file="chuc_nang/cn01_dang_nhap_phan_quyen/dang_nhap_ui.py (đầu file)"><code>"""Giao diện form đăng nhập — chỉ vẽ widget, không chứa logic."""
+
+import tkinter as tk
+from tkinter import ttk, messagebox
+# ↑ Chỉ import tkinter + submodule. KHÔNG import _tt hay _dk.
+
+class CuaSoDangNhapUI:
+    def __init__(self, parent):
+        self.top = tk.Toplevel(parent)
+        # ... vẽ widget ...
+        self.nguoi_dung = None  # ← sẽ được _dk gán khi đăng nhập OK
+
+    # Getter cho _dk gọi:
+    def lay_ten_dang_nhap(self):
+        return self.entry_ten.get().strip()
+
+    def lay_mat_khau(self):
+        return self.entry_mk.get().strip()
+
+    def xoa_mat_khau(self):
+        self.entry_mk.delete(0, tk.END)
+
+    def bao_loi(self, thong_bao):
+        messagebox.showerror('Đăng nhập thất bại', thong_bao, parent=self.top)
+
+    def dong(self):
+        self.top.destroy()
+</code></pre>
+
+        <p>Đặc điểm quan trọng: <code class="inline">_ui.py</code> có nhiều <strong>hàm getter/setter</strong> (lay_*, bao_loi, xoa_mat_khau, dong) — đây là "cửa" để <code class="inline">_dk.py</code> giao tiếp với UI mà <strong>không cần biết widget nào bên trong</strong>.</p>
+
+        <h3>4.2. File <code class="inline">dang_nhap_tt.py</code> — KHÔNG import _ui, KHÔNG import _dk</h3>
+
+        <pre data-file="chuc_nang/cn01_dang_nhap_phan_quyen/dang_nhap_tt.py (đầu file)"><code>"""Thuật toán đăng nhập — không có code giao diện."""
+
+# Import hàm kiểm tra từ thư viện thuật toán (KHÔNG phải _ui hay _dk)
+from loi_thuat_toan.nguoi_dung import kiem_tra_dang_nhap
+
+class BoDangNhap:
+    def __init__(self):
+        self.nguoi_dung_hien_tai = None
+
+    def dang_nhap(self, ten_dang_nhap, mat_khau):
+        """Trả về (True, nguoi_dung) hoặc (False, msg)."""
+        try:
+            nguoi_dung = kiem_tra_dang_nhap(ten_dang_nhap, mat_khau)
+            if nguoi_dung is None:
+                return False, 'Sai tên đăng nhập hoặc mật khẩu.'
+            self.nguoi_dung_hien_tai = nguoi_dung
+            return True, nguoi_dung
+        except Exception as loi:
+            return False, f'Lỗi: {loi}'
+</code></pre>
+
+        <p>Đặc điểm quan trọng: <code class="inline">_tt.py</code> chỉ nhận <strong>tham số đầu vào</strong> (ten_dang_nhap, mat_khau) và <strong>trả về tuple</strong> (bool, msg). Không hề biết tới widget nào cả. Vì vậy bạn có thể <strong>test _tt.py trong terminal</strong> mà không cần mở cửa sổ:</p>
+        <pre data-file="Test _tt.py trong terminal"><code>>>> from chuc_nang.cn01_dang_nhap_phan_quyen.dang_nhap_tt import BoDangNhap
+>>> bo = BoDangNhap()
+>>> bo.dang_nhap('admin', '123')
+(True, <NguoiDung 'admin'>)
+>>> bo.dang_nhap('admin', 'sai_mat_khau')
+(False, 'Sai tên đăng nhập hoặc mật khẩu.')</code></pre>
+
+        <h3>4.3. File <code class="inline">dang_nhap_dk.py</code> — IMPORT CẢ _ui VÀ _tt</h3>
+
+        <pre data-file="chuc_nang/cn01_dang_nhap_phan_quyen/dang_nhap_dk.py"><code>"""Điều khiển — cầu nối giữa _ui và _tt."""
+
+# ← DÒNG NÀY kéo _ui vào:
+from .dang_nhap_ui import CuaSoDangNhapUI
+# ← DÒNG NÀY kéo _tt vào:
+from .dang_nhap_tt import BoDangNhap
+
+
+class DieuKhienDangNhap:
+    def __init__(self):
+        # Tạo 1 đối tượng Thuật toán — giữ suốt vòng đời app
+        self.bo = BoDangNhap()  # ← _dk tạo object _tt
+
+    def hien_form_dang_nhap(self, parent):
+        # Tạo 1 object UI — modal form
+        form = CuaSoDangNhapUI(parent)  # ← _dk tạo object _ui
+
+        # Gắn sự kiện: nút "Đăng nhập" + phím Enter → hàm xử lý
+        form.entry_mk.bind('&lt;Return&gt;', lambda e: self._xu_ly_dang_nhap(form))
+        form.btn_dn.config(command=lambda: self._xu_ly_dang_nhap(form))
+
+        # Chờ form đóng
+        parent.wait_window(form.top)
+
+        # Trả về người dùng (None nếu user đóng form không login)
+        return form.nguoi_dung
+
+    def _xu_ly_dang_nhap(self, form):
+        """Hàm nội bộ — được gọi khi user bấm nút hoặc Enter."""
+        # 1. ĐỌC dữ liệu từ UI (gọi getter của _ui)
+        ten = form.lay_ten_dang_nhap()
+        mk = form.lay_mat_khau()
+
+        # 2. Validate cơ bản
+        if not ten or not mk:
+            form.bao_loi('Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.')
+            return
+
+        # 3. GỌI thuật toán (gọi hàm của _tt)
+        ok, ket_qua = self.bo.dang_nhap(ten, mk)
+
+        # 4. XỬ LÝ kết quả — GHI ngược vào UI
+        if ok:
+            form.nguoi_dung = ket_qua  # ← gán cho _ui để caller đọc
+            form.dong()                # ← gọi hàm của _ui
+        else:
+            form.bao_loi(ket_qua)      # ← gọi hàm của _ui
+            form.xoa_mat_khau()        # ← gọi hàm của _ui
+</code></pre>
+
+        <div class="callout callout--success">
+            <div class="callout__title">✅ 2 dòng import quan trọng nhất</div>
+            <div class="callout__body">
+                <p>Toàn bộ sự liên kết giữa 3 file nằm trong 2 dòng đầu của <code class="inline">dang_nhap_dk.py</code>:</p>
+                <pre><code>from .dang_nhap_ui import CuaSoDangNhapUI  # ← _dk biết _ui
+from .dang_nhap_tt import BoDangNhap       # ← _dk biết _tt</code></pre>
+                <p>Dấu chấm <code class="inline">.</code> trước tên module nghĩa là "tìm trong cùng folder với file hiện tại". Vì 3 file cùng folder <code class="inline">cn01_dang_nhap_phan_quyen/</code>, nên dùng import tương đối.</p>
+                <p>Nếu không dùng dấu chấm, phải viết đường dẫn đầy đủ: <code class="inline">from chuc_nang.cn01_dang_nhap_phan_quyen.dang_nhap_ui import CuaSoDangNhapUI</code> — dài hơn nhưng cùng ý nghĩa.</p>
+            </div>
+        </div>
+
+        <h3>4.4. Hành trình của 1 lần bấm nút "Đăng nhập"</h3>
+
+        <pre data-file="Luồng: User nhập xong + bấm nút Đăng nhập"><code>BƯỚC 1: User gõ "admin" vào ô tên, "123" vào ô mật khẩu, bấm nút "Đăng nhập"
+
+BƯỚC 2: Tkinter phát sinh event "click" trên form.btn_dn
+         ↓
+         Tkinter gọi hàm đã gán ở dòng:
+         form.btn_dn.config(command=lambda: self._xu_ly_dang_nhap(form))
+
+BƯỚC 3: _dk._xu_ly_dang_nhap(form) chạy
+         ↓
+         Gọi form.lay_ten_dang_nhap() → trả về "admin"
+         Gọi form.lay_mat_khau()      → trả về "123"
+         ↓ (đọc dữ liệu từ UI)
+
+BƯỚC 4: Validate: ten="admin", mk="123" → không rỗng → đi tiếp
+
+BƯỚC 5: Gọi self.bo.dang_nhap("admin", "123")
+         ↓ (điều khiển gọi thuật toán)
+
+BƯỚC 6: BoDangNhap.dang_nhap() chạy (trong _tt)
+         ↓
+         Gọi kiem_tra_dang_nhap("admin", "123")  ← từ loi_thuat_toan.nguoi_dung
+         ↓
+         Hàm này query SQLite: SELECT * FROM nguoi_dung WHERE ten='admin'
+         ↓
+         Trả về NguoiDung('admin', '123', 'Quản trị viên', 'admin')
+
+BƯỚC 7: BoDangNhap.dang_nhap() trả về (True, NguoiDung(...))
+         ↓ (kết quả ngược về _dk)
+
+BƯỚC 8: _dk._xu_ly_dang_nhap() xử lý kết quả
+         ↓
+         ok=True → gán form.nguoi_dung = NguoiDung(...)
+                   gọi form.dong()  ← _ui đóng cửa sổ modal
+         ↓ (ghi kết quả vào UI)
+
+BƯỚC 9: form.top.destroy() → wait_window(form.top) trong hien_form_dang_nhap() trả về
+         ↓
+         return form.nguoi_dung  ← trả NguoiDung về cho main.py
+</code></pre>
+
+        <h2 id="example-cn03">5. Ví dụ 2: cn03 Thêm sản phẩm</h2>
+
+        <p>Pattern của cn03 gần giống cn01, nhưng có 1 điểm khác: <code class="inline">_tt.py</code> là <strong>hàm tự do</strong> (không bọc trong class) — để bạn thấy cả 2 cách viết.</p>
+
+        <h3>5.1. <code class="inline">them_san_pham_tt.py</code> — hàm tự do</h3>
+
+        <pre data-file="chuc_nang/cn03_them_san_pham/them_san_pham_tt.py (rút gọn)"><code>"""Thuật toán thêm sản phẩm — viết dạng hàm tự do (không class)."""
+
+from loi_thuat_toan.lop_doi_tuong import Sach, TapChi, BaoGiay, LuanVan, BanTao
+
+
+def them_san_pham(danh_sach, bo_undoredo, du_lieu):
+    """Thêm 1 sản phẩm vào DSLK + đẩy vào Stack undo.
+
+    Tham số:
+        danh_sach   : DSLK đôi toàn cục.
+        bo_undoredo : dict 2 Stack.
+        du_lieu     : dict chứa thông tin sản phẩm.
+
+    Trả về (True, msg) hoặc (False, msg).
+    """
+    # 1. Validate
+    if not du_lieu.get('ma_so') or not du_lieu.get('ten_san_pham'):
+        return False, 'Thiếu mã số hoặc tên sản phẩm.'
+
+    # 2. Kiểm tra mã đã tồn tại chưa
+    if danh_sach.tim_theo_ma_so(du_lieu['ma_so']) is not None:
+        return False, f"Mã {du_lieu['ma_so']} đã tồn tại."
+
+    # 3. Tạo đối tượng theo loại hàng (đa hình)
+    loai = du_lieu.get('loai_hang', 'Sach').lower()
+    if loai == 'sach':
+        sp = Sach(**du_lieu)
+    elif loai == 'tap chi':
+        sp = TapChi(**du_lieu)
+    elif loai == 'bao giay':
+        sp = BaoGiay(**du_lieu)
+    elif loai == 'luan van':
+        sp = LuanVan(**du_lieu)
+    else:
+        sp = BanTao(**du_lieu)
+
+    # 4. Thêm vào DSLK
+    danh_sach.them_vao_cuoi(sp)
+
+    # 5. Đẩy thao tác vào Stack undo
+    bo_undoredo['undo'].day_vao({
+        'loai': 'them',
+        'ma_so': sp.ma_so,
+        'du_lieu_cu': None,
+        'du_lieu_moi': du_lieu
+    })
+    # Xóa redo stack (vì có thao tác mới → redo cũ không còn hợp lệ)
+    bo_undoredo['redo'].xoa_tat_ca()
+
+    return True, f'Đã thêm "{sp.ten_san_pham}" thành công.'
+</code></pre>
+
+        <h3>5.2. <code class="inline">them_san_pham_ui.py</code> — vẽ form Thêm</h3>
+
+        <p>UI của Thêm/Sửa dùng chung 1 file trong <code class="inline">_shared/form_them_sua_ui.py</code>. UI chỉ vẽ widget + có hàm <code class="inline">lay_du_lieu()</code> để dk đọc:</p>
+
+        <pre data-file="chuc_nang/_shared/form_them_sua_ui.py (rút gọn)"><code>"""Form Thêm/Sửa dùng chung — chỉ vẽ widget."""
+
+import tkinter as tk
+from tkinter import ttk
+
+
+class FormThemSuaUI:
+    def __init__(self, parent, du_lieu_cu=None):
+        """Nếu du_lieu_cu=None → chế độ Thêm. Nếu có → chế độ Sửa (điền sẵn)."""
+        self.top = tk.Toplevel(parent)
+        self.top.title('Thêm sản phẩm' if du_lieu_cu is None else 'Sửa sản phẩm')
+        # ... modal setup ...
+
+        self.ket_qua = None  # ← _dk sẽ gán khi Lưu thành công
+
+        # Vẽ các widget: Entry mã số, tên, Combobox loại, Entry giá, ...
+        self._tao_giao_dien(du_lieu_cu)
+
+    def _tao_giao_dien(self, du_lieu_cu):
+        # ... vẽ Label + Entry + Combobox + Button Lưu/Hủy ...
+        self.btn_luu = ttk.Button(self.top, text='Lưu')
+        # ← KHÔNG gắn command ở đây. _dk sẽ gắn.
+        self.btn_huy = ttk.Button(self.top, text='Hủy')
+        # ← Tương tự.
+
+    # Getter cho _dk đọc:
+    def lay_du_lieu(self):
+        return {
+            'ma_so': self.entry_ma.get().strip(),
+            'ten_san_pham': self.entry_ten.get().strip(),
+            'loai_hang': self.combo_loai.get(),
+            'gia_co_ban': int(self.entry_gia.get() or 0),
+            'ton_kho': int(self.entry_ton.get() or 0),
+            # ...
+        }
+
+    def bao_loi(self, msg):
+        messagebox.showerror('Lỗi', msg, parent=self.top)
+
+    def bao_thanh_cong(self, msg):
+        messagebox.showinfo('Thành công', msg, parent=self.top)
+
+    def dong(self):
+        self.top.destroy()
+</code></pre>
+
+        <h3>5.3. <code class="inline">them_san_pham_dk.py</code> — liên kết _ui và _tt</h3>
+
+        <pre data-file="chuc_nang/cn03_them_san_pham/them_san_pham_dk.py"><code>"""Điều khiển — cầu nối UI và Thuật toán."""
+
+# ← IMPORT _tt (hàm tự do, không phải class)
+from .them_san_pham_tt import them_san_pham
+# ← IMPORT _ui (form Thêm/Sửa dùng chung)
+from .them_san_pham_ui import FormThemSuaUI
+
+
+class DieuKhienThemSanPham:
+    def __init__(self, danh_sach, bo_undoredo):
+        """Nhận state từ QuanLyTrungTam khi được tạo ở cua_so_chinh_dk."""
+        self.danh_sach = danh_sach
+        self.bo_undoredo = bo_undoredo
+
+    def mo_form_them(self, parent):
+        """Mở form Thêm modal. Trả True nếu đã thêm, False nếu user hủy."""
+        # 1. Tạo UI
+        form = FormThemSuaUI(parent, du_lieu_cu=None)
+
+        # 2. Gắn sự kiện nút Lưu → hàm xử lý
+        form.btn_luu.config(command=lambda: self._xu_ly_luu(form))
+
+        # 3. Chờ form đóng
+        parent.wait_window(form.top)
+
+        # 4. Trả về dựa trên form.ket_qua (được gán trong _xu_ly_luu)
+        return form.ket_qua is not None
+
+    def _xu_ly_luu(self, form):
+        """Hàm nội bộ — gọi khi user bấm nút Lưu."""
+        # 1. ĐỌC dữ liệu từ UI
+        du_lieu = form.lay_du_lieu()
+
+        # 2. GỌI thuật toán
+        ok, msg = them_san_pham(self.danh_sach, self.bo_undoredo, du_lieu)
+
+        # 3. XỬ LÝ kết quả
+        if ok:
+            form.ket_qua = du_lieu       # ← gán để mo_form_them biết
+            form.bao_thanh_cong(msg)     # ← GHI vào UI
+            form.dong()                  # ← GHI vào UI (đóng form)
+        else:
+            form.bao_loi(msg)            # ← GHI vào UI (giữ form để sửa)
+</code></pre>
+
+        <h2 id="data-flow">6. Luồng dữ liệu 1 chiều</h2>
+
+        <p>Qua 2 ví dụ trên, bạn thấy luồng dữ liệu luôn đi theo 1 chiều:</p>
+
+        <pre data-file="Luồng dữ liệu 1 chiều"><code>        ┌─────────────────────────────────────────────────────┐
+        │                     USER                            │
+        │  (gõ text, bấm nút, double-click, nhấn phím)         │
+        └──────────────────────┬──────────────────────────────┘
+                               │
+                               ▼ event
+        ┌─────────────────────────────────────────────────────┐
+        │                  _ui.py (WIDGET)                     │
+        │  ← Tkinter gọi callback đã gắn                       │
+        └──────────────────────┬──────────────────────────────┘
+                               │
+                               ▼ gọi hàm _dk
+        ┌─────────────────────────────────────────────────────┐
+        │              _dk.py (ĐIỀU KHIỂN)                     │
+        │  1. form.lay_du_lieu()  ← ĐỌC UI                     │
+        │  2. self.bo.xxx()      ← GỌI _tt                     │
+        └──────────────────────┬──────────────────────────────┘
+                               │
+                               ▼ gọi hàm _tt
+        ┌─────────────────────────────────────────────────────┐
+        │              _tt.py (THUẬT TOÁN)                     │
+        │  • thao tác DSLK / Stack / Queue                     │
+        │  • query SQLite                                      │
+        │  • trả về (True, msg) hoặc (False, msg)              │
+        └──────────────────────┬──────────────────────────────┘
+                               │
+                               ▼ return
+        ┌─────────────────────────────────────────────────────┐
+        │              _dk.py (ĐIỀU KHIỂN)                     │
+        │  if ok:                                              │
+        │      form.bao_thanh_cong(msg)  ← GHI UI              │
+        │      form.dong()               ← GHI UI              │
+        │  else:                                               │
+        │      form.bao_loi(msg)         ← GHI UI              │
+        └──────────────────────┬──────────────────────────────┘
+                               │
+                               ▼
+        ┌─────────────────────────────────────────────────────┐
+        │                     USER                            │
+        │  (nhìn thấy thông báo / form đóng / bảng refresh)    │
+        └─────────────────────────────────────────────────────┘
+</code></pre>
+
+        <div class="callout callout--tip">
+            <div class="callout__title">💡 Tại sao 1 chiều?</div>
+            <div class="callout__body">
+                <p>Vì nếu 2 chiều (UI gọi _tt trực tiếp), UI sẽ phải import _tt → phụ thuộc lẫn nhau → khó test riêng.</p>
+                <p>Với 1 chiều, bạn có thể test từng phần độc lập:</p>
+                <ul>
+                    <li>Test <code class="inline">_tt.py</code> trong terminal: <code class="inline">python -c "from cn03_them_san_pham_tt import them_san_pham; ..."</code></li>
+                    <li>Test <code class="inline">_ui.py</code> bằng cách mở form + gõ thử + kiểm tra getter trả đúng.</li>
+                    <li>Test <code class="inline">_dk.py</code> bằng cách mock _ui và _tt (giả lập trả về).</li>
+                </ul>
+            </div>
+        </div>
+
+        <h2 id="binding">7. Cú pháp bind sự kiện Tkinter — chi tiết</h2>
+
+        <p>Trong <code class="inline">_dk.py</code> luôn có dòng gắn sự kiện dạng:</p>
+        <pre data-file="3 cách gắn sự kiện"><code># Cách 1: Gắn command cho Button
+form.btn_dn.config(command=lambda: self._xu_ly_dang_nhap(form))
+
+# Cách 2: Gắn phím cho Entry
+form.entry_mk.bind('&lt;Return&gt;', lambda e: self._xu_ly_dang_nhap(form))
+
+# Cách 3: Gắn double-click cho Treeview
+self.ui_bang.tree.bind('&lt;Double-1&gt;', lambda e: self._sua_san_pham())
+</code></pre>
+
+        <h3>7.1. <code class="inline">button.config(command=...)</code></h3>
+        <p>Widget <code class="inline">ttk.Button</code> có tham số <code class="inline">command</code> — gán hàm sẽ chạy khi user bấm. <strong>Hàm KHÔNG nhận tham số</strong> (vì Tkinter gọi hàm mà không truyền gì).</p>
+        <pre data-file="Ví dụ"><code># Hàm xử lý:
+def _xu_ly_dang_nhap(form):
+    ten = form.lay_ten_dang_nhap()
+    # ...
+
+# Gắn cho nút:
+form.btn_dn.config(command=lambda: _xu_ly_dang_nhap(form))
+#                ↑ lambda bọc vì command cần hàm 0 tham số, nhưng _xu_ly cần tham số form</code></pre>
+
+        <h3>7.2. <code class="inline">widget.bind('&lt;Event&gt;', handler)</code></h3>
+        <p>Widget bất kỳ đều có <code class="inline">.bind(event, handler)</code>. <strong>Handler PHẢI nhận 1 tham số event</strong> (Tkinter tự truyền).</p>
+        <p>Các event phổ biến trong đồ án:</p>
+        <table style="width: 100%; border-collapse: collapse; margin: 12px 0;">
+            <tr style="background: #edf2f7;">
+                <th style="padding: 6px 10px; border: 1px solid #cbd5e0;">Event</th>
+                <th style="padding: 6px 10px; border: 1px solid #cbd5e0;">Ý nghĩa</th>
+                <th style="padding: 6px 10px; border: 1px solid #cbd5e0;">Dùng trong cn nào</th>
+            </tr>
+            <tr>
+                <td style="padding: 6px 10px; border: 1px solid #cbd5e0;"><code class="inline">&lt;Return&gt;</code></td>
+                <td style="padding: 6px 10px; border: 1px solid #cbd5e0;">Phím Enter</td>
+                <td style="padding: 6px 10px; border: 1px solid #cbd5e0;">cn01 (Đăng nhập), cn06 (Tìm kiếm)</td>
+            </tr>
+            <tr>
+                <td style="padding: 6px 10px; border: 1px solid #cbd5e0;"><code class="inline">&lt;Double-1&gt;</code></td>
+                <td style="padding: 6px 10px; border: 1px solid #cbd5e0;">Double-click chuột trái</td>
+                <td style="padding: 6px 10px; border: 1px solid #cbd5e0;">cn02 (bảng) → mở cn04 (Sửa)</td>
+            </tr>
+            <tr>
+                <td style="padding: 6px 10px; border: 1px solid #cbd5e0;"><code class="inline">&lt;Button-1&gt;</code></td>
+                <td style="padding: 6px 10px; border: 1px solid #cbd5e0;">Click chuột trái (1 lần)</td>
+                <td style="padding: 6px 10px; border: 1px solid #cbd5e0;">Hiếm dùng trong đồ án</td>
+            </tr>
+            <tr>
+                <td style="padding: 6px 10px; border: 1px solid #cbd5e0;"><code class="inline">&lt;Key&gt;</code></td>
+                <td style="padding: 6px 10px; border: 1px solid #cbd5e0;">Bấm phím bất kỳ</td>
+                <td style="padding: 6px 10px; border: 1px solid #cbd5e0;">cn03 (form Thêm) — để validate</td>
+            </tr>
+            <tr>
+                <td style="padding: 6px 10px; border: 1px solid #cbd5e0;"><code class="inline">&lt;ComboboxSelected&gt;</code></td>
+                <td style="padding: 6px 10px; border: 1px solid #cbd5e0;">Chọn item trong Combobox</td>
+                <td style="padding: 6px 10px; border: 1px solid #cbd5e0;">cn03, cn04 (chọn loại hàng), cn06 (chọn tiêu chí sắp xếp)</td>
+            </tr>
+        </table>
+
+        <h3>7.3. Tại sao dùng <code class="inline">lambda</code>?</h3>
+        <p>Vì khi gán <code class="inline">command=_xu_ly_dang_nhap(form)</code> — Python sẽ <strong>gọi hàm ngay lập tức</strong> và gán kết quả trả về. Bạn muốn gán <strong>hàm chưa gọi</strong> để Tkinter gọi sau. Dùng <code class="inline">lambda</code> tạo hàm vô danh chưa gọi:</p>
+        <pre data-file="Sai vs Đúng"><code># SAI: Python gọi _xu_ly ngay khi gán (form chưa có dữ liệu!)
+form.btn_dn.config(command=_xu_ly_dang_nhap(form))
+
+# ĐÚNG: lambda tạo hàm 0 tham số, Tkinter sẽ gọi sau khi user bấm
+form.btn_dn.config(command=lambda: _xu_ly_dang_nhap(form))
+
+# ĐÚNG (cho bind, handler phải nhận event):
+form.entry_mk.bind('&lt;Return&gt;', lambda e: _xu_ly_dang_nhap(form))
+#                                       ↑ 'e' là event object, bỏ qua không dùng</code></pre>
+
+        <h2 id="pattern-rules">8. 5 quy tắc pattern để nhớ</h2>
+
+        <div class="callout callout--success">
+            <div class="callout__title">✅ Ghi nhớ 5 quy tắc này để đọc code không rối</div>
+            <div class="callout__body">
+                <ol>
+                    <li><strong>_dk import _ui + _tt</strong>. 2 dòng đầu mỗi file <code class="inline">_dk.py</code> luôn là 2 import này (dùng dấu chấm <code class="inline">.</code>).</li>
+                    <li><strong>_ui chỉ import tkinter</strong>. UI chỉ vẽ widget + có getter/setter. KHÔNG gọi thuật toán.</li>
+                    <li><strong>_tt chỉ import loi_thuat_toan.*</strong>. Thuật toán chỉ nhận tham số + trả tuple. KHÔNG import tkinter.</li>
+                    <li><strong>Luồng 1 chiều</strong>: UI → dk (đọc) → tt (gọi) → dk (ghi) → UI.</li>
+                    <li><strong>Event handler dùng <code class="inline">lambda</code></strong>: <code class="inline">btn.config(command=lambda: ham())</code> cho nút, <code class="inline">widget.bind('&lt;Event&gt;', lambda e: ham())</code> cho sự kiện.</li>
+                </ol>
+            </div>
+        </div>
+
+        <h2>📌 Tóm tắt bài 21</h2>
+
+        <div class="callout callout--success">
+            <div class="callout__title">✅ Bạn đã hiểu</div>
+            <div class="callout__body">
+                <ul>
+                    <li><strong>2 dòng import đầu _dk.py</strong> là toàn bộ sự liên kết giữa 3 file: <code class="inline">from ._xx_ui import ...</code> + <code class="inline">from ._xx_tt import ...</code>.</li>
+                    <li><strong>_ui.py và _tt.py không bao giờ import lẫn nhau</strong> — đó là quy tắc vàng của pattern MVC.</li>
+                    <li><strong>_ui có getter/setter</strong> (lay_*, bao_loi, dong...) để _dk đọc/ghi mà không cần biết widget bên trong.</li>
+                    <li><strong>_tt nhận tham số + trả tuple (bool, msg)</strong> — không biết tới widget, test được trong terminal.</li>
+                    <li><strong>_dk làm 3 việc</strong>: tạo _ui + tạo _tt + gắn sự kiện cho widget.</li>
+                    <li><strong>Cú pháp bind</strong>: <code class="inline">btn.config(command=lambda: f())</code> cho nút, <code class="inline">widget.bind('&lt;Event&gt;', lambda e: f())</code> cho phím/click.</li>
+                    <li><strong>Luồng 1 chiều</strong>: User → UI → dk → tt → dk → UI → User.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="callout callout--tip">
+            <div class="callout__title">💡 Bài tiếp theo</div>
+            <div class="callout__body">
+                <p>Bạn đã học hết 21 bài. Bài cuối (Bài 22) sẽ là <strong>Phân chia công việc</strong> — biết ai làm phần nào trong 3 người (Huy / Ngọ / Tú) để phối hợp làm nhóm.</p>
+            </div>
+        </div>
+
+        <div class="page-nav"></div>
+
+    </div>
+
+    <footer class="footer">
+        <p>Bài 21/22 — Chi tiết _tt / _ui / _dk liên kết | Học đồ án QLNS</p>
+    </footer>
+</main>
+
+<script src="../js/highlight.js"></script>
+<script src="../js/main.js"></script>
+
+</body>
+</html>

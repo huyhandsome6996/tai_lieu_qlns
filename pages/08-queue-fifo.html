@@ -297,6 +297,21 @@ class HangDoi:
     self.so_luong -= 1
     return data</code></pre>
 
+<div class="anim-container">
+    <div class="anim-title">🎬 Mô phỏng Queue FIFO (ENQUEUE 3 lần, rồi DEQUEUE 3 lần)</div>
+    <div data-anim="queue-fifo"></div>
+</div>
+
+<div class="callout callout--tip">
+    <div class="callout__title">💡 Quan sát FIFO</div>
+    <div class="callout__body">
+        <p>Lưu ý <strong>"Sách A"</strong> (thêm vào đầu tiên) lại bị <strong>DEQUEUE ra đầu tiên</strong> khi thanh toán.</p>
+        <p>Trong đồ án: Queue là giỏ hàng → khách thêm Sách A → Sách B → Sách C, khi thanh toán sẽ xử lý theo thứ tự A → B → C (FIFO).</p>
+        <p>Bấm <strong>⏭ Từng bước</strong> để đọc kỹ từng dòng code <code>them_vao</code> / <code>lay_ra</code>.</p>
+    </div>
+</div>
+
+
         <div class="callout callout--warning">
             <div class="callout__title">⚠️ Tại sao phải reset cuoi_hang khi rỗng?</div>
             <div class="callout__body">
@@ -462,6 +477,7 @@ node_hien_tai.sau = node_hien_tai.sau.sau   # B.sau = D
 </main>
 
 <script src="../js/highlight.js"></script>
+<script src="../js/animation.js"></script>
 <script src="../js/main.js"></script>
 
 </body>

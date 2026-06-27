@@ -148,6 +148,79 @@ else:
 
         <h2 id="ui">3. File _ui: CuaSoDangNhapUI (giao diện)</h2>
 
+<div class="callout callout--info">
+    <div class="callout__title">🎨 Hình minh hoạ: Form đăng nhập trông như nào</div>
+    <div class="callout__body">
+        <p>Đây là mockup (hình vẽ) của <code class="inline">CuaSoDangNhapUI</code>. Khi chạy app thật, cửa sổ này sẽ hiện ra modal (chặn tương tác cửa sổ cha) cho tới khi đăng nhập thành công hoặc đóng.</p>
+    </div>
+</div>
+
+<div class="tk-mockup" style="max-width: 400px;">
+    <div class="tk-mockup__titlebar">
+        <div class="tk-mockup__controls">
+            <div class="tk-mockup__btn-circle tk-mockup__btn-circle--min"></div>
+            <div class="tk-mockup__btn-circle tk-mockup__btn-circle--max"></div>
+            <div class="tk-mockup__btn-circle tk-mockup__btn-circle--close"></div>
+        </div>
+        <div class="tk-mockup__title">Đăng nhập hệ thống</div>
+        <div style="width: 48px;"></div>
+    </div>
+    <div class="tk-mockup__body" style="padding: 24px;">
+        <div style="text-align: center; font-size: 1.1rem; font-weight: bold; padding-bottom: 18px; color: #1e3a5f;">
+            ĐĂNG NHẬP
+        </div>
+        <div class="tk-row">
+            <div class="tk-row__label">Tên đăng nhập:</div>
+            <div class="tk-row__input"><div class="tk-entry">admin</div></div>
+        </div>
+        <div class="tk-row">
+            <div class="tk-row__label">Mật khẩu:</div>
+            <div class="tk-row__input"><div class="tk-entry tk-entry--password">•••</div></div>
+        </div>
+        <div style="text-align: center; padding: 18px 0 8px;">
+            <div class="tk-button tk-button--primary" style="min-width: 200px;">Đăng nhập</div>
+        </div>
+        <div style="text-align: center; font-size: 0.78rem; color: gray; padding-top: 4px;">
+            (Mặc định: admin/123 hoặc nhanvien/123)
+        </div>
+    </div>
+</div>
+<p class="tk-mockup__caption">Hình: Form đăng nhập — 1 Label tiêu đề + 2 cặp Label+Entry + 1 Button + 1 Label gợi ý. Đây là kết quả chạy <code class="inline">CuaSoDangNhapUI._tao_giao_dien()</code>.</p>
+
+<div class="callout callout--tip">
+    <div class="callout__title">💡 Bảng tương ứng code → widget</div>
+    <div class="callout__body">
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+            <tr style="background: #edf2f7;">
+                <th style="padding: 6px 10px; text-align: left; border: 1px solid #cbd5e0;">Code Tkinter</th>
+                <th style="padding: 6px 10px; text-align: left; border: 1px solid #cbd5e0;">Widget trên hình</th>
+            </tr>
+            <tr>
+                <td style="padding: 6px 10px; border: 1px solid #cbd5e0;"><code class="inline">ttk.Label(text='ĐĂNG NHẬP', font=('Arial',16,'bold'))</code></td>
+                <td style="padding: 6px 10px; border: 1px solid #cbd5e0;">Tiêu đề "ĐĂNG NHẬP" to ở giữa</td>
+            </tr>
+            <tr>
+                <td style="padding: 6px 10px; border: 1px solid #cbd5e0;"><code class="inline">ttk.Label(text='Tên đăng nhập:')</code></td>
+                <td style="padding: 6px 10px; border: 1px solid #cbd5e0;">Nhãn "Tên đăng nhập:" bên trái ô nhập</td>
+            </tr>
+            <tr>
+                <td style="padding: 6px 10px; border: 1px solid #cbd5e0;"><code class="inline">ttk.Entry(width=25)</code></td>
+                <td style="padding: 6px 10px; border: 1px solid #cbd5e0;">Ô nhập chữ "admin"</td>
+            </tr>
+            <tr>
+                <td style="padding: 6px 10px; border: 1px solid #cbd5e0;"><code class="inline">ttk.Entry(width=25, show='*')</code></td>
+                <td style="padding: 6px 10px; border: 1px solid #cbd5e0;">Ô nhập mật khẩu hiển thị "•••"</td>
+            </tr>
+            <tr>
+                <td style="padding: 6px 10px; border: 1px solid #cbd5e0;"><code class="inline">ttk.Button(text='Đăng nhập')</code></td>
+                <td style="padding: 6px 10px; border: 1px solid #cbd5e0;">Nút "Đăng nhập" xanh ở dưới</td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+
+
         <p>File này chỉ chứa <strong>code Tkinter</strong> — vẽ form đăng nhập. Form này
         <strong>modal</strong> (chặn tương tác cửa sổ cha cho đến khi đóng).</p>
 

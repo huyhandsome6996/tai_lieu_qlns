@@ -28,6 +28,8 @@ const PAGES = [
     // Nhóm 4: Tổng thể
     { id: 'main-flow',       title: 'Tổng thể: main.py + QuanLyTrungTam', file: 'pages/18-main-flow.html', icon: '🎯', group: 'Tổng thể' },
     { id: 'phan-chia',       title: 'Phân chia công việc',   file: 'pages/19-phan-chia-cong-viec.html', icon: '👥', group: 'Tổng thể' },
+    { id: 'luong-app',       title: 'Luồng ghép các cn thành app', file: 'pages/20-luong-app.html', icon: '🧩', group: 'Tổng thể' },
+    { id: 'tt-ui-dk',        title: 'Chi tiết _tt / _ui / _dk liên kết', file: 'pages/21-tt-ui-dk.html', icon: '🧠', group: 'Tổng thể' },
 ];
 
 // ============================================================

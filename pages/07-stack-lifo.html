@@ -169,6 +169,21 @@
     # Trả về dữ liệu đã gỡ
     return data</code></pre>
 
+<div class="anim-container">
+    <div class="anim-title">🎬 Mô phỏng Stack LIFO (PUSH 3 lần, rồi POP 3 lần)</div>
+    <div data-anim="stack-lifo"></div>
+</div>
+
+<div class="callout callout--tip">
+    <div class="callout__title">💡 Quan sát LIFO</div>
+    <div class="callout__body">
+        <p>Lưu ý <strong>"Sửa C"</strong> (đẩy vào cuối cùng) lại nằm <strong>TRÊN CÙNG</strong> và bị POP ra <strong>ĐẦU TIÊN</strong>.</p>
+        <p>Trong đồ án: Stack lưu lịch sử sửa → khi UNDO, thao tác sửa sau cùng bị hoàn tác trước (đúng LIFO).</p>
+        <p>Bấm <strong>⏭ Từng bước</strong> để đọc kỹ từng dòng code <code>day_vao</code> / <code>lay_ra</code>.</p>
+    </div>
+</div>
+
+
         <h3>Mô phỏng</h3>
 
         <div class="diagram">
@@ -275,6 +290,7 @@ print(f"Rỗng? {stack.rong()}")                    # True</code></pre>
 </main>
 
 <script src="../js/highlight.js"></script>
+<script src="../js/animation.js"></script>
 <script src="../js/main.js"></script>
 
 </body>

@@ -185,6 +185,87 @@ def thanh_toan(gio_hang):
 
         <h2 id="ui">3. File _ui: KhungGioHangUI</h2>
 
+<div class="callout callout--info">
+    <div class="callout__title">🎨 Hình minh hoạ: Khung giỏ hàng ở góc phải cửa sổ chính</div>
+    <div class="callout__body">
+        <p>Khung giỏ hàng (<code class="inline">KhungGioHangUI</code>) nằm ở góc <strong>phải dưới</strong> của cửa sổ chính. Bên trái là bảng sản phẩm, bên phải trên là thống kê, bên phải dưới là giỏ.</p>
+    </div>
+</div>
+
+<div class="tk-mockup" style="max-width: 700px;">
+    <div class="tk-mockup__titlebar">
+        <div class="tk-mockup__controls">
+            <div class="tk-mockup__btn-circle tk-mockup__btn-circle--min"></div>
+            <div class="tk-mockup__btn-circle tk-mockup__btn-circle--max"></div>
+            <div class="tk-mockup__btn-circle tk-mockup__btn-circle--close"></div>
+        </div>
+        <div class="tk-mockup__title">Quản lý nhà sách — admin (admin)</div>
+        <div style="width: 48px;"></div>
+    </div>
+    <div class="tk-mockup__body" style="padding: 8px;">
+        <!-- Toolbar -->
+        <div class="tk-toolbar">
+            <div class="tk-button" style="font-size: 0.78rem;">➕ Thêm</div>
+            <div class="tk-button" style="font-size: 0.78rem;">✏ Sửa</div>
+            <div class="tk-button" style="font-size: 0.78rem;">🗑 Xóa</div>
+            <div class="tk-separator"></div>
+            <div class="tk-button" style="font-size: 0.78rem;">↶ Undo</div>
+            <div class="tk-button" style="font-size: 0.78rem;">↷ Redo</div>
+            <div class="tk-separator"></div>
+            <div class="tk-combobox" style="font-size: 0.78rem; min-width: 100px;">Tìm theo tên</div>
+            <div class="tk-entry" style="font-size: 0.78rem; min-width: 80px;">python</div>
+            <div class="tk-button" style="font-size: 0.78rem;">Tìm</div>
+            <div class="tk-button" style="font-size: 0.78rem;">Sắp xếp</div>
+        </div>
+
+        <!-- 2 cột: trái bảng, phải thống kê + giỏ -->
+        <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 8px;">
+            <!-- Cột trái: bảng sản phẩm -->
+            <div class="tk-treeview" style="font-size: 0.78rem;">
+                <div class="tk-treeview__header">
+                    <div class="tk-treeview__header-cell">Mã</div>
+                    <div class="tk-treeview__header-cell">Tên</div>
+                    <div class="tk-treeview__header-cell">Giá</div>
+                </div>
+                <div class="tk-treeview__row tk-treeview__row--selected">
+                    <div class="tk-treeview__cell">S001</div>
+                    <div class="tk-treeview__cell">Sách Python</div>
+                    <div class="tk-treeview__cell">120k</div>
+                </div>
+                <div class="tk-treeview__row">
+                    <div class="tk-treeview__cell">S002</div>
+                    <div class="tk-treeview__cell">Tạp chí KH</div>
+                    <div class="tk-treeview__cell">35k</div>
+                </div>
+            </div>
+
+            <!-- Cột phải: giỏ hàng -->
+            <div class="tk-labelframe">
+                <div class="tk-labelframe__title">🛒 Giỏ hàng (2 món)</div>
+                <div style="height: 12px;"></div>
+                <div style="font-size: 0.78rem; padding: 4px 0; border-bottom: 1px dashed #ccc;">
+                    1️⃣ Sách Python — 120.000₫
+                </div>
+                <div style="font-size: 0.78rem; padding: 4px 0; border-bottom: 1px dashed #ccc;">
+                    2️⃣ Tạp chí KH — 35.000₫
+                </div>
+                <div style="font-size: 0.85rem; padding: 8px 0; font-weight: bold; color: #1e3a5f;">
+                    Tổng: 155.000₫
+                </div>
+                <div style="display: flex; gap: 4px; padding-top: 4px;">
+                    <div class="tk-button" style="font-size: 0.75rem; flex: 1;">➕ Thêm vào giỏ</div>
+                    <div class="tk-button" style="font-size: 0.75rem; flex: 1;">❌ Bỏ</div>
+                </div>
+                <div class="tk-button tk-button--primary" style="font-size: 0.78rem; text-align: center; margin-top: 6px; padding: 6px;">💰 Thanh toán</div>
+            </div>
+        </div>
+    </div>
+    <div class="tk-statusbar">2 mặt hàng trong giỏ · Tổng 155.000₫</div>
+</div>
+<p class="tk-mockup__caption">Hình: Cửa sổ chính với khung giỏ hàng bên phải. Khi bấm <strong>Thêm vào giỏ</strong> → gọi <code class="inline">HangDoi.them_vao()</code>. Khi bấm <strong>Thanh toán</strong> → gọi <code class="inline">HangDoi.lay_ra()</code> cho từng món (FIFO).</p>
+
+
+
         <pre data-file="gio_hang_ui.py"><code>from tkinter import ttk
 
 

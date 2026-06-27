@@ -77,6 +77,58 @@
 
         <h2 id="ui">2. Form Thêm dùng chung (FormThemSuaUI)</h2>
 
+<div class="callout callout--info">
+    <div class="callout__title">🎨 Hình minh hoạ: Form Thêm sản phẩm</div>
+    <div class="callout__body">
+        <p>Form Thêm (và Sửa) dùng chung 1 UI: <code class="inline">FormThemSuaUI</code> trong <code class="inline">_shared/form_them_sua_ui.py</code>. Có 6 ô nhập + Combobox chọn loại + 2 nút Lưu/Hủy.</p>
+    </div>
+</div>
+
+<div class="tk-mockup" style="max-width: 480px;">
+    <div class="tk-mockup__titlebar">
+        <div class="tk-mockup__controls">
+            <div class="tk-mockup__btn-circle tk-mockup__btn-circle--min"></div>
+            <div class="tk-mockup__btn-circle tk-mockup__btn-circle--max"></div>
+            <div class="tk-mockup__btn-circle tk-mockup__btn-circle--close"></div>
+        </div>
+        <div class="tk-mockup__title">Thêm sản phẩm mới</div>
+        <div style="width: 48px;"></div>
+    </div>
+    <div class="tk-mockup__body" style="padding: 20px;">
+        <div class="tk-row">
+            <div class="tk-row__label">Mã số:</div>
+            <div class="tk-row__input"><div class="tk-entry">S004</div></div>
+        </div>
+        <div class="tk-row">
+            <div class="tk-row__label">Tên sản phẩm:</div>
+            <div class="tk-row__input"><div class="tk-entry">Sách Python nâng cao</div></div>
+        </div>
+        <div class="tk-row">
+            <div class="tk-row__label">Loại hàng:</div>
+            <div class="tk-row__input"><div class="tk-combobox">Sách</div></div>
+        </div>
+        <div class="tk-row">
+            <div class="tk-row__label">Giá cơ bản:</div>
+            <div class="tk-row__input"><div class="tk-entry">120000</div></div>
+        </div>
+        <div class="tk-row">
+            <div class="tk-row__label">Tồn kho:</div>
+            <div class="tk-row__input"><div class="tk-entry">10</div></div>
+        </div>
+        <div class="tk-row">
+            <div class="tk-row__label">Tác giả:</div>
+            <div class="tk-row__input"><div class="tk-entry">Nguyễn Văn A</div></div>
+        </div>
+        <div style="text-align: center; padding: 16px 0 4px; display: flex; gap: 10px; justify-content: center;">
+            <div class="tk-button">Hủy</div>
+            <div class="tk-button tk-button--primary" style="min-width: 120px;">Lưu</div>
+        </div>
+    </div>
+</div>
+<p class="tk-mockup__caption">Hình: Form Thêm sản phẩm — 6 ô nhập liệu + 1 Combobox + 2 nút. Khi bấm <strong>Lưu</strong>, <code class="inline">DieuKhienThemSanPham._xu_ly_luu()</code> sẽ đọc dữ liệu → gọi <code class="inline">them_san_pham()</code>.</p>
+
+
+
         <pre data-file="_shared/form_them_sua_ui.py"><code>import tkinter as tk
 from tkinter import ttk, messagebox
 

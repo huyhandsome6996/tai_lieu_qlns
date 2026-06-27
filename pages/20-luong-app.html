@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài 20: Luồng ghép các cn thành app thống nhất — Học đồ án QLNS</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header class="header">
+    <a href="../index.html" class="header__brand">
+        <span class="header__brand-icon">📚</span>
+        <span>Học đồ án QLNS</span>
+    </a>
+    <div class="header__search">
+        <span class="header__search-icon">🔍</span>
+        <input type="text" placeholder="Tìm bài học...">
+    </div>
+    <button class="header__menu-toggle" type="button">☰</button>
+</header>
+
+<aside class="sidebar"></aside>
+
+<main class="main">
+    <div class="content">
+
+        <h1>🧩 Bài 20: Luồng ghép các "cn" thành app thống nhất</h1>
+
+        <p>Bạn đã học 9 chức năng riêng lẻ (CN01 → CN09). Nhưng <strong>làm thế nào 9 cái đó ghép lại thành 1 app chạy được</strong>?
+        Bài này sẽ đi từng bước: từ <code class="inline">main.py</code> gọi <code class="inline">khung_chinh</code>,
+        khung_chinh gọi từng <code class="inline">cn</code> → tất cả cùng chia sẻ <code class="inline">QuanLyTrungTam</code>.</p>
+
+        <div class="callout callout--info">
+            <div class="callout__title">📖 Mục tiêu bài học</div>
+            <div class="callout__body">
+                <p>Sau bài này bạn sẽ hiểu rõ:</p>
+                <ul>
+                    <li>Tại sao 9 cn riêng lẻ lại chạy được cùng nhau trong 1 cửa sổ.</li>
+                    <li>File nào là "cái keo" dán 9 cn lại với nhau.</li>
+                    <li>Câu lệnh <code class="inline">import</code> nào nối chúng lại.</li>
+                    <li>Luồng chạy từ lúc user bấm nút "Thêm sản phẩm" đến khi bảng tự refresh.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="toc">
+            <div class="toc__title">📑 Mục lục</div>
+            <ol>
+                <li><a href="#why">Vì sao cần ghép? — 9 cn là 9 hòn đá, cần 1 chuỗi xâu lại</a></li>
+                <li><a href="#map">Bản đồ kiến trúc tổng thể</a></li>
+                <li><a href="#main">main.py — điểm vào duy nhất</a></li>
+                <li><a href="#qltt">QuanLyTrungTam — bộ não chung</a></li>
+                <li><a href="#khung-chinh">khung_chinh — cái khung gầm</a></li>
+                <li><a href="#cn-ghep">9 cn ghép vào khung_chinh thế nào</a></li>
+                <li><a href="#luong-them">Luồng ví dụ: User bấm "Thêm sản phẩm"</a></li>
+                <li><a href="#luong-undoredo">Luồng ví dụ: User bấm "Undo"</a></li>
+                <li><a href="#luong-dangxuat">Luồng ví dụ: User bấm "Đăng xuất"</a></li>
+                <li><a href="#che-do-import">3 chế độ import: tĩnh, lazy, tương đối</a></li>
+            </ol>
+        </div>
+
+        <h2 id="why">1. Vì sao cần ghép? — 9 cn là 9 hòn đá, cần 1 chuỗi xâu lại</h2>
+
+        <p>Mỗi folder <code class="inline">cn01_…</code>, <code class="inline">cn02_…</code>, …, <code class="inline">cn09_…</code>
+        đều tự chạy độc lập được — mỗi cái có UI riêng + Thuật toán riêng + Điều khiển riêng. Nhưng khi user mở app,
+        họ KHÔNG muốn thấy 9 cửa sổ lẻ tẻ. Họ muốn <strong>1 cửa sổ duy nhất</strong>, có thanh công cụ ở trên,
+        bảng dữ liệu ở giữa, giỏ hàng ở góc phải, thống kê ở dưới — và 9 nút bấm để dùng 9 chức năng.</p>
+
+        <p>Ví dụ:</p>
+        <ul>
+            <li>Nút <strong>➕ Thêm</strong> trên thanh công cụ → phải gọi <code class="inline">cn03</code>.</li>
+            <li>Nút <strong>✏ Sửa</strong> → phải gọi <code class="inline">cn04</code>.</li>
+            <li>Nút <strong>🗑 Xóa</strong> → phải gọi <code class="inline">cn05</code>.</li>
+            <li>Nút <strong>↶ Undo</strong> → phải gọi <code class="inline">cn08</code>.</li>
+            <li>Bảng chính hiển thị dữ liệu → do <code class="inline">cn02</code> vẽ.</li>
+            <li>Khung giỏ hàng bên phải → do <code class="inline">cn09</code> vẽ.</li>
+            <li>Khung thống kê bên dưới → do <code class="inline">cn07</code> vẽ.</li>
+        </ul>
+
+        <p>Vậy ai là người "biết" tất cả 9 cn và gắn chúng vào đúng vị trí? Đó là <strong>3 file trong folder <code class="inline">khung_chinh/</code></strong>.</p>
+
+        <h2 id="map">2. Bản đồ kiến trúc tổng thể</h2>
+
+        <pre data-file="Bản đồ kiến trúc"><code>                        ┌─────────────────────────────────────────┐
+                        │           main.py (điểm vào)            │
+                        │  1. Tạo QuanLyTrungTam                  │
+                        │  2. Tạo Tk root                         │
+                        │  3. Mở form đăng nhập (cn01)            │
+                        │  4. Nếu OK → mở Cửa sổ chính            │
+                        └────────────────────┬────────────────────┘
+                                             │ import
+                ┌────────────────────────────┴────────────────────────────┐
+                │                                                          │
+                ▼                                                          ▼
+┌──────────────────────────────┐              ┌──────────────────────────────────────────┐
+│  khung_chinh/khung_chinh_tt  │              │      khung_chinh/cua_so_chinh_dk         │
+│  = QuanLyTrungTam (state)    │              │      = DieuKhienCuaSoChinh               │
+│                              │              │      (lớp "keo" dán 9 cn lại)            │
+│  • danh_sach (DSLK đôi)      │              │                                          │
+│  • bo_undoredo (2 Stack)     │◄─────────────┤  • Tạo 9 đối tượng DieuKhienCN…         │
+│  • gio_hang (Queue)          │   reference  │  • Gắn command cho 9 nút                 │
+│  • nguoi_dung_hien_tai       │              │  • refresh_all() sau mỗi thao tác        │
+└──────────────────────────────┘              └────────────────────┬─────────────────────┘
+                                                                    │ import 9 DieuKhienCN
+                                                                    ▼
+            ┌─────────────────────────────────────────────────────────────────────┐
+            │                       9 folder chuc_nang/cnXX_*                       │
+            ├──────────────┬──────────────┬──────────────┬──────────────┬──────────┤
+            │  cn01        │  cn02        │  cn03        │  cn04        │  ...     │
+            │  dang_nhap   │  doc_danh_s  │  them_san_p  │  sua_san_p   │          │
+            │              │              │              │              │          │
+            │  _tt.py      │  _tt.py      │  _tt.py      │  _tt.py      │          │
+            │  _ui.py      │  _ui.py      │  _ui.py      │  _ui.py      │          │
+            │  _dk.py      │  _dk.py      │  _dk.py      │  _dk.py      │          │
+            └──────────────┴──────────────┴──────────────┴──────────────┴──────────┘
+</code></pre>
+
+        <div class="callout callout--tip">
+            <div class="callout__title">💡 Đọc bản đồ thế nào</div>
+            <div class="callout__body">
+                <p>Theo <strong>chiều dọc</strong>: <code class="inline">main.py</code> ở trên cùng (điểm vào) → <code class="inline">khung_chinh</code> ở giữa (cái khung) → <code class="inline">chuc_nang/cnXX</code> ở dưới (9 chức năng).</p>
+                <p>Theo <strong>chiều ngang</strong>: <code class="inline">khung_chinh_tt</code> (trái) giữ STATE (dữ liệu), <code class="inline">cua_so_chinh_dk</code> (phải) giữ ĐIỀU KHIỂN (luồng). 2 cái chia việc: thằng giữ data, thằng điều phối luồng.</p>
+                <p>Mũi tên ◂: <code class="inline">cua_so_chinh_dk</code> nhận <strong>tham chiếu</strong> tới <code class="inline">QuanLyTrungTam</code> để truy cập state — KHÔNG tạo bản sao, mà dùng chung object.</p>
+            </div>
+        </div>
+
+        <h2 id="main">3. main.py — điểm vào duy nhất</h2>
+
+        <p>File <code class="inline">main.py</code> chỉ dài ~90 dòng, nhưng đó là <strong>điểm vào duy nhất</strong> của app. Khi bạn gõ <code class="inline">python main.py</code>, đây là file đầu tiên chạy.</p>
+
+        <pre data-file="main.py"><code>import tkinter as tk
+
+# Import state container (bộ não app)
+from quan_ly_trung_tam import QuanLyTrungTam
+# Import UI + Thuật toán đăng nhập
+from chuc_nang.cn01_dang_nhap_phan_quyen.dang_nhap_ui import CuaSoDangNhapUI
+from chuc_nang.cn01_dang_nhap_phan_quyen.dang_nhap_tt import BoDangNhap
+# Import Điều khiển cửa sổ chính (lớp "keo")
+from khung_chinh.cua_so_chinh_dk import DieuKhienCuaSoChinh
+
+
+def main():
+    # 1. Tạo bộ não app + khởi tạo DB, DSLK, Stack, Queue
+    qly = QuanLyTrungTam()
+    qly.khoi_tao()
+
+    # 2. Tạo cửa sổ root (Tkinter yêu cầu root trước)
+    root = tk.Tk()
+    root.title("Quản lý nhà sách")
+    root.geometry("100x100")  # Tạm nhỏ, sẽ phóng to sau khi đăng nhập
+
+    # 3. Mở form đăng nhập (cn01)
+    bo_dn = BoDangNhap()
+    form = CuaSoDangNhapUI(root)
+    # ... gắn sự kiện Enter + nút Đăng nhập ...
+    root.wait_window(form.top)  # Chờ user đăng nhập xong
+
+    # 4. Nếu đăng nhập OK → mở cửa sổ chính
+    if form.nguoi_dung:
+        qly.nguoi_dung_hien_tai = form.nguoi_dung
+        root.deiconify()  # Hiện root
+        # TẠO ĐIỀU KHIỂN CỬA SỔ CHÍNH — nó tự vẽ UI + gắn 9 cn
+        app = DieuKhienCuaSoChinh(root, qly, form.nguoi_dung)
+        root.mainloop()  # Vòng lặp chính — chạy đến khi user đóng
+    else:
+        root.destroy()
+
+
+if __name__ == '__main__':
+    main()
+</code></pre>
+
+        <div class="callout callout--info">
+            <div class="callout__title">📌 4 dòng quan trọng nhất</div>
+            <div class="callout__body">
+                <p>4 dòng dưới đây là <strong>toàn bộ sự kết nối</strong> giữa main.py và các module khác:</p>
+                <ol>
+                    <li><code class="inline">from quan_ly_trung_tam import QuanLyTrungTam</code> — kéo bộ não vào.</li>
+                    <li><code class="inline">from chuc_nang.cn01_..._ui import CuaSoDangNhapUI</code> — kéo UI đăng nhập.</li>
+                    <li><code class="inline">from chuc_nang.cn01_..._tt import BoDangNhap</code> — kéo thuật toán đăng nhập.</li>
+                    <li><code class="inline">from khung_chinh.cua_so_chinh_dk import DieuKhienCuaSoChinh</code> — kéo lớp "keo".</li>
+                </ol>
+                <p>4 dòng import này là <strong>tất cả những gì main.py cần biết</strong> về 9 cn. main.py KHÔNG cần biết tới cn02, cn03, ..., cn09 — vì <code class="inline">DieuKhienCuaSoChinh</code> sẽ lo việc đó.</p>
+            </div>
+        </div>
+
+        <h2 id="qltt">4. QuanLyTrungTam — bộ não chung</h2>
+
+        <p><code class="inline">QuanLyTrungTam</code> là <strong>singleton</strong> (chỉ có 1 object duy nhất trong toàn app). Nó giữ:</p>
+        <ul>
+            <li><code class="inline">danh_sach</code> — DSLK đôi chứa toàn bộ sản phẩm.</li>
+            <li><code class="inline">bo_undoredo</code> — dict 2 Stack (undo + redo).</li>
+            <li><code class="inline">gio_hang</code> — Queue FIFO chứa giỏ.</li>
+            <li><code class="inline">nguoi_dung_hien_tai</code> — người đang đăng nhập.</li>
+        </ul>
+
+        <p>Vì <code class="inline">QuanLyTrungTam</code> giữ state toàn cục, mọi chức năng đều cần tham chiếu tới nó. Đó là lý do nó được truyền vào <strong>mọi</strong> hàm <code class="inline">__init__</code> của lớp Điều khiển:</p>
+
+        <pre data-file="khung_chinh/cua_so_chinh_dk.py (rút gọn)"><code>class DieuKhienCuaSoChinh:
+    def __init__(self, root, quan_ly, nguoi_dung):
+        self.root = root
+        self.quan_ly = quan_ly   # ← nhận tham chiếu QuanLyTrungTam
+
+        # Tạo 9 điều khiển con — mỗi cái đều nhận 1 phần state từ quan_ly
+        self.dk_danh_sach = DieuKhienDocDanhSach(
+            self.ui.ui_bang, quan_ly.danh_sach)         # ← truyền DSLK
+        self.dk_them = DieuKhienThemSanPham(
+            quan_ly.danh_sach, quan_ly.bo_undoredo)     # ← truyền DSLK + 2 Stack
+        self.dk_sua = DieuKhienSuaSanPham(
+            quan_ly.danh_sach, quan_ly.bo_undoredo)
+        self.dk_xoa = DieuKhienXoaSanPham(
+            quan_ly.danh_sach, quan_ly.bo_undoredo)
+        self.dk_tim_sx = DieuKhienTimKiemSapXep(
+            self.ui.ui_tim_sx, quan_ly.danh_sach, self.ui.ui_bang)
+        self.dk_thong_ke = DieuKhienThongKe(
+            self.ui.ui_thong_ke, quan_ly.danh_sach)
+        self.dk_undoredo = DieuKhienHoanTacLamLai(
+            self.ui.ui_undoredo, quan_ly.danh_sach, quan_ly.bo_undoredo)
+        self.dk_gio_hang = DieuKhienGioHang(
+            self.ui.ui_gio_hang, quan_ly.danh_sach, quan_ly.gio_hang)  # ← Queue
+</code></pre>
+
+        <p>Đây chính là câu trả lời cho câu hỏi "các cn liên kết qua file nào?" — chúng liên kết qua <strong>tham chiếu object</strong> được truyền vào <code class="inline">__init__</code> của lớp Điều khiển.</p>
+
+        <h2 id="khung-chinh">5. khung_chinh — cái khung gầm</h2>
+
+        <p>Folder <code class="inline">khung_chinh/</code> có 3 file (giống hệt pattern của mỗi cn):</p>
+
+        <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+            <tr style="background: #edf2f7;">
+                <th style="padding: 8px 12px; border: 1px solid #cbd5e0; text-align: left;">File</th>
+                <th style="padding: 8px 12px; border: 1px solid #cbd5e0; text-align: left;">Lớp</th>
+                <th style="padding: 8px 12px; border: 1px solid #cbd5e0; text-align: left;">Vai trò</th>
+            </tr>
+            <tr>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;"><code class="inline">khung_chinh_tt.py</code></td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;"><code class="inline">QuanLyTrungTam</code></td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;">Giữ state toàn cục (DSLK, Stack, Queue, user)</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;"><code class="inline">cua_so_chinh_ui.py</code></td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;"><code class="inline">CuaSoChinhUI</code></td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;">Vẽ cửa sổ chính: toolbar + bảng + giỏ + thống kê</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;"><code class="inline">cua_so_chinh_dk.py</code></td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;"><code class="inline">DieuKhienCuaSoChinh</code></td>
+                <td style="padding: 8px 12px; border: 1px solid #cbd5e0;">Lớp "keo" — tạo 9 dk con + gắn command cho 9 nút</td>
+            </tr>
+        </table>
+
+        <h3>5.1. CuaSoChinhUI — vẽ cửa sổ chính</h3>
+
+        <p><code class="inline">CuaSoChinhUI</code> chỉ vẽ widget, không có logic. Quan trọng: nó <strong>import UI của 5 cn</strong> để tái sử dụng — không viết lại từ đầu:</p>
+
+        <pre data-file="khung_chinh/cua_so_chinh_ui.py (rút gọn)"><code>import tkinter as tk
+from tkinter import ttk
+
+# Import UI của 5 cn con — TÁI SỬ DỤNG
+from chuc_nang.cn02_doc_danh_sach.doc_danh_sach_ui import BangSanPhamUI
+from chuc_nang.cn06_tim_kiem_sap_xep.tim_kiem_sap_xep_ui import ThanhTimKiemSapXepUI
+from chuc_nang.cn07_thong_ke.thong_ke_ui import KhungThongKeUI
+from chuc_nang.cn08_hoan_tac_lam_lai.hoan_tac_lam_lai_ui import ThanhUndoRedoUI
+from chuc_nang.cn09_gio_hang.gio_hang_ui import KhungGioHangUI
+
+
+class CuaSoChinhUI:
+    def __init__(self, root, ho_ten, vai_tro):
+        self.root = root
+        root.title(f'Quản lý nhà sách — {ho_ten} ({vai_tro})')
+        root.geometry('1100x700+100+50')
+        self.vai_tro = vai_tro
+        self._tao_giao_dien()
+
+    def _tao_giao_dien(self):
+        # === THANH ĐẦU ===
+        frame_dau = ttk.Frame(self.root, padding=10)
+        frame_dau.pack(fill='x')
+        ttk.Label(frame_dau, text='QUẢN LÝ NHÀ SÁCH',
+                  font=('Arial', 16, 'bold')).pack(side='left')
+        # Khung user bên phải
+        frame_user = ttk.Frame(frame_dau)
+        frame_user.pack(side='right')
+        self.lbl_ten_user = ttk.Label(frame_user, text='')
+        self.lbl_ten_user.pack(side='left', padx=5)
+        self.btn_dang_xuat = ttk.Button(frame_user, text='Đăng xuất')
+        self.btn_dang_xuat.pack(side='left', padx=5)
+
+        # === THANH CÔNG CỤ ===
+        frame_cc = ttk.Frame(self.root, padding=(10, 0, 10, 5))
+        frame_cc.pack(fill='x')
+        self.btn_them = ttk.Button(frame_cc, text='➕ Thêm', width=10)
+        self.btn_them.pack(side='left', padx=2)
+        self.btn_sua = ttk.Button(frame_cc, text='✏ Sửa', width=10)
+        self.btn_sua.pack(side='left', padx=2)
+        self.btn_xoa = ttk.Button(frame_cc, text='🗑 Xóa', width=10)
+        self.btn_xoa.pack(side='left', padx=2)
+
+        # Thanh Undo/Redo — DÙNG UI CỦA cn08
+        self.ui_undoredo = ThanhUndoRedoUI(frame_cc)
+        # Thanh Tìm/Sắp — DÙNG UI CỦA cn06
+        self.ui_tim_sx = ThanhTimKiemSapXepUI(frame_cc)
+
+        # === KHUNG CHÍNH: BẢNG TRÁI + KHUNG PHẢI ===
+        paned = ttk.PanedWindow(self.root, orient='horizontal')
+        paned.pack(fill='both', expand=True, padx=10, pady=5)
+        frame_bang = ttk.LabelFrame(paned, text='Danh sách sản phẩm', padding=5)
+        paned.add(frame_bang, weight=3)
+        # BẢNG — DÙNG UI CỦA cn02
+        self.ui_bang = BangSanPhamUI(frame_bang)
+
+        # Khung phải: Thống kê + Giỏ hàng
+        frame_phai = ttk.Frame(paned)
+        paned.add(frame_phai, weight=2)
+        self.ui_thong_ke = KhungThongKeUI(frame_phai)   # cn07
+        self.ui_gio_hang = KhungGioHangUI(frame_phai)   # cn09
+</code></pre>
+
+        <div class="callout callout--warning">
+            <div class="callout__title">⚠️ Chú ý: 9 cn KHÔNG đều được nhúng trực tiếp vào UI</div>
+            <div class="callout__body">
+                <p>Chỉ có <strong>5 cn</strong> có UI nhúng trực tiếp vào cửa sổ chính: <code class="inline">cn02</code> (bảng), <code class="inline">cn06</code> (thanh tìm), <code class="inline">cn07</code> (thống kê), <code class="inline">cn08</code> (undo/redo), <code class="inline">cn09</code> (giỏ hàng).</p>
+                <p>4 cn còn lại — <code class="inline">cn03</code> (Thêm), <code class="inline">cn04</code> (Sửa), <code class="inline">cn05</code> (Xóa), <code class="inline">cn01</code> (Đăng nhập) — mở <strong>form modal riêng</strong> khi user bấm nút. Vì vậy UI của 4 cn này không nằm trong cửa sổ chính.</p>
+            </div>
+        </div>
+
+        <h3>5.2. DieuKhienCuaSoChinh — lớp "keo" dán 9 cn lại</h3>
+
+        <p>Đây là file QUAN TRỌNG NHẤT nếu bạn muốn hiểu "làm sao 9 cn lại gộp được". Nó làm 3 việc:</p>
+        <ol>
+            <li><strong>Tạo 9 đối tượng Điều khiển con</strong> — mỗi cái là 1 cn.</li>
+            <li><strong>Gắn command</strong> cho 9 nút trên UI → gọi hàm của dk con tương ứng.</li>
+            <li><strong>Cung cấp refresh_all()</strong> — gọi sau mỗi thao tác để cập nhật UI.</li>
+        </ol>
+
+        <pre data-file="khung_chinh/cua_so_chinh_dk.py (rút gọn)"><code># Import UI cửa sổ chính (chính nó)
+from .cua_so_chinh_ui import CuaSoChinhUI
+# Import UI đăng nhập (để mở lại khi đăng xuất)
+from chuc_nang.cn01_dang_nhap_phan_quyen.dang_nhap_ui import CuaSoDangNhapUI
+# Import 7 Điều khiển chức năng con (cn01 không cần vì đăng nhập xử lý ở main.py)
+from chuc_nang.cn02_doc_danh_sach.doc_danh_sach_dk import DieuKhienDocDanhSach
+from chuc_nang.cn03_them_san_pham.them_san_pham_dk import DieuKhienThemSanPham
+from chuc_nang.cn04_sua_san_pham.sua_san_pham_dk import DieuKhienSuaSanPham
+from chuc_nang.cn05_xoa_san_pham.xoa_san_pham_dk import DieuKhienXoaSanPham
+from chuc_nang.cn06_tim_kiem_sap_xep.tim_kiem_sap_xep_dk import DieuKhienTimKiemSapXep
+from chuc_nang.cn07_thong_ke.thong_ke_dk import DieuKhienThongKe
+from chuc_nang.cn08_hoan_tac_lam_lai.hoan_tac_lam_lai_dk import DieuKhienHoanTacLamLai
+from chuc_nang.cn09_gio_hang.gio_hang_dk import DieuKhienGioHang
+
+
+class DieuKhienCuaSoChinh:
+    def __init__(self, root, quan_ly, nguoi_dung):
+        self.root = root
+        self.quan_ly = quan_ly
+        self.nguoi_dung = nguoi_dung
+
+        # 1. Tạo UI cửa sổ chính (vẽ widget)
+        self.ui = CuaSoChinhUI(root, nguoi_dung.ho_ten, nguoi_dung.vai_tro)
+
+        # 2. Tạo 8 dk con — mỗi cái nhận state từ quan_ly
+        self.dk_danh_sach = DieuKhienDocDanhSach(self.ui.ui_bang, quan_ly.danh_sach)
+        self.dk_them = DieuKhienThemSanPham(quan_ly.danh_sach, quan_ly.bo_undoredo)
+        self.dk_sua = DieuKhienSuaSanPham(quan_ly.danh_sach, quan_ly.bo_undoredo)
+        self.dk_xoa = DieuKhienXoaSanPham(quan_ly.danh_sach, quan_ly.bo_undoredo)
+        self.dk_tim_sx = DieuKhienTimKiemSapXep(self.ui.ui_tim_sx, quan_ly.danh_sach, self.ui.ui_bang)
+        self.dk_thong_ke = DieuKhienThongKe(self.ui.ui_thong_ke, quan_ly.danh_sach)
+        self.dk_undoredo = DieuKhienHoanTacLamLai(self.ui.ui_undoredo, quan_ly.danh_sach, quan_ly.bo_undoredo)
+        self.dk_gio_hang = DieuKhienGioHang(self.ui.ui_gio_hang, quan_ly.danh_sach, quan_ly.gio_hang)
+
+        # 3. Gắn command cho 9 nút
+        self._gan_su_kien()
+
+        # 4. Nạp dữ liệu ban đầu
+        self.refresh_all()
+
+    def _gan_su_kien(self):
+        # Nút Thêm → gọi hàm _them_san_pham của chính lớp này
+        self.ui.btn_them.config(command=self._them_san_pham)
+        self.ui.btn_sua.config(command=self._sua_san_pham)
+        self.ui.btn_xoa.config(command=self._xoa_san_pham)
+        self.ui.btn_dang_xuat.config(command=self._dang_xuat)
+
+        # Double-click vào dòng bảng → mở form Sửa
+        self.ui.bind_double_click_bang(self._sua_san_pham)
+
+        # Thanh Tìm/Sắp xếp — dk con tự gắn sự kiện của nó
+        self.dk_tim_sx.gan_su_kien()
+        # Thanh Undo/Redo — dk con + truyền 2 callback
+        self.dk_undoredo.gan_su_kien(
+            cap_nhat_bang=lambda: self.dk_danh_sach.nap_lai(),
+            cap_nhat_thong_ke=self.dk_thong_ke.cap_nhat
+        )
+        # Giỏ hàng — dk con + truyền callback lấy mã đang chọn
+        self.dk_gio_hang.gan_su_kien(
+            lay_ma_dang_chon_bang_chinh=self.ui.ui_bang.lay_ma_dang_chon
+        )
+
+    def refresh_all(self):
+        """Sau mỗi thao tác (Thêm/Sửa/Xóa/Undo/Redo), gọi hàm này để refresh UI."""
+        so_luong = self.dk_danh_sach.nap_lai()       # Nạp lại bảng
+        self.dk_thong_ke.cap_nhat()                   # Nạp lại thống kê
+        self.dk_gio_hang.cap_nhat_gio_hang()          # Nạp lại giỏ
+        self.dk_undoredo.cap_nhat_trang_thai()        # Bật/tắt nút Undo/Redo
+        self.ui.dat_trang_thai(f'Đã tải {so_luong} mặt hàng.')
+
+    def _them_san_pham(self):
+        """Khi user bấm nút Thêm → mở form → nếu lưu OK → refresh_all."""
+        da_them = self.dk_them.mo_form_them(self.root)
+        if da_them:
+            self.refresh_all()  # ← đây là câu lệnh khiến bảng tự cập nhật sau khi Thêm
+
+    def _sua_san_pham(self):
+        ma = self.ui.ui_bang.lay_ma_dang_chon()
+        if not ma:
+            messagebox.showwarning('Chưa chọn', 'Vui lòng chọn 1 dòng để sửa.')
+            return
+        da_sua = self.dk_sua.mo_form_sua(self.root, ma)
+        if da_sua:
+            self.refresh_all()
+
+    def _xoa_san_pham(self):
+        ma = self.ui.ui_bang.lay_ma_dang_chon()
+        if not ma:
+            messagebox.showwarning('Chưa chọn', 'Vui lòng chọn 1 dòng để xóa.')
+            return
+        da_xoa = self.dk_xoa.xu_ly_xoa(self.root, ma, self.quan_ly.la_admin())
+        if da_xoa:
+            self.refresh_all()
+</code></pre>
+
+        <h2 id="cn-ghep">6. 9 cn ghép vào khung_chinh thế nào</h2>
+
+        <p>Tóm tắt: 9 cn ghép vào app qua <strong>3 cơ chế</strong>:</p>
+
+        <h3>Cơ chế 1: Nhúng UI trực tiếp (5 cn)</h3>
+        <p>Các cn có UI nằm cố định trong cửa sổ chính — <code class="inline">CuaSoChinhUI</code> gọi constructor của chúng để vẽ:</p>
+        <pre data-file="Ví dụ: nhúng UI của cn02 vào cửa sổ chính"><code># Trong cua_so_chinh_ui.py
+from chuc_nang.cn02_doc_danh_sach.doc_danh_sach_ui import BangSanPhamUI
+
+# Trong _tao_giao_dien():
+frame_bang = ttk.LabelFrame(paned, text='Danh sách sản phẩm')
+paned.add(frame_bang, weight=3)
+self.ui_bang = BangSanPhamUI(frame_bang)  # ← nhúng UI cn02 vào frame_bang
+</code></pre>
+
+        <h3>Cơ chế 2: Mở form modal khi bấm nút (3 cn: Thêm/Sửa/Xóa)</h3>
+        <p>UI của các cn này không nằm trong cửa sổ chính. Khi user bấm nút → <code class="inline">DieuKhienCuaSoChinh</code> gọi <code class="inline">mo_form_them(self.root)</code> của dk con → dk con tạo <code class="inline">Toplevel</code> modal riêng:</p>
+        <pre data-file="Ví dụ: mở form cn03 khi user bấm nút Thêm"><code># Trong cua_so_chinh_dk.py
+def _them_san_pham(self):
+    da_them = self.dk_them.mo_form_them(self.root)  # ← mở form modal
+    if da_them:
+        self.refresh_all()  # Sau khi đóng form → refresh bảng
+
+# Trong cn03/them_san_pham_dk.py
+def mo_form_them(self, parent):
+    form = FormThemSuaUI(parent, du_lieu_cu=None)  # ← Toplevel modal
+    form.btn_luu.config(command=lambda: self._xu_ly_luu(form))
+    parent.wait_window(form.top)  # ← chờ form đóng
+    return form.ket_qua is not None
+</code></pre>
+
+        <h3>Cơ chế 3: Xử lý 1 lần rồi thoát (cn01 Đăng nhập)</h3>
+        <p><code class="inline">cn01</code> không có dk nhúng trong cửa sổ chính. Nó được <code class="inline">main.py</code> gọi 1 lần duy nhất lúc mở app, và được <code class="inline">cua_so_chinh_dk._dang_xuat()</code> gọi lại khi user đăng xuất.</p>
+
+        <h2 id="luong-them">7. Luồng ví dụ: User bấm "Thêm sản phẩm"</h2>
+
+        <p>Đây là luồng đi từ lúc user bấm nút <strong>➕ Thêm</strong> đến khi bảng tự cập nhật. Theo dõi từng bước:</p>
+
+        <pre data-file="Luồng: User bấm nút Thêm"><code>BƯỚC 1: User click nút "➕ Thêm" trên UI
+         ↓
+         Tkinter gọi hàm đã gán cho self.ui.btn_them.config(command=...)
+         ↓ (command được gán ở cua_so_chinh_dk._gan_su_kien)
+
+BƯỚC 2: DieuKhienCuaSoChinh._them_san_pham() chạy
+         ↓
+         Gọi: self.dk_them.mo_form_them(self.root)
+         ↓ (dk_them là DieuKhienThemSanPham của cn03)
+
+BƯỚC 3: cn03/them_san_pham_dk.mo_form_them() chạy
+         ↓
+         Tạo form = FormThemSuaUI(parent, du_lieu_cu=None)  # ← Toplevel modal
+         Gắn: form.btn_luu.config(command=lambda: self._xu_ly_luu(form))
+         parent.wait_window(form.top)  # ← chờ user nhập + bấm Lưu
+
+BƯỚC 4: User nhập dữ liệu → bấm "Lưu"
+         ↓
+         Tkinter gọi _xu_ly_luu(form) trong cn03_dk
+
+BƯỚC 5: cn03_dk._xu_ly_luu() chạy
+         ↓
+         du_lieu = form.lay_du_lieu()           # ← đọc từ UI cn03
+         ok, msg = them_san_pham(self.danh_sach, self.bo_undoredo, du_lieu)
+         ↓ (gọi hàm trong cn03_tt)
+
+BƯỚC 6: cn03/them_san_pham_tt.them_san_pham() chạy
+         ↓
+         - Tạo đối tượng MatHang/Sach/TapChi... từ du_lieu
+         - self.danh_sach.them_vao_cuoi(san_pham)  # ← thêm vào DSLK toàn cục
+         - Đẩy thao tác vào Stack undo: bo_undoredo['undo'].day_vao({...})
+         - Trả về (True, "Đã thêm thành công")
+
+BƯỚC 7: cn03_dk._xu_ly_luu() nhận kết quả
+         ↓
+         if ok:
+             form.ket_qua = du_lieu
+             form.bao_thanh_cong(msg)
+             form.dong()  # ← đóng form modal → wait_window ở B3 trả về
+
+BƯỚC 8: mo_form_them() trả về True
+         ↓
+         Về tới B2: da_them = True
+
+BƯỚC 9: DieuKhienCuaSoChinh._them_san_pham() gọi self.refresh_all()
+         ↓
+         - dk_danh_sach.nap_lai(): đọc DSLK → vẽ lại bảng (cn02)
+         - dk_thong_ke.cap_nhat(): đọc DSLK → vẽ lại thống kê (cn07)
+         - dk_gio_hang.cap_nhat_gio_hang(): vẽ lại giỏ (cn09)
+         - dk_undoredo.cap_nhat_trang_thai(): bật nút Undo (cn08)
+
+BƯỚC 10: Bảng hiển thị sản phẩm mới → user nhìn thấy "Đã thêm!"
+</code></pre>
+
+        <div class="callout callout--tip">
+            <div class="callout__title">💡 Điểm mấu chốt</div>
+            <div class="callout__body">
+                <p><strong>Step 6</strong> là mấu chốt: hàm <code class="inline">them_san_pham()</code> không tạo DSLK mới, mà <strong>gọi <code class="inline">self.danh_sach.them_vao_cuoi()</code> trên object DSLK chung</strong> mà <code class="inline">QuanLyTrungTam</code> giữ.</p>
+                <p>Vì vậy sau bước 6, DSLK đã có sản phẩm mới. Bước 9 chỉ là "đọc lại DSLK rồi vẽ lên UI" — dữ liệu đã có sẵn.</p>
+                <p>Đây chính là lý do <code class="inline">QuanLyTrungTam</code> tồn tại: để mọi chức năng cùng thao tác trên <strong>cùng 1 DSLK</strong>, không ai tạo bản sao riêng.</p>
+            </div>
+        </div>
+
+        <h2 id="luong-undoredo">8. Luồng ví dụ: User bấm "Undo"</h2>
+
+        <pre data-file="Luồng: User bấm nút Undo"><code>BƯỚC 1: User click nút "↶ Undo" trên UI
+         ↓
+         Tkinter gọi hàm gán cho nút (do cn08_dk.gan_su_kien() gán)
+
+BƯỚC 2: cn08/hoan_tac_lam_lai_dk._xu_ly_hoan_tac() chạy
+         ↓
+         Gọi: hoan_tac(self.danh_sach, self.bo_undoredo)
+         ↓ (hàm trong cn08_tt)
+
+BƯÙC 3: cn08/hoan_tac_lam_lai_tt.hoan_tac() chạy
+         ↓
+         thao_tac = self.bo_undoredo['undo'].lay_ra()  # ← POP khỏi Stack undo
+         ↓
+         Tùy loại thao_tac:
+           - 'them': xóa sản phẩm vừa thêm
+           - 'sua':  khôi phục dữ liệu cũ
+           - 'xoa':  thêm lại sản phẩm đã xóa
+         ↓
+         Đẩy thao_tac vào Stack redo: bo_undoredo['redo'].day_vao(thao_tac)
+         ↓ (để user có thể Redo lại)
+         Trả về (True, "Đã hoàn tác")
+
+BƯỚC 4: cn08_dk._xu_ly_hoan_tac() nhận kết quả
+         ↓
+         Gọi 2 callback đã được cua_so_chinh_dk truyền vào:
+           - cap_nhat_bang(): gọi dk_danh_sach.nap_lai() → vẽ lại bảng
+           - cap_nhat_thong_ke(): gọi dk_thong_ke.cap_nhat() → vẽ lại thống kê
+
+BƯỚC 5: Nút Undo/Redo được bật/tắt lại (nếu Stack undo rỗng → tắt Undo)
+         ↓
+         User nhìn thấy bảng đã quay về trạng thái trước thao tác
+</code></pre>
+
+        <h2 id="luong-dangxuat">9. Luồng ví dụ: User bấm "Đăng xuất"</h2>
+
+        <pre data-file="Luồng: User bấm nút Đăng xuất"><code>BƯỚC 1: User click "Đăng xuất" trên UI
+         ↓
+         Tkinter gọi DieuKhienCuaSoChinh._dang_xuat()
+
+BƯỚC 2: _dang_xuat() hỏi xác nhận
+         ↓
+         if not messagebox.askyesno('Xác nhận', '...?'): return
+
+BƯỚC 3: Reset user
+         ↓
+         self.quan_ly.dang_xuat()  # ← QuanLyTrungTam.nguoi_dung_hien_tai = None
+
+BƯỚC 4: Ẩn cửa sổ chính
+         ↓
+         self.root.withdraw()  # ← ẩn đi, không destroy
+
+BƯỚC 5: Mở lại form đăng nhập (cn01)
+         ↓
+         form = CuaSoDangNhapUI(self.root)  # ← import từ cn01_dang_nhap_ui
+         # Gắn sự kiện Enter + nút Đăng nhập (giống main.py)
+         bo = BoDangNhap()
+         def _xu_ly_dang_nhap(): ...
+         form.btn_dn.config(command=_xu_ly_dang_nhap)
+         self.root.wait_window(form.top)  # ← chờ user đăng nhập lại
+
+BƯỚC 6a: Nếu user đăng nhập lại OK
+         ↓
+         - Cập nhật self.nguoi_dung = form.nguoi_dung
+         - Cập nhật self.quan_ly.nguoi_dung_hien_tai = form.nguoi_dung
+         - Cập nhật UI: self.ui.cap_nhat_user(ho_ten, vai_tro)
+         - Bật/tắt nút Xóa theo quyền (admin = bật, nhân viên = tắt)
+         - self.root.deiconify()  # ← hiện lại cửa sổ chính
+         - self.refresh_all()     # ← nạp lại dữ liệu
+
+BƯỚC 6b: Nếu user đóng form không đăng nhập → thoát app
+         ↓
+         self.root.quit()
+</code></pre>
+
+        <h2 id="che-do-import">10. 3 chế độ import: tĩnh, lazy, tương đối</h2>
+
+        <p>Trong đồ án có 3 kiểu import. Hiểu rõ 3 kiểu này sẽ giúp bạn đọc code không bị rối:</p>
+
+        <h3>10.1. Import tĩnh (ở đầu file)</h3>
+        <p>Kiểu phổ biến nhất. Module được load ngay khi file chạy lần đầu.</p>
+        <pre data-file="Ví dụ"><code># main.py
+from quan_ly_trung_tam import QuanLyTrungTam
+from chuc_nang.cn01_dang_nhap_phan_quyen.dang_nhap_ui import CuaSoDangNhapUI
+from khung_chinh.cua_so_chinh_dk import DieuKhienCuaSoChinh</code></pre>
+
+        <h3>10.2. Import tương đối (dấu chấm)</h3>
+        <p>Khi file A và file B nằm cùng folder, A có thể import B mà không cần ghi đường dẫn đầy đủ. Dùng dấu chấm <code class="inline">.</code> (cùng folder) hoặc <code class="inline">..</code> (folder cha).</p>
+        <pre data-file="Ví dụ"><code># Trong cn01/dang_nhap_dk.py (cùng folder với dang_nhap_ui.py và dang_nhap_tt.py)
+from .dang_nhap_ui import CuaSoDangNhapUI  # ← dấu chấm = cùng folder
+from .dang_nhap_tt import BoDangNhap</code></pre>
+        <p>Đây là lý do trong <code class="inline">cua_so_chinh_dk.py</code> có dòng <code class="inline">from .cua_so_chinh_ui import CuaSoChinhUI</code> — vì 2 file này cùng folder <code class="inline">khung_chinh/</code>.</p>
+
+        <h3>10.3. Lazy import (bên trong hàm)</h3>
+        <p>Một số module chỉ được import khi hàm được gọi. Lý do: tránh <strong>phụ thuộc vòng</strong> (A import B, B import A → lỗi).</p>
+        <pre data-file="Ví dụ: QuanLyTrungTam dùng lazy import"><code># khung_chinh/khung_chinh_tt.py
+class QuanLyTrungTam:
+    def lay_danh_sach(self):
+        # Lazy import: chỉ import khi hàm này được gọi
+        from chuc_nang.cn02_doc_danh_sach.doc_danh_sach_tt import lay_danh_sach as _lay
+        return _lay(self.danh_sach)
+
+    def them_san_pham(self, du_lieu):
+        from chuc_nang.cn03_them_san_pham.them_san_pham_tt import them_san_pham as _them
+        return _them(self.danh_sach, self.bo_undoredo, du_lieu)</code></pre>
+        <p>Nếu import tĩnh (ở đầu file), <code class="inline">khung_chinh_tt.py</code> sẽ import <code class="inline">cn02_tt</code> → <code class="inline">cn02_tt</code> import DSLK từ <code class="inline">loi_thuat_toan</code> → OK. Nhưng nếu <code class="inline">cn02_tt</code> lại cần <code class="inline">QuanLyTrungTam</code> thì sẽ bị vòng. Lazy import phá được vòng này.</p>
+
+        <div class="callout callout--info">
+            <div class="callout__title">📌 Tóm tắt 3 chế độ</div>
+            <div class="callout__body">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.92rem;">
+                    <tr style="background: #edf2f7;">
+                        <th style="padding: 6px 10px; border: 1px solid #cbd5e0; text-align: left;">Kiểu</th>
+                        <th style="padding: 6px 10px; border: 1px solid #cbd5e0; text-align: left;">Cú pháp</th>
+                        <th style="padding: 6px 10px; border: 1px solid #cbd5e0; text-align: left;">Khi nào dùng</th>
+                    </tr>
+                    <tr>
+                        <td style="padding: 6px 10px; border: 1px solid #cbd5e0;">Tĩnh</td>
+                        <td style="padding: 6px 10px; border: 1px solid #cbd5e0;"><code class="inline">from X.Y import Z</code></td>
+                        <td style="padding: 6px 10px; border: 1px solid #cbd5e0;">Khi luôn cần module đó</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 6px 10px; border: 1px solid #cbd5e0;">Tương đối</td>
+                        <td style="padding: 6px 10px; border: 1px solid #cbd5e0;"><code class="inline">from .Y import Z</code></td>
+                        <td style="padding: 6px 10px; border: 1px solid #cbd5e0;">Khi file cùng folder</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 6px 10px; border: 1px solid #cbd5e0;">Lazy</td>
+                        <td style="padding: 6px 10px; border: 1px solid #cbd5e0;"><code class="inline">def f(): from X import Y</code></td>
+                        <td style="padding: 6px 10px; border: 1px solid #cbd5e0;">Tránh phụ thuộc vòng</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <h2>📌 Tóm tắt bài 20</h2>
+
+        <div class="callout callout--success">
+            <div class="callout__title">✅ Bạn đã hiểu</div>
+            <div class="callout__body">
+                <ul>
+                    <li><strong>main.py</strong> là điểm vào — chỉ import 4 thứ: QuanLyTrungTam, CuaSoDangNhapUI, BoDangNhap, DieuKhienCuaSoChinh.</li>
+                    <li><strong>QuanLyTrungTam</strong> giữ state toàn cục (DSLK, Stack, Queue, user) — truyền tham chiếu cho mọi dk con.</li>
+                    <li><strong>DieuKhienCuaSoChinh</strong> là "keo" — tạo 8 dk con + gắn command cho 9 nút + cung cấp refresh_all().</li>
+                    <li><strong>5 cn có UI nhúng trực tiếp</strong> (cn02, 06, 07, 08, 09). <strong>3 cn mở form modal</strong> (cn03, 04, 05). <strong>cn01</strong> xử lý 1 lần lúc mở app.</li>
+                    <li>Luồng "Thêm sản phẩm" đi qua 10 bước: bấm nút → dk chính → dk con cn03 → form UI → thuật toán cn03 → DSLK → refresh_all.</li>
+                    <li><strong>3 kiểu import</strong>: tĩnh (đầu file), tương đối (dấu chấm), lazy (trong hàm — tránh vòng).</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="callout callout--tip">
+            <div class="callout__title">💡 Bài tiếp theo</div>
+            <div class="callout__body">
+                <p>Bài 21 sẽ đi sâu vào <strong>chi tiết cách _tt, _ui, _dk liên kết với nhau</strong> trong 1 cn — bài này chỉ mới nói về cn cấp cao. Bài 21 sẽ phân tích từng dòng import, từng lời gọi hàm giữa 3 file này.</p>
+            </div>
+        </div>
+
+        <div class="page-nav"></div>
+
+    </div>
+
+    <footer class="footer">
+        <p>Bài 20/21 — Luồng ghép các cn thành app thống nhất | Học đồ án QLNS</p>
+    </footer>
+</main>
+
+<script src="../js/highlight.js"></script>
+<script src="../js/main.js"></script>
+
+</body>
+</html>
